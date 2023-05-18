@@ -32,7 +32,7 @@ class AbsProp(ABC):
     def xdim(self) -> int:
         """ Return the dimension of input/state. """
         lb, _ = self.lbub()
-        shape = lb.shape[1:]
+        shape = lb.shape[1:] # not include batch dimension
         return torch.prod(torch.tensor(shape)).item()
 
     def safe_dist(self, outs: AbsEle, *args, **kwargs):
@@ -111,7 +111,7 @@ class AndProp(AbsProp):
     def __init__(self, props: List[AbsProp]):
         assert len(props) > 0
         xdims = [p.xdim() for p in props]
-        assert all([d == xdims[0] for d in xdims])
+        assert all([d == xdims[0] for d in xdims]) #输入维度要保持一致 TODO why?
 
         super().__init__('&'.join([p.name for p in props]))
 
@@ -137,8 +137,8 @@ class AndProp(AbsProp):
 
         # initialize for 1st prop
         orig_label = torch.eye(nprops).byte()  # showing each input region which properties they should obey
-        lbs, ubs = props[0].lbub()
-        labels = orig_label[[0]].expand(len(lbs), nprops)
+        lbs, ubs = props[0].lbub() # both are 1 * input_dim
+        labels = orig_label[[0]].expand(len(lbs), nprops) # for 1st prob, labels is 1 * nprob matrix [[1,0,0,...]] 
 
         for i, prop in enumerate(props):
             if i == 0:
@@ -161,6 +161,7 @@ class AndProp(AbsProp):
 
         All arguments are assumed to be batched tensors.
         """
+        # 上面这段话的意思好像是把X和Y的交集取出来了，这样这个交集和剩下的余集就是互不相交的了
         shared_lbs, shared_ubs, shared_labels = [], [], []  # intersected ones from X and Y
 
         def _covered(new_lb: Tensor, new_ub: Tensor, new_label: Tensor) -> bool:
@@ -179,7 +180,7 @@ class AndProp(AbsProp):
 
         while True:
             found_new_shared = False
-            for i, j in itertools.product(range(len(x_lbs)), range(len(y_lbs))):
+            for i, j in itertools.product(range(len(x_lbs)), range(len(y_lbs))): #(1,share_labels)
                 xlb, xub, xlabel = x_lbs[i], x_ubs[i], x_labels[i]
                 ylb, yub, ylabel = y_lbs[j], y_ubs[j], y_labels[j]
                 try:

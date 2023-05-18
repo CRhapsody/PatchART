@@ -56,7 +56,7 @@ class Bisecter(object):
     def _grad_dists_of_batch(self, new_lb: Tensor, new_ub: Tensor, new_extra: Optional[Tensor],
                              forward_fn: nn.Module) -> Tuple[Tensor, Tensor]:
         """ Get the gradient value for each abstraction as heuristic, as long as safe distances. """
-        with torch.enable_grad():
+        with torch.enable_grad(): #设置可以求梯度
             new_lb = new_lb.detach().requires_grad_()
             new_ub = new_ub.detach().requires_grad_()
             if new_lb.grad is not None:
@@ -335,6 +335,7 @@ class Bisecter(object):
         tiny_extra = None if extra is None else empty().byte()
         wl_safe_dist, wl_grad = empty(), empty()
 
+        # initialize lb and ub
         new_lb, new_ub, new_extra = lb, ub, extra
         iter = 0
         while True:

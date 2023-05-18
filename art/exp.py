@@ -123,9 +123,9 @@ class ExpArgParser(argparse.ArgumentParser):
                           help='initial learning rate during training')
         self.add_argument('--batch_size', type=int, default=32,
                           help='mini batch size during each training epoch')
-        self.add_argument('--min_epochs', type=int, default=90,
+        self.add_argument('--min_epochs', type=int, default=25,
                           help='at least run this many epochs for sufficient training')
-        self.add_argument('--max_epochs', type=int, default=100,
+        self.add_argument('--max_epochs', type=int, default=35,
                           help='at most run this many epochs before too long')
 
         # training flags
@@ -139,7 +139,7 @@ class ExpArgParser(argparse.ArgumentParser):
                           help='disable refinement during training')
 
         # printing flags
-        group = self.add_mutually_exclusive_group()
+        group = self.add_mutually_exclusive_group() #确保下面只有一个参数会被使用
         group.add_argument("--quiet", action="store_true", default=False,
                            help='show warning level logs (default: info)')
         group.add_argument("--debug", action="store_true", default=False,
