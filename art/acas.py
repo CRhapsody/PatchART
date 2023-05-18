@@ -147,6 +147,20 @@ class AcasNetID(object):
 
         ids = phi2.applicable.bool() | phi8.applicable.bool()
         ids = ids.nonzero(as_tuple=False)  # Batch x 2
+        # ids = [AcasNetID(row[0] + 1, row[1] + 1) for row in ids]
+        ids = [AcasNetID(torch.tensor(2),torch.tensor(9))]
+        # ids = [AcasNetID(torch.tensor(2), torch.tensor(1)),AcasNetID(torch.tensor(2), torch.tensor(3)),
+        # AcasNetID(torch.tensor(2), torch.tensor(4)),AcasNetID(torch.tensor(2), torch.tensor(6)),
+        # AcasNetID(torch.tensor(2), torch.tensor(8))]
+        return ids
+    
+    def goal_adv_ids(cls, dom: AbsDom) -> List[AcasNetID]:
+        """ Those networks with safety violations (i.e., phi2 and phi8), to train to be safe by construction. """
+        phi2 = AcasProp.property2(dom)
+        phi8 = AcasProp.property8(dom)
+
+        ids = phi2.applicable.bool() | phi8.applicable.bool()
+        ids = ids.nonzero(as_tuple=False)  # Batch x 2
         ids = [AcasNetID(row[0] + 1, row[1] + 1) for row in ids]
         return ids
 
@@ -247,7 +261,8 @@ class AcasProp(OneProp):
         names = [f'property{i}' for i in range(1, 6)]
         names.extend(['property6a', 'property6b'])
         names.extend([f'property{i}' for i in range(7, 11)])
-        return [getattr(cls, n)(dom) for n in names]
+        a = [getattr(cls, n)(dom) for n in names]
+        return a
 
     @classmethod
     def all_composed_props(cls, dom: AbsDom) -> List[AndProp]:
@@ -274,8 +289,21 @@ class AcasProp(OneProp):
         p.set_input_bound(AcasIn.RHO, new_low=55947.691)
         p.set_input_bound(AcasIn.V_OWN, new_low=1145)
         p.set_input_bound(AcasIn.V_INT, new_high=60)
-        p.set_all_applicable_as(True)
+        p.set_all_applicable_as(False)
+        # # acas xu nnet 3,x allow p1
+        # for y in range(1, AcasNetID.YS + 1):
+        #     p.set_applicable(3, y, False)
         return p
+    
+    # @classmethod
+    # def adv_property(cls, dom: AbsDom):
+    #     p = AcasProp(name='adv_property', dom=dom, safe_fn='col_le_val', viol_fn='col_ge_val',
+    #                  fn_args=[AcasOut.CLEAR_OF_CONFLICT, 1500, 7.5188840201005975, 373.94992])  # mean/range hardcoded
+    #     p.set_input_bound(AcasIn.RHO, new_low=55947.691)
+    #     p.set_input_bound(AcasIn.V_OWN, new_low=1145)
+    #     p.set_input_bound(AcasIn.V_INT, new_high=60)
+    #     p.set_all_applicable_as(True)
+    #     return p
 
     @classmethod
     def property2(cls, dom: AbsDom):
@@ -298,9 +326,11 @@ class AcasProp(OneProp):
         p.set_input_bound(AcasIn.PSI, new_low=3.10)
         p.set_input_bound(AcasIn.V_OWN, new_low=980)
         p.set_input_bound(AcasIn.V_INT, new_low=960)
-        p.set_all_applicable_as(True)
-        for y in [7, 8, 9]:
-            p.set_applicable(1, y, False)
+        p.set_all_applicable_as(False)
+        # for y in [7, 8, 9]:
+        #     p.set_applicable(1, y, False)
+        # for y in [1,3,4,6,8]:
+        #     p.set_applicable(2, y, False)
         return p
 
     @classmethod
@@ -312,9 +342,12 @@ class AcasProp(OneProp):
         p.set_input_bound(AcasIn.PSI, new_low=-0.01, new_high=0.01)  # was [0, 0], for precise size, use [±0.01]
         p.set_input_bound(AcasIn.V_OWN, new_low=1000)
         p.set_input_bound(AcasIn.V_INT, new_low=700, new_high=800)
-        p.set_all_applicable_as(True)
-        for y in [7, 8, 9]:
-            p.set_applicable(1, y, False)
+        p.set_all_applicable_as(False)
+        
+        # for y in [7, 8, 9]:
+        #     p.set_applicable(1, y, False)
+        # for y in [1,3,4,6,8]:
+        #     p.set_applicable(2, y, False)
         return p
 
     @classmethod
@@ -449,6 +482,9 @@ class _CommaString(object):
     pass
 
 
+
+
+
 class AcasNet(nn.Module):
     """ Compatible with the NNET format used in Reluplex. """
 
@@ -464,6 +500,7 @@ class AcasNet(nn.Module):
         self.output_size = output_size
         self.hidden_sizes = hidden_sizes
         self.n_layers = len(hidden_sizes) + 1
+        
 
         # By default, assume normalized, therefore (d - mean) / range doesn't change the value.
         # One more element for output data mean/range.
