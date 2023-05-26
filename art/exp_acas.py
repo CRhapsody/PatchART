@@ -160,7 +160,6 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
         safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra = v.split(in_lb, in_ub, in_bitmap, net, args.refine_top_k,
                                                                 tiny_width=args.tiny_width,
                                                                 stop_on_k_all=args.start_abs_cnt)
-
     # params = list(net.parameters()) 
     # for patch in patch_lists:
     #     params.extend(patch.parameters())
