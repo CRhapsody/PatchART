@@ -119,23 +119,13 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
         net.reset_parameters()
     logging.info(net)
 
-    # TODO the number of repair neural network
-    n_repair = 5
-    # TODO the construction of support and patch network
-    input_size = 5
-    hidden_size = [10,10,10]
-    support_lists = []
-    patch_lists = []
-    for i in range(n_repair):
-        support = SupportNet(input_size=input_size, dom=args.dom, hidden_sizes=hidden_size,
-            name = f'repair{i}')
-        patch = PatchNet(input_size=input_size, dom=args.dom, hidden_sizes=hidden_size,
-            name = f'repair{i}')
-        support_lists.append(support)
-        patch_lists.append(patch)
     
-    repair_net = IntersectionNetSum(dom=args.dom, target_net=net, support_nets=support_lists, patch_nets=patch_lists, device = device)
-    logging.info(repair_net)
+    
+
+
+    # TODO the combine of support and patch network
+    # repair_net = IntersectionNetSum(dom=args.dom, target_net=net, support_nets=support_lists, patch_nets=patch_lists, device = device)
+    # logging.info(repair_net)
 
 
     all_props = AndProp(nid.applicable_props(args.dom))
@@ -165,16 +155,34 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
         curr_abs_lb, curr_abs_ub, curr_abs_bitmap = in_lb, in_ub, in_bitmap
     else:
         # refine it at the very beginning to save some steps in later epochs
-        # TODO 这里可以先用原网络的结构对抽象域进行细化，然后再修复
-        curr_abs_lb, curr_abs_ub, curr_abs_bitmap = v.split(in_lb, in_ub, in_bitmap, net, args.refine_top_k,
-                                                            # tiny_width=args.tiny_width,
-                                                            stop_on_k_all=args.start_abs_cnt)
+        # and use the refined bounds as the initial bounds for support network training
+        
+        safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra = v.split(in_lb, in_ub, in_bitmap, net, args.refine_top_k,
+                                                                tiny_width=args.tiny_width,
+                                                                stop_on_k_all=args.start_abs_cnt)
 
     # params = list(net.parameters()) 
     # for patch in patch_lists:
     #     params.extend(patch.parameters())
     # for support in support_lists:
     #     params.extend(support.parameters())
+
+    # repair part
+    # the number of repair patch network,which is equal to the number of properties
+    n_repair = len(in_bitmap[0])
+    # the construction of support and patch network
+    input_size = 5
+    hidden_size = [10,10,10]
+    patch_lists = []
+
+    support = SupportNet(input_size=input_size, dom=args.dom, hidden_sizes=hidden_size,
+            name = f'support network')
+    for i in range(n_repair):
+        
+        patch = PatchNet(input_size=input_size, dom=args.dom, hidden_sizes=hidden_size,
+            name = f'patch network {i}')
+        patch_lists.append(patch)
+
     
 
     
