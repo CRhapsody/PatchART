@@ -291,7 +291,7 @@ class Bisecter(object):
               stop_on_k_new: int = None,
               stop_on_k_ops: int = None,
               tiny_width: float = None,
-              collapse_res: bool = True) -> Union[Tuple[Tensor, Tensor], Tuple[Tensor, Tensor, Tensor]]:
+              collapse_res: bool = True, for_support = False) -> Union[Tuple[Tensor, Tensor], Tuple[Tensor, Tensor, Tensor]]:
         """ Different from verify(), split() does breadth-first traversal. Its objective is to have roughly even
             abstractions with small safety losses for the optimization later.
 
@@ -309,6 +309,8 @@ class Bisecter(object):
         :param stop_on_k_ops: if not None, split() stops after this many refinement steps have been applied.
         :param tiny_width: if not None, stop refining one dimension if its width is already <= this bar,
                            e.g., setting tiny_width=1e-3 would ensure all refined abstraction dimension width > 5e-4.
+        :param collapse_res: if True, return the safe and violated regions and their extra together, otherwise return the violated regions and its extra
+        :param for_support: if True, return the safe and violated regions and their extra respectively, otherwise return the above together
         :return: <LB, UB> when extra is None, otherwise <LB, UB, extra>
         """
         assert valid_lb_ub(lb, ub)
@@ -408,25 +410,46 @@ class Bisecter(object):
         if len(wl_lb) > 0:
             logging.debug(f'Non zero loss boxes have safe loss min {wl_safe_dist.min()} ~ max {wl_safe_dist.max()}.')
 
-        if collapse_res:
-            with torch.no_grad():
-                all_lb = cat0(wl_lb, safe_lb, tiny_lb)
-                all_ub = cat0(wl_ub, safe_ub, tiny_ub)
-                all_extra = cat0(wl_extra, safe_extra, tiny_extra)
+        if not for_support:
+            if collapse_res:
+                with torch.no_grad():
+                    all_lb = cat0(wl_lb, safe_lb, tiny_lb)
+                    all_ub = cat0(wl_ub, safe_ub, tiny_ub)
+                    all_extra = cat0(wl_extra, safe_extra, tiny_extra)
 
-            if all_extra is None:
-                return all_lb, all_ub
+                if all_extra is None:
+                    return all_lb, all_ub
+                else:
+                    return all_lb, all_ub, all_extra
             else:
-                return all_lb, all_ub, all_extra
+                with torch.no_grad():
+                    wl_lb = cat0(wl_lb, tiny_lb)
+                    wl_ub = cat0(wl_ub, tiny_ub)
+                    wl_extra = cat0(wl_extra, tiny_extra)
+                if wl_extra is None:
+                    return wl_lb, wl_ub
+                else:
+                    return wl_lb, wl_ub, wl_extra
         else:
-            with torch.no_grad():
-                wl_lb = cat0(wl_lb, tiny_lb)
-                wl_ub = cat0(wl_ub, tiny_ub)
-                wl_extra = cat0(wl_extra, tiny_extra)
-            if wl_extra is None:
-                return wl_lb, wl_ub
+            if collapse_res:
+                # with torch.no_grad():
+                #     all_lb = cat0(wl_lb, safe_lb, tiny_lb)
+                #     all_ub = cat0(wl_ub, safe_ub, tiny_ub)
+                #     all_extra = cat0(wl_extra, safe_extra, tiny_extra)
+
+                if all_extra is None:
+                    return safe_lb, safe_ub, wl_lb, wl_ub
+                else:
+                    return safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra
             else:
-                return wl_lb, wl_ub, wl_extra
+                with torch.no_grad():
+                    wl_lb = cat0(wl_lb, tiny_lb)
+                    wl_ub = cat0(wl_ub, tiny_ub)
+                    wl_extra = cat0(wl_extra, tiny_extra)
+                if wl_extra is None:
+                    return wl_lb, wl_ub
+                else:
+                    return wl_lb, wl_ub, wl_extra
 
     def try_certify(self, lb: Tensor, ub: Tensor, extra: Optional[Tensor], forward_fn: nn.Module, batch_size: int,
               timeout_sec: int) -> bool:
