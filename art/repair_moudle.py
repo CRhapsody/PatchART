@@ -19,7 +19,7 @@ class SupportNet(nn.Module):
                 name: str, output_size: int ) -> None:
         '''
         :param hidden_sizes: the size of all hidden layers
-        :param output_size: Due to the support network is characteristic function, the output of support network should be confidence.
+        :param output_size: Due to the support network is characteristic function, the output of support network should be the number of properties to be repaired.
         :param name: the name of this support network; maybe the repairing property belonging to it in the later
         '''
         super().__init__()
@@ -29,13 +29,21 @@ class SupportNet(nn.Module):
         self.output_size = output_size
         self.n_layers = len(hidden_sizes) + 1
 
-        # layer
-        self.acti = dom.ReLU()
+        # abstract domain
+        # self.acti = dom.ReLU()
+
+        # concrete domain
+        self.acti = nn.ReLU()
+
         self.all_linears = nn.ModuleList()
         in_sizes = [self.input_size] + self.hidden_sizes
         out_sizes = self.hidden_sizes + [self.output_size]
         for in_size, out_size in zip(in_sizes, out_sizes):
-            self.all_linears.append(dom.Linear(in_size, out_size))
+            # abstract domain
+            # self.all_linears.append(dom.Linear(in_size, out_size))
+            # concrete domain
+            self.all_linears.append(nn.Linear(in_size, out_size))
+        self.violate_judge_layer = nn.Linear(self.hidden_sizes[-1], 2)
         return 
     
     def forward(self, x):
@@ -43,9 +51,11 @@ class SupportNet(nn.Module):
             x = lin(x)
             x = self.acti(x)
             
-        # TODO last layer can be relu layer
-        x = self.all_linears[-1](x)
-        return x
+        
+        classes_score = self.all_linears[-1](x)
+        violate_score = self.violate_judge_layer(x)
+
+        return classes_score, violate_score
         
     
     def __str__(self):

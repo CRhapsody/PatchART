@@ -42,6 +42,8 @@ class AcasArgParser(exp.ExpArgParser):
         # training
         self.add_argument('--accuracy_loss', type=str, choices=['L1', 'MSE', 'CE'], default='CE',
                           help='canonical loss function for concrete points training')
+        self.add_argument('--supprt_loss', type=str, choices=['L1', 'MSE', 'CE','BCE'], default='BCE',
+                          help= 'canonical loss function for patch net training')
         self.add_argument('--sample_amount', type=int, default=5000,
                           help='specifically for data points sampling from spec')
         self.add_argument('--reset_params', type=literal_eval, default=False,
@@ -65,11 +67,19 @@ class AcasArgParser(exp.ExpArgParser):
             # *= -1 because ACAS picks smallest value as suggestion
             return ce(softmax(outs * -1.), labels)
 
+        def Bce_loss(outs: Tensor, labels: Tensor):
+            bce = nn.BCEWithLogitsLoss()
+            return bce(outs, labels)
+
         args.accuracy_loss = {
             'L1': nn.L1Loss(),
             'MSE': nn.MSELoss(),
             'CE': ce_loss
         }[args.accuracy_loss]
+
+        args.supprt_loss = {
+            'BCE' : Bce_loss
+        }[args.supprt_loss]
         return
     pass
 
@@ -159,7 +169,7 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
         
         safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra = v.split(in_lb, in_ub, in_bitmap, net, args.refine_top_k,
                                                                 tiny_width=args.tiny_width,
-                                                                stop_on_k_all=args.start_abs_cnt)
+                                                                stop_on_k_all=args.start_abs_cnt,for_support=True)
     # params = list(net.parameters()) 
     # for patch in patch_lists:
     #     params.extend(patch.parameters())
@@ -174,42 +184,108 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
     hidden_size = [10,10,10]
     patch_lists = []
 
-    support = SupportNet(input_size=input_size, dom=args.dom, hidden_sizes=hidden_size,
+    support_net = SupportNet(input_size=input_size, dom=args.dom, hidden_sizes=hidden_size,
             name = f'support network')
+    
     for i in range(n_repair):
-        
-        patch = PatchNet(input_size=input_size, dom=args.dom, hidden_sizes=hidden_size,
+        patch_net = PatchNet(input_size=input_size, dom=args.dom, hidden_sizes=hidden_size,
             name = f'patch network {i}')
-        patch_lists.append(patch)
+        patch_lists.append(patch_net)
 
-    
+    # process the bounds above to the training data
+    def process_data(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra):
+        # process the safe bounds and unsafe bounds(wl bounds) with label respectively
+        def process_bounds(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra):
+            # already normalized
+            # combine lb and ub into one tensor
+            def combine_tensors(A, B):
+                # 将A和B在最后一个维度上进行拼接
+                C = torch.cat((A, B), dim=-1)
+                C = torch.zeros_like(C)
+                for i in range(C.shape[1]):
+                    if i % 2 == 0:
+                        C[:, i] = A[:, i//2]
+                    else:
+                        C[:, i] = B[:, i//2]
+                return C
 
-    
-    if args.reassure_support_and_patch_combine:
-        def get_out_abs(net, batch_abs_lb: Tensor, batch_abs_ub: Tensor)-> Tuple[Tensor]:
-            """ Return the outputs of over abstract domain. """
-            batch_abs_ins = args.dom.Ele.by_intvl(batch_abs_lb, batch_abs_ub)
-            batch_abs_outs = net(batch_abs_ins)
-            batch_abs_lb = batch_abs_outs.lb()
-            batch_abs_ub = batch_abs_outs.ub()
-            return batch_abs_lb, batch_abs_ub
 
-        def choose_k(patch_lists: List[nn.Module]) -> List[Tensor] :
-            K_list = []
-            for patch in patch_lists:
-                batch_abs_lb, batch_abs_ub = get_out_abs(patch, curr_abs_lb, curr_abs_ub)
-                lb = torch.min(batch_abs_lb)
-                ub = torch.max(batch_abs_ub)
-                
-                result = 0.1*torch.maximum(ub, torch.abs(lb)).item()
-                K_list.append(result)
-            return K_list
-        k_list = choose_k(patch_lists=patch_lists)
-        repair_net.K = k_list
+            safe_region_data = combine_tensors(safe_lb, safe_ub)    # batch_size * 2 * input_size
+            unsafe_region_data = combine_tensors(wl_lb, wl_ub)
 
-    
+            safe_label = torch.tensor([1,0])    # batch_size * 2
+            safe_label.repeat(safe_region_data.shape[0])
+
+            
+            unsafe_label = torch.tensor([0,1]) # batch_size * 2
+            unsafe_label.repeat(unsafe_region_data.shape[0])
+
+
+
+
+            return safe_region_data,safe_extra, safe_label, unsafe_region_data, wl_extra, unsafe_label
+
+        safe_region_data, safe_extra, safe_label, unsafe_region_data, wl_extra, unsafe_label = process_bounds(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra)
+        input_regions = torch.cat((safe_region_data, unsafe_region_data), dim=0)
+        violate_labels = torch.cat((safe_label, unsafe_label), dim=0)
+        property_labels = torch.cat((safe_extra, wl_extra), dim=0)
+
+        shuffle = True  # 是否对数据进行洗牌
+
+        from torch.utils.data import TensorDataset, DataLoader
+        dataset = TensorDataset(input_regions, violate_labels, property_labels)
+        dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=shuffle)
+
+        return dataloader
+
+
+    # train the support network
+    def train_model(model, safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra):
+        # training support network using the splited bounds
+        opti_support = Adam(support_net.parameters(), lr=args.lr)
+        scheduler_support = args.scheduler_fn(opti_support)  # could be None
+
+        # certain epoch to train support network
+        initial_training_support_epoch = 10
+
+        criterion = args.support_loss  # 分类任务的损失函数
+        binary_criterion = args.support_loss  # 正反例识别任务的损失函数
+
+        input_region_dataloader = process_data(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra)
+        nbatches = len(input_region_dataloader)
+        input_region_dataloader = iter(input_region_dataloader)
+        with torch.enable_grad():
+            for epoch in range(initial_training_support_epoch):
+                for j in range(len(nbatches)):
+                    opti_support.zero_grad()
+                    train_data, class_labels, binary_labels = next(input_region_dataloader)
+                    class_output, binary_output = support_net(train_data)
+
+                    class_loss = criterion(class_output, class_labels)
+                    binary_loss = binary_criterion(binary_output, binary_labels)
+
+                    # TODO how to combine the two loss
+                    loss = class_loss + binary_loss
+                    loss.backward()
+                    opti_support.step()
+                    
+                    logging.info(f'[initial {utils.time_since(start)}] Epoch {epoch} {j} batch: support loss {loss.item()}')
+
+    # TODO it is necessary to test the support network?
+
+    #first train the support network
+    with torch.no_grad():
+        train_model(support_net, safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra)
+
+
+    # construct the repair network
+    # the number of repair patch network,which is equal to the number of properties 
+       
+
+    # train the patch and original network
     opti = Adam(repair_net.parameters(), lr=args.lr)
     scheduler = args.scheduler_fn(opti)  # could be None
+
 
     accuracies = []  # epoch 0: ratio
     certified = False
