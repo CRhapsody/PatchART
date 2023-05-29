@@ -132,12 +132,13 @@ class Netsum(nn.Module):
     This class is to add the patch net to target net:
     
     '''
-    def __init__(self, dom: AbsDom, target_net: AcasNet, patch_nets: List[nn.Module], device = None, ):
+    def __init__(self, dom: AbsDom, target_net: AcasNet, support_nets: nn.Module, patch_nets: List[nn.Module], device = None, ):
         '''
         :params 
         '''
         super().__init__()
         self.target_net = target_net
+        self.support_net = support_nets
         
         # for support, patch in zip(support_nets, patch_nets):
         #     assert(support.name == patch.name), 'support and patch net is one-to-one'
@@ -159,9 +160,20 @@ class Netsum(nn.Module):
 
     def forward(self, x):
         out = self.target_net(x)
+        classes_score, violate_score = self.support_net(x)
+
+        # we should make sure that the violate_score is not trainable, otherwise the net will not linear
+        violate_score.requires_grad_(False)
+
+        # compute the K in reassure
+        norms = torch.norm(classes_score, p=float('inf'), dim=1)
+        norms.requires_grad_(False)
+
         for i,patch in enumerate(self.patch_nets):
-            out += self.acti(patch(x) + self.K[i]*support(x) - self.K[i]) \
-                - self.acti(-1*patch(x) + self.K[i]*support(x) - self.K[i])
+            # violate_score[...,0] is the score of safe, violate_score[...,1] is the score of violate
+            # we repair the property according to the violate score
+            out += self.acti(patch(x) + norms[i]*violate_score[...,1] - self.K[i]) \
+                - self.acti(-1*patch(x) + norms[i]*violate_score[...,1] - self.K[i])
         return out
     
     def __str__(self):

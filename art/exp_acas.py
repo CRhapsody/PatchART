@@ -280,7 +280,7 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
 
     # construct the repair network
     # the number of repair patch network,which is equal to the number of properties 
-       
+    
 
     # train the patch and original network
     opti = Adam(repair_net.parameters(), lr=args.lr)
