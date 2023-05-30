@@ -167,9 +167,9 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
         # refine it at the very beginning to save some steps in later epochs
         # and use the refined bounds as the initial bounds for support network training
         
-        safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra = v.split(in_lb, in_ub, in_bitmap, net, args.refine_top_k,
+        curr_abs_lb, curr_abs_ub, curr_abs_bitmap = v.split(in_lb, in_ub, in_bitmap, net, args.refine_top_k,
                                                                 tiny_width=args.tiny_width,
-                                                                stop_on_k_all=args.start_abs_cnt,for_support=True)
+                                                                stop_on_k_all=args.start_abs_cnt) #,for_support=False
     # params = list(net.parameters()) 
     # for patch in patch_lists:
     #     params.extend(patch.parameters())
@@ -193,54 +193,55 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
         patch_lists.append(patch_net)
 
     # process the bounds above to the training data
-    def process_data(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra):
-        # process the safe bounds and unsafe bounds(wl bounds) with label respectively
-        def process_bounds(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra):
-            # already normalized
-            # combine lb and ub into one tensor
-            def combine_tensors(A, B):
-                # 将A和B在最后一个维度上进行拼接
-                C = torch.cat((A, B), dim=-1)
-                C = torch.zeros_like(C)
-                for i in range(C.shape[1]):
-                    if i % 2 == 0:
-                        C[:, i] = A[:, i//2]
-                    else:
-                        C[:, i] = B[:, i//2]
-                return C
+    # def process_data(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra):
+    #     # process the safe bounds and unsafe bounds(wl bounds) with label respectively
+    #     def process_bounds(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra):
+    #         # already normalized
+    #         # combine lb and ub into one tensor
+    #         def combine_tensors(A, B):
+    #             # 将A和B在最后一个维度上进行拼接
+    #             C = torch.cat((A, B), dim=-1)
+    #             C = torch.zeros_like(C)
+    #             for i in range(C.shape[1]):
+    #                 if i % 2 == 0:
+    #                     C[:, i] = A[:, i//2]
+    #                 else:
+    #                     C[:, i] = B[:, i//2]
+    #             return C
 
 
-            safe_region_data = combine_tensors(safe_lb, safe_ub)    # batch_size * 2 * input_size
-            unsafe_region_data = combine_tensors(wl_lb, wl_ub)
+    #         safe_region_data = combine_tensors(safe_lb, safe_ub)    # batch_size * 2 * input_size
+    #         unsafe_region_data = combine_tensors(wl_lb, wl_ub)
 
-            safe_label = torch.tensor([1,0])    # batch_size * 2
-            safe_label.repeat(safe_region_data.shape[0])
+    #         safe_label = torch.tensor([1,0])    # batch_size * 2
+    #         safe_label.repeat(safe_region_data.shape[0])
 
             
-            unsafe_label = torch.tensor([0,1]) # batch_size * 2
-            unsafe_label.repeat(unsafe_region_data.shape[0])
+    #         unsafe_label = torch.tensor([0,1]) # batch_size * 2
+    #         unsafe_label.repeat(unsafe_region_data.shape[0])
 
 
 
 
-            return safe_region_data,safe_extra, safe_label, unsafe_region_data, wl_extra, unsafe_label
+    #         return safe_region_data,safe_extra, safe_label, unsafe_region_data, wl_extra, unsafe_label
 
-        safe_region_data, safe_extra, safe_label, unsafe_region_data, wl_extra, unsafe_label = process_bounds(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra)
-        input_regions = torch.cat((safe_region_data, unsafe_region_data), dim=0)
-        violate_labels = torch.cat((safe_label, unsafe_label), dim=0)
-        property_labels = torch.cat((safe_extra, wl_extra), dim=0)
+    #     safe_region_data, safe_extra, safe_label, unsafe_region_data, wl_extra, unsafe_label = process_bounds(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra)
+    #     input_regions = torch.cat((safe_region_data, unsafe_region_data), dim=0)
+    #     violate_labels = torch.cat((safe_label, unsafe_label), dim=0)
+    #     property_labels = torch.cat((safe_extra, wl_extra), dim=0)
 
-        shuffle = True  # 是否对数据进行洗牌
+    #     shuffle = True  # 是否对数据进行洗牌
 
-        from torch.utils.data import TensorDataset, DataLoader
-        dataset = TensorDataset(input_regions, violate_labels, property_labels)
-        dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=shuffle)
+    #     from torch.utils.data import TensorDataset, DataLoader
+    #     dataset = TensorDataset(input_regions, violate_labels, property_labels)
+    #     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=shuffle)
 
-        return dataloader
+    #     return dataloader
 
 
     # train the support network
-    def train_model(model, safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra):
+    # def train_model(model, safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra):
+    def train_model(support_net, curr_abs_lb, curr_abs_ub, curr_abs_bitmap):
         # training support network using the splited bounds
         opti_support = Adam(support_net.parameters(), lr=args.lr)
         scheduler_support = args.scheduler_fn(opti_support)  # could be None
@@ -249,36 +250,55 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
         initial_training_support_epoch = 10
 
         criterion = args.support_loss  # 分类任务的损失函数
-        binary_criterion = args.support_loss  # 正反例识别任务的损失函数
 
-        input_region_dataloader = process_data(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra)
-        nbatches = len(input_region_dataloader)
-        input_region_dataloader = iter(input_region_dataloader)
+        # binary_criterion = args.support_loss  # 正反例识别任务的损失函数
+
+        # input_region_dataloader = process_data(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra)
+
+        # construct the abstract dataset for support network training
+        absset = exp.AbsIns(curr_abs_lb, curr_abs_ub, curr_abs_bitmap)
+        abs_loader = data.DataLoader(absset, batch_size=args.batch_size, shuffle=True)
+        nbatches = len(abs_loader)  # doesn't matter rewriting len(conc_loader), they are the same
+        abs_loader = iter(abs_loader)
+
         with torch.enable_grad():
             for epoch in range(initial_training_support_epoch):
                 for j in range(len(nbatches)):
+                    loss = 0
                     opti_support.zero_grad()
-                    train_data, class_labels, binary_labels = next(input_region_dataloader)
-                    class_output, binary_output = support_net(train_data)
+                    # train_data, class_labels, binary_labels = next(input_region_dataloader)
+                    # class_output, binary_output = support_net(train_data)
+                    # train_data, class_labels = next(abs_loader)
+                    # class_output = support_net(train_data)
+                    # loss = criterion(class_output, class_labels)
+                    # binary_loss = binary_criterion(binary_output, binary_labels)
+                    
+                    # TODO rewrite the safe dists
+                    # TODO write a abstract domain of sigmoid
+                    batch_dists = run_abs(support_net,batch_abs_lb, batch_abs_ub, batch_abs_bitmap)
 
-                    class_loss = criterion(class_output, class_labels)
-                    binary_loss = binary_criterion(binary_output, binary_labels)
+                    # TODO as above
+                    loss = batch_dists.mean()
+                    
 
-                    # TODO how to combine the two loss
-                    loss = class_loss + binary_loss
+                    
+                    # loss = class_loss + binary_loss
                     loss.backward()
                     opti_support.step()
                     
                     logging.info(f'[initial {utils.time_since(start)}] Epoch {epoch} {j} batch: support loss {loss.item()}')
+                if scheduler is not None:
+                    scheduler.step(loss)
+
 
     # TODO it is necessary to test the support network?
 
     #first train the support network
     with torch.no_grad():
-        train_model(support_net, safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra)
+        train_model(support_net, curr_abs_lb, curr_abs_ub, curr_abs_bitmap)
 
 
-    # construct the repair network
+    # TODO construct the repair network
     # the number of repair patch network,which is equal to the number of properties 
     
 
