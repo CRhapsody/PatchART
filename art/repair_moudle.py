@@ -30,20 +30,22 @@ class SupportNet(nn.Module):
         self.n_layers = len(hidden_sizes) + 1
 
         # abstract domain
-        # self.acti = dom.ReLU()
+        self.acti = dom.ReLU()
 
         # concrete domain
-        self.acti = nn.ReLU()
+        # self.acti = nn.ReLU()
 
         self.all_linears = nn.ModuleList()
         in_sizes = [self.input_size] + self.hidden_sizes
         out_sizes = self.hidden_sizes + [self.output_size]
         for in_size, out_size in zip(in_sizes, out_sizes):
             # abstract domain
-            # self.all_linears.append(dom.Linear(in_size, out_size))
+            self.all_linears.append(dom.Linear(in_size, out_size))
             # concrete domain
-            self.all_linears.append(nn.Linear(in_size, out_size))
-        self.violate_judge_layer = nn.Linear(self.hidden_sizes[-1], 2)
+            # self.all_linears.append(nn.Linear(in_size, out_size))
+
+        # this layer is to judge whether the property is violated; but it will lead the discontinuity of the NN
+        # self.violate_judge_layer = nn.Linear(self.hidden_sizes[-1], 2)
         return 
     
     def forward(self, x):
@@ -53,9 +55,9 @@ class SupportNet(nn.Module):
             
         
         classes_score = self.all_linears[-1](x)
-        violate_score = self.violate_judge_layer(x)
+        # violate_score = self.violate_judge_layer(x)
 
-        return classes_score, violate_score
+        return classes_score
         
     
     def __str__(self):
@@ -160,7 +162,7 @@ class Netsum(nn.Module):
 
     def forward(self, x):
         out = self.target_net(x)
-        classes_score, violate_score = self.support_net(x)
+        classes_score, violate_score = self.support_net(x) # batchsize * repair_num * []
 
         # we should make sure that the violate_score is not trainable, otherwise the net will not linear
         violate_score.requires_grad_(False)
