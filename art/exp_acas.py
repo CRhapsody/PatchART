@@ -274,7 +274,7 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
                     # binary_loss = binary_criterion(binary_output, binary_labels)
                     
                     # TODO rewrite the safe dists
-                    # TODO write a abstract domain of sigmoid
+                    # TODO (complete) write a abstract domain of sigmoid function
                     batch_dists = run_abs(support_net,batch_abs_lb, batch_abs_ub, batch_abs_bitmap)
 
                     # TODO as above
@@ -434,6 +434,12 @@ def train_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False) -> Tu
         batch_abs_ins = args.dom.Ele.by_intvl(batch_abs_lb, batch_abs_ub)
         batch_abs_outs = net(batch_abs_ins)
         return all_props.safe_dist(batch_abs_outs, batch_abs_bitmap)
+
+    def run_abs_support(batch_abs_lb: Tensor, batch_abs_ub: Tensor, batch_abs_bitmap: Tensor) -> Tensor:
+        """ Return the safety distances over abstract domain. """
+        batch_abs_ins = args.dom.Ele.by_intvl(batch_abs_lb, batch_abs_ub)
+        batch_abs_outs = net(batch_abs_ins)
+        return all_props.safe_dist_support(batch_abs_outs, batch_abs_bitmap)
 
     # 包含所有的性质(以及若两个性质的输入区间有交，则将交集单独拿出来，
     # 并设置其对应的safe_dist function为两个性质的safe_dist相加)

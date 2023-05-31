@@ -46,6 +46,9 @@ class SupportNet(nn.Module):
 
         # this layer is to judge whether the property is violated; but it will lead the discontinuity of the NN
         # self.violate_judge_layer = nn.Linear(self.hidden_sizes[-1], 2)
+        # add a sigmoid layer to the end of the network
+        self.sigmoid = dom.sigmoid()
+        x = self.sigmoid(x)
         return 
     
     def forward(self, x):
@@ -54,7 +57,8 @@ class SupportNet(nn.Module):
             x = self.acti(x)
             
         
-        classes_score = self.all_linears[-1](x)
+        x = self.all_linears[-1](x)
+        classes_score = self.sigmoid(x)
         # violate_score = self.violate_judge_layer(x)
 
         return classes_score
@@ -104,6 +108,8 @@ class PatchNet(nn.Module):
         out_sizes = self.hidden_sizes + [self.output_size]
         for in_size, out_size in zip(in_sizes, out_sizes):
             self.all_linears.append(dom.Linear(in_size, out_size))
+
+        
         return
     
     def forward(self, x):
