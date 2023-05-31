@@ -7,7 +7,7 @@ from typing import Tuple, List, Optional, Iterable
 import torch
 from torch import Tensor
 
-from diffabs import AbsDom, AbsEle, ConcDist
+from diffabs import AbsDom, AbsEle, ConcDist, deeppoly
 from diffabs.utils import valid_lb_ub
 
 
@@ -90,6 +90,9 @@ class OneProp(AbsProp):
     def safe_dist(self, outs: AbsEle, *args, **kwargs):
         """ Return the safety distance with the guarantee that dist == 0 => safe. """
         return getattr(self.dom.Dist(), self.safe_fn)(outs, *self.fn_args)
+    
+    def safe_dist_support(self, outs: AbsEle, *args, **kwargs):
+        return getattr(deeppoly.Dist, 'cols_is_many_times')(outs, *self.fn_args)
 
     def viol_dist(self, outs: AbsEle, *args, **kwargs):
         """ Return the safety distance with the guarantee that dist == 0 => violation. """
@@ -249,6 +252,36 @@ class AndProp(AbsProp):
         assert idxs.dim() == 1
         props = [self.props[i] for i in idxs]
         return props
+    
+    def safe_dist_support(self, outs: AbsEle, bitmap: Tensor, *args, **kwargs):
+        """ sum(every prop's classes scores loss)
+        :param bitmap: the bit-vectors corresponding to outputs, showing what rules they should obey
+        """
+        if len(self.props) == 1:
+            assert torch.equal(bitmap, torch.ones_like(bitmap))
+            dists = self.props[0].safe_dist(outs, *args, **kwargs)
+            return dists
+
+        res = []
+        # for i, prop in enumerate(self.props):
+        #     bits = bitmap[..., i]
+        #     if not bits.any():
+        #         # no one here needs to obey this property
+        #         continue
+
+        #     ''' The default nonzero(as_tuple=True) returns a tuple, make scatter_() unhappy.
+        #         Here we just extract the real data from it to make it the same as old nonzero().squeeze(dim=-1).
+        #     '''
+        #     bits = bits.nonzero(as_tuple=True)[0]
+        #     assert bits.dim() == 1
+        #     piece_outs = outs[bits]
+        piece_dists = deeppoly.Dist.cols_is_many_times(outs, bitmap, *args, **kwargs)
+        full_dists = torch.zeros(len(bitmap), *piece_dists.size()[1:], device=piece_dists.device)
+        full_dists.scatter_(0, bits, piece_dists)
+        res.append(full_dists)
+
+        res = torch.stack(res, dim=-1)  # Batch x nprops
+        return torch.sum(res, dim=-1)
 
     def safe_dist(self, outs: AbsEle, bitmap: Tensor, *args, **kwargs):
         """ sum(every prop's safe_dists)
