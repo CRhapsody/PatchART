@@ -155,21 +155,7 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
     in_lb = net.normalize_inputs(in_lb, bound_mins, bound_maxs)
     in_ub = net.normalize_inputs(in_ub, bound_mins, bound_maxs)
 
-    # already moved to GPU if necessary
-    trainset = AcasPoints.load(nid, train=True, device=device)
-    testset = AcasPoints.load(nid, train=False, device=device)
 
-    start = timer()
-
-    if args.no_abs or args.no_refine:
-        curr_abs_lb, curr_abs_ub, curr_abs_bitmap = in_lb, in_ub, in_bitmap
-    else:
-        # refine it at the very beginning to save some steps in later epochs
-        # and use the refined bounds as the initial bounds for support network training
-        
-        curr_abs_lb, curr_abs_ub, curr_abs_bitmap = v.split(in_lb, in_ub, in_bitmap, net, args.refine_top_k,
-                                                                tiny_width=args.tiny_width,
-                                                                stop_on_k_all=args.start_abs_cnt) #,for_support=False
     # params = list(net.parameters()) 
     # for patch in patch_lists:
     #     params.extend(patch.parameters())
@@ -241,7 +227,7 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
 
     # train the support network
     # def train_model(model, safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra):
-    def train_model(support_net, curr_abs_lb, curr_abs_ub, curr_abs_bitmap):
+    def train_model(support_net, in_lb, in_ub, in_bitmap):
         # training support network using the splited bounds
         opti_support = Adam(support_net.parameters(), lr=args.lr)
         scheduler_support = args.scheduler_fn(opti_support)  # could be None
@@ -256,37 +242,40 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
         # input_region_dataloader = process_data(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra)
 
         # construct the abstract dataset for support network training
-        absset = exp.AbsIns(curr_abs_lb, curr_abs_ub, curr_abs_bitmap)
-        abs_loader = data.DataLoader(absset, batch_size=args.batch_size, shuffle=True)
-        nbatches = len(abs_loader)  # doesn't matter rewriting len(conc_loader), they are the same
-        abs_loader = iter(abs_loader)
+        # absset = exp.AbsIns(in_lb, in_ub, in_bitmap)
+        # abs_loader = data.DataLoader(absset, batch_size=len(in_lb), shuffle=True)
+        # nbatches = len(abs_loader)  # doesn't matter rewriting len(conc_loader), they are the same
+        # abs_loader = iter(abs_loader)[0]
 
         with torch.enable_grad():
             for epoch in range(initial_training_support_epoch):
-                for j in range(len(nbatches)):
-                    loss = 0
-                    opti_support.zero_grad()
-                    # train_data, class_labels, binary_labels = next(input_region_dataloader)
-                    # class_output, binary_output = support_net(train_data)
-                    # train_data, class_labels = next(abs_loader)
-                    # class_output = support_net(train_data)
-                    # loss = criterion(class_output, class_labels)
-                    # binary_loss = binary_criterion(binary_output, binary_labels)
-                    
-                    # TODO rewrite the safe dists
-                    # TODO (complete) write a abstract domain of sigmoid function
-                    batch_dists = run_abs(support_net,batch_abs_lb, batch_abs_ub, batch_abs_bitmap)
+                # for j in range(len(nbatches)):
+                loss = 0
+                opti_support.zero_grad()
+                # train_data, class_labels, binary_labels = next(input_region_dataloader)
+                # class_output, binary_output = support_net(train_data)
+                # train_data, class_labels = next(abs_loader)
+                # class_output = support_net(train_data)
+                # loss = criterion(class_output, class_labels)
+                # binary_loss = binary_criterion(binary_output, binary_labels)
+                
+                # TODO rewrite the safe dists
+                # TODO (complete) write a abstract domain of sigmoid function
+                # batch_dists = run_abs(support_net, in_lb, in_ub, in_bitmap)
+                abs_ins = args.dom.Ele.by_intvl(in_lb, in_ub)
+                abs_outs = support_net(abs_ins)
+                loss = all_props.safe_dist_support(abs_outs, batch_abs_bitmap)
 
-                    # TODO as above
-                    loss = batch_dists.mean()
-                    
+                # TODO as above(complete, not batch) 
+                # loss = batch_dists.mean()
+                
 
-                    
-                    # loss = class_loss + binary_loss
-                    loss.backward()
-                    opti_support.step()
-                    
-                    logging.info(f'[initial {utils.time_since(start)}] Epoch {epoch} {j} batch: support loss {loss.item()}')
+                
+                # loss = class_loss + binary_loss
+                loss.backward()
+                opti_support.step()
+                
+                logging.info(f'[initial {utils.time_since(start)}] Epoch {epoch} {j} batch: support loss {loss.item()}')
                 if scheduler is not None:
                     scheduler.step(loss)
 
@@ -295,11 +284,30 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
 
     #first train the support network
     with torch.no_grad():
-        train_model(support_net, curr_abs_lb, curr_abs_ub, curr_abs_bitmap)
+        train_model(support_net, in_lb, in_ub, in_bitmap)
 
 
     # TODO construct the repair network
     # the number of repair patch network,which is equal to the number of properties 
+
+
+
+    # already moved to GPU if necessary
+    trainset = AcasPoints.load(nid, train=True, device=device)
+    testset = AcasPoints.load(nid, train=False, device=device)
+
+    start = timer()
+
+    if args.no_abs or args.no_refine:
+        curr_abs_lb, curr_abs_ub, curr_abs_bitmap = in_lb, in_ub, in_bitmap
+    else:
+        # refine it at the very beginning to save some steps in later epochs
+        # and use the refined bounds as the initial bounds for support network training
+        
+        curr_abs_lb, curr_abs_ub, curr_abs_bitmap = v.split(in_lb, in_ub, in_bitmap, net, args.refine_top_k,
+                                                                tiny_width=args.tiny_width,
+                                                                stop_on_k_all=args.start_abs_cnt) #,for_support=False
+    
     
 
     # train the patch and original network
