@@ -261,24 +261,17 @@ class AndProp(AbsProp):
             assert torch.equal(bitmap, torch.ones_like(bitmap))
             dists = self.props[0].safe_dist(outs, *args, **kwargs)
             return dists
-
+        
         res = []
-        # for i, prop in enumerate(self.props):
-        #     bits = bitmap[..., i]
-        #     if not bits.any():
-        #         # no one here needs to obey this property
-        #         continue
 
-        #     ''' The default nonzero(as_tuple=True) returns a tuple, make scatter_() unhappy.
-        #         Here we just extract the real data from it to make it the same as old nonzero().squeeze(dim=-1).
-        #     '''
-        #     bits = bits.nonzero(as_tuple=True)[0]
-        #     assert bits.dim() == 1
-        #     piece_outs = outs[bits]
-        piece_dists = deeppoly.Dist.cols_is_many_times(outs, bitmap, *args, **kwargs)
-        full_dists = torch.zeros(len(bitmap), *piece_dists.size()[1:], device=piece_dists.device)
-        full_dists.scatter_(0, bits, piece_dists)
-        res.append(full_dists)
+        for i,bits in enumerate(bitmap):
+            bits = bits.nonzero(as_tuple=True)[0].tolist()
+            piece_dists = deeppoly.Dist.cols_is_many_times(outs[i], bits, *args, **kwargs)
+        
+        
+        # full_dists = torch.zeros(len(bitmap), *piece_dists.size()[1:], device=piece_dists.device)
+        # full_dists.scatter_(0, bits, piece_dists)
+            res.append(piece_dists)
 
         res = torch.stack(res, dim=-1)  # Batch x nprops
         return torch.sum(res, dim=-1)
