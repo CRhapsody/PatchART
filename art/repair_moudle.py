@@ -48,7 +48,7 @@ class SupportNet(nn.Module):
         # self.violate_judge_layer = nn.Linear(self.hidden_sizes[-1], 2)
         # add a sigmoid layer to the end of the network
         self.sigmoid = dom.sigmoid()
-        x = self.sigmoid(x)
+        # x = self.sigmoid(x)
         return 
     
     def forward(self, x):
@@ -168,20 +168,25 @@ class Netsum(nn.Module):
 
     def forward(self, x):
         out = self.target_net(x)
-        classes_score, violate_score = self.support_net(x) # batchsize * repair_num * []
+        # classes_score, violate_score = self.support_net(x) # batchsize * repair_num * []
+        classes_score = self.support_net(x) # batchsize * repair_num_propertys
 
         # we should make sure that the violate_score is not trainable, otherwise the net will not linear
-        violate_score.requires_grad_(False)
+        # violate_score.requires_grad_(False)
 
         # compute the K in reassure
-        norms = torch.norm(classes_score, p=float('inf'), dim=1)
-        norms.requires_grad_(False)
+        # norms = torch.norm(classes_score, p=float('inf'), dim=1)
+        # norms.requires_grad_(False)
 
         for i,patch in enumerate(self.patch_nets):
             # violate_score[...,0] is the score of safe, violate_score[...,1] is the score of violate
             # we repair the property according to the violate score
-            out += self.acti(patch(x) + norms[i]*violate_score[...,1] - self.K[i]) \
-                - self.acti(-1*patch(x) + norms[i]*violate_score[...,1] - self.K[i])
+            pa = patch(x)
+            K = pa.ub().norm(p = float('inf'),dim = -1).view(-1,1)
+
+            # using the upper bound of the patch net to instead of the inf norm of patch net
+            out += self.acti(patch(x) + K * classes_score[:,:,i] - K) \
+                - self.acti(-1*patch(x) + K * classes_score[:,:,i] - K)
         return out
     
     def __str__(self):

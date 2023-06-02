@@ -42,7 +42,7 @@ class AcasArgParser(exp.ExpArgParser):
         # training
         self.add_argument('--accuracy_loss', type=str, choices=['L1', 'MSE', 'CE'], default='CE',
                           help='canonical loss function for concrete points training')
-        self.add_argument('--supprt_loss', type=str, choices=['L1', 'MSE', 'CE','BCE'], default='BCE',
+        self.add_argument('--support_loss', type=str, choices=['L1', 'MSE', 'CE','BCE'], default='BCE',
                           help= 'canonical loss function for patch net training')
         self.add_argument('--sample_amount', type=int, default=5000,
                           help='specifically for data points sampling from spec')
@@ -77,9 +77,9 @@ class AcasArgParser(exp.ExpArgParser):
             'CE': ce_loss
         }[args.accuracy_loss]
 
-        args.supprt_loss = {
+        args.support_loss = {
             'BCE' : Bce_loss
-        }[args.supprt_loss]
+        }[args.support_loss]
         return
     pass
 
@@ -121,7 +121,7 @@ def eval_test(net: acas.AcasNet, testset: AcasPoints, categories=None) -> float:
     return ratio
 
 
-from repair_moudle import SupportNet, PatchNet, IntersectionNetSum
+from repair_moudle import SupportNet, PatchNet, Netsum, IntersectionNetSum
 def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tuple[int, float, bool, float]:
     fpath = nid.fpath()
     net, bound_mins, bound_maxs = acas.AcasNet.load_nnet(fpath, args.dom, device)
@@ -170,12 +170,14 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
     hidden_size = [10,10,10]
     patch_lists = []
 
-    support_net = SupportNet(input_size=input_size, dom=args.dom, hidden_sizes=hidden_size,
+    support_net = SupportNet(input_size=input_size, dom=args.dom, hidden_sizes=hidden_size, output_size=n_repair,
             name = f'support network')
+    support_net.to(device)
     
     for i in range(n_repair):
         patch_net = PatchNet(input_size=input_size, dom=args.dom, hidden_sizes=hidden_size,
             name = f'patch network {i}')
+        patch_net.to(device)
         patch_lists.append(patch_net)
 
     # process the bounds above to the training data
@@ -233,7 +235,7 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
         scheduler_support = args.scheduler_fn(opti_support)  # could be None
 
         # certain epoch to train support network
-        initial_training_support_epoch = 10
+        initial_training_support_epoch = 400
 
         criterion = args.support_loss  # 分类任务的损失函数
 
@@ -246,7 +248,7 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
         # abs_loader = data.DataLoader(absset, batch_size=len(in_lb), shuffle=True)
         # nbatches = len(abs_loader)  # doesn't matter rewriting len(conc_loader), they are the same
         # abs_loader = iter(abs_loader)[0]
-
+        logging.info('start pre-training support network:')
         with torch.enable_grad():
             for epoch in range(initial_training_support_epoch):
                 # for j in range(len(nbatches)):
@@ -259,12 +261,16 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
                 # loss = criterion(class_output, class_labels)
                 # binary_loss = binary_criterion(binary_output, binary_labels)
                 
-                # TODO rewrite the safe dists
+                # TODO (complete) rewrite the safe dists
                 # TODO (complete) write a abstract domain of sigmoid function
                 # batch_dists = run_abs(support_net, in_lb, in_ub, in_bitmap)
                 abs_ins = args.dom.Ele.by_intvl(in_lb, in_ub)
                 abs_outs = support_net(abs_ins)
-                loss = all_props.safe_dist_support(abs_outs, batch_abs_bitmap)
+                loss = all_props.safe_dist_support(abs_outs, in_bitmap)
+
+                # only one property
+                if loss is None:
+                    break
 
                 # TODO as above(complete, not batch) 
                 # loss = batch_dists.mean()
@@ -274,10 +280,10 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
                 # loss = class_loss + binary_loss
                 loss.backward()
                 opti_support.step()
-                
-                logging.info(f'[initial {utils.time_since(start)}] Epoch {epoch} {j} batch: support loss {loss.item()}')
-                if scheduler is not None:
-                    scheduler.step(loss)
+                if epoch % 10 == 0:
+                    logging.info(f'Epoch {epoch}: support loss {loss.item()}')
+                if scheduler_support is not None:
+                    scheduler_support.step(loss)
 
 
     # TODO it is necessary to test the support network?
@@ -287,9 +293,9 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
         train_model(support_net, in_lb, in_ub, in_bitmap)
 
 
-    # TODO construct the repair network
+    # TODO(complete) construct the repair network 
     # the number of repair patch network,which is equal to the number of properties 
-
+    repair_net =  Netsum(args.dom, target_net= net, support_nets= support_net, patch_nets= patch_lists, device=device)
 
 
     # already moved to GPU if necessary
@@ -730,7 +736,7 @@ if __name__ == '__main__':
         'exp_fn': 'test_goal_safety',
         # 'exp_fn': 'test_patch_distribution',
 
-        'no_repair': True,
+        'no_repair': False,
         'reassure_support_and_patch_combine': True
         # 'no_refine': True
     }
