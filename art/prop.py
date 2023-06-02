@@ -258,15 +258,17 @@ class AndProp(AbsProp):
         :param bitmap: the bit-vectors corresponding to outputs, showing what rules they should obey
         """
         if len(self.props) == 1:
+            # the only prop is the default one, which is always true
             assert torch.equal(bitmap, torch.ones_like(bitmap))
-            dists = self.props[0].safe_dist(outs, *args, **kwargs)
+            # dists = self.props[0].safe_dist(outs, *args, **kwargs)
+            dists = None
             return dists
         
         res = []
 
         for i,bits in enumerate(bitmap):
             bits = bits.nonzero(as_tuple=True)[0].tolist()
-            piece_dists = deeppoly.Dist.cols_is_many_times(outs[i], bits, *args, **kwargs)
+            piece_dists = deeppoly.Dist.cols_is_many_times(outs[i], bits, many_times=10, *args, **kwargs)
         
         
         # full_dists = torch.zeros(len(bitmap), *piece_dists.size()[1:], device=piece_dists.device)
