@@ -182,11 +182,24 @@ class Netsum(nn.Module):
             # violate_score[...,0] is the score of safe, violate_score[...,1] is the score of violate
             # we repair the property according to the violate score
             pa = patch(x)
-            K = pa.ub().norm(p = float('inf'),dim = -1).view(-1,1)
+            if isinstance(pa, Tensor):
+                K = pa.norm(p = float('inf'),dim = -1).view(-1,1)
+                K = K.detach()
+                bar = (K * classes_score[:,i].view(-1,1))
+                out += self.acti(pa + bar -K)\
+                    + -1*self.acti(-1*pa + bar -K)
+            else:
+                K = pa.ub().norm(p = float('inf'),dim = -1).view(-1,1)
 
-            # using the upper bound of the patch net to instead of the inf norm of patch net
-            out += self.acti(patch(x) + K * classes_score[:,:,i] - K) \
-                - self.acti(-1*patch(x) + K * classes_score[:,:,i] - K)
+                # avoid multiply grad
+                # K.requires_grad_(False)
+                K = K.detach()
+
+                bar = (K * classes_score[:,:,i])
+                bar = bar.unsqueeze(dim = 2).expand_as(pa)
+                # using the upper bound of the patch net to instead of the inf norm of patch net
+                out += self.acti(pa + bar + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)) )\
+                    + -1*self.acti(-1*pa + bar + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)))
         return out
     
     def __str__(self):
