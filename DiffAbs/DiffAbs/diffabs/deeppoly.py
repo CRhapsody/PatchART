@@ -193,6 +193,22 @@ class Ele(AbsEle):
             self._ucnst.transpose(dim0, dim1),
             self.dlb, self.dub
         )
+    
+    def unsqueeze(self,dim: int) -> Ele:
+        shape_coefs = list(self._lcoef.size())
+        shape_coefs.insert(dim, 1)  # 1 x Batch x FlatDim0 x ...
+        shape_cnsts = list(self._lcnst.size())
+        shape_cnsts.insert(dim, 1)  # 1 x Batch x 1 x ...
+        shape_dlb = list(self.dlb.size())
+        shape_dlb.insert(dim, 1)  # 1 x Batch x 1 x ...
+
+        newl_coefs = self._lcoef.view(*shape_coefs)
+        newl_cnsts = self._lcnst.view(*shape_cnsts)
+        newu_coefs = self._ucoef.view(*shape_coefs)
+        newu_cnsts = self._ucnst.view(*shape_cnsts)
+        dlb = self.dlb.view(*shape_dlb)
+        dub = self.dub.view(*shape_dlb)
+        return Ele(newl_coefs, newl_cnsts, newu_coefs, newu_cnsts, dlb, dub)
 
     def matmul(self, weights: Tensor) -> Ele:
         """ Basically,
@@ -250,7 +266,27 @@ class Ele(AbsEle):
                            self._lcoef * flt_coefs, self._lcnst * flt_cnsts,
                            self.dlb, self.dub)
             else:
+                
                 raise NotImplementedError()
+            
+        elif isinstance(flt, Tensor) and flt.dim() == 2 and flt.shape[0] == self.size()[-1]:
+            flt_coefs = flt.expand_as(self._lcoef)
+            flt_cnsts = flt.expand_as(self._lcnst)
+            lcoef = torch.where(flt > 0, self._lcoef * flt_coefs, self._ucoef * flt_coefs)
+            ucoef = torch.where(flt > 0, self._ucoef * flt_coefs, self._lcoef * flt_coefs)
+            # ucoef = torch.where(flt > 0, torch.dot(self._ucoef, flt_coefs ), torch.dot(self._lcoef, flt_coefs ))
+            lcnst = torch.where(flt > 0, self._lcnst * flt , self._ucnst * flt)
+            ucnst = torch.where(flt > 0, self._ucnst * flt , self._lcnst * flt)
+            # ucnst = torch.where(flt > 0, torch.dot(self._ucnst, flt ), torch.dot(self._lcnst, flt ))
+        # elif isinstance(flt, Tensor) and flt.dim() == 2 and flt.shape[0] == self.size()[-1]: # batchsize dim
+            # lcoef = torch.where(flt > 0, torch.dot(self._lcoef, flt ), torch.dot(self._ucoef, flt ))
+            # ucoef = torch.where(flt > 0, torch.dot(self._ucoef, flt ), torch.dot(self._lcoef, flt ))
+
+            # lcnst = torch.where(lcnst > 0, torch.dot(self._lcnst, flt.max(dim = -1).value ), torch.dot(self._ucnst, flt.max(dim = -1).value ))            
+            # ucnst = torch.where(ucnst > 0, torch.dot(self._ucnst, flt.max(dim = -1).value ), torch.dot(self._lcnst, flt.max(dim = -1).value ))
+            return Ele(lcoef, lcnst, ucoef, ucnst, self.dlb, self.dub)
+           
+            
 
         elif not (isinstance(flt, float) or isinstance(flt, int)):
             raise ValueError('Unsupported multiplication with', str(flt), type(flt))
@@ -306,6 +342,47 @@ class Dist(AbsDist):
             mins, _ = torch.min(diff, dim=-1)
             res.append(mins)
         return sum(res)
+    
+    @classmethod
+    def cols_is_many_times(cls, e: Ele, idxs :list, many_times: int) -> Tensor:
+        """ It calculates the loss of the output of the sigmoid score.
+            Intuitively, some-is-many-times => exists target . target > all_others is always true.
+            Therefore, many_times*other_col.UB() - target_col.LB() should < 0, if not, that is the distance.
+            All of the others should be accounted (i.e., max).
+        """
+        others_idxs = cls._idxs_not_support(e, idxs)
+
+        e = e.unsqueeze(0)
+        others_coef = e._ucoef[:, :, others_idxs]
+        others_cnst = e._ucnst[:, :, others_idxs]
+        # others_coef = e._ucoef[:, others_idxs]
+        # others_cnst = e._ucnst[:, others_idxs]
+
+        # the pre layer is sigmoid, so the lb > 0
+        assert(e.lb() > 0).all()
+        
+        res = []
+        for i in idxs:
+            target_coef = e._lcoef[:, :, [i]]  # Batch x Dim0 x 1
+            target_cnst = e._lcnst[:, :, [i]]  # Batch x 1 x 1
+            # target_coef = e._lcoef[:, [i]]  # Batch x 1
+            # target_cnst = e._lcnst[:, [i]]  # Batch x 1  
+            diff_coefs = many_times * others_coef - target_coef  # will broadcast
+            diff_cnsts = many_times * others_cnst - target_cnst
+
+            diffs = e.ub_of(diff_coefs, diff_cnsts, e.dlb, e.dub)  # Batch x (Dim-|ids|)
+            diffs = F.relu(diffs + 1e-5)
+            res.append(diffs)
+
+        if len(idxs) == 1:
+            all_diffs = res[0]
+        else:
+            all_diffs = torch.stack(res, dim=-1)
+            all_diffs, _ = torch.min(all_diffs, dim=-1)  # it's OK to have either one to be max, thus use torch.min()
+
+        # then it needs to surpass everybody else, thus use torch.max() for maximum distance
+        diffs, _ = torch.max(all_diffs, dim=-1)
+        return diffs
 
     def cols_is_max(self, e: Ele, *idxs: int) -> Tensor:
         """ Intuitively, some-is-max => exists target . target > all_others is always true.
@@ -1083,6 +1160,106 @@ class Tanh(nn.Tanh):
         return new_e if input_is_ele else tuple(new_e)
     pass
 
+class sigmoid(nn.Sigmoid):
+    def __str__(self):
+        return f'{Dom.name}.' + super().__str__()
+
+    def export(self) -> nn.Sigmoid:
+        return nn.Sigmoid()
+
+    def forward(self, *ts: Union[Tensor, Ele]) -> Union[Tensor, Ele, Tuple[Tensor, ...]]:
+        """ For both LB' and UB', it chooses the smaller slope between LB-UB and LB'/UB'. Specifically,
+            when L > 0, LB' chooses LB-UB, otherwise LB';
+            when U < 0, UB' chooses LB-UB, otherwise UB'.
+        """
+        input_is_ele = True
+        if len(ts) == 1:
+            if isinstance(ts[0], Tensor):
+                return super().forward(ts[0])  # plain tensor, no abstraction
+            elif isinstance(ts[0], Ele):
+                e = ts[0]  # abstract element
+            else:
+                raise ValueError(f'Not supported argument type {type(ts[0])}.')
+        else:
+            input_is_ele = False
+            e = Ele(*ts)  # reconstruct abstract element
+
+        flat_size = e._lcoef.size()[1]  # FlatDim0
+
+        # was flattening the dimensions, actually no need to do that
+        lcoef = e._lcoef  # Batch x FlatDim0 x Dims...
+        lcnst = e._lcnst
+        ucoef = e._ucoef
+        ucnst = e._ucnst
+
+        # utils.pp_cuda_mem('Tanh: Before gamma()')
+
+        lb, ub = e.gamma()  # Batch x Dims...
+        coef_zeros = torch.zeros_like(lcoef)
+        cnst_zeros = torch.zeros_like(lcnst)
+        lbub_zeros = torch.zeros_like(lb)
+        # utils.pp_cuda_mem('Tanh: After gamma()')
+
+        sigmoid_lb, sigmoid_ub = torch.sigmoid(lb), torch.sigmoid(ub)
+        lbub_same = sigmoid_lb >= sigmoid_ub  # perhaps the extra > would cover a bit of numerical error as well?
+
+        def full_bits(bits: Tensor, is_coef: bool) -> Tensor:
+            sizes = list(bits.size())
+            bits = bits.unsqueeze(dim=1)  # right after Batch x ...
+            if is_coef:
+                sizes.insert(1, flat_size)  # Batch x FlatDim0 x ...
+            else:
+                sizes.insert(1, 1)  # Batch x 1 x ...
+            return bits.expand(*sizes)
+
+        # when L = U, just reset them to a constant value
+        case_degen_lcoef = coef_zeros
+        case_degen_lcnst = sigmoid_lb.unsqueeze(dim=1)  # Batch x 1 x Dims
+        case_degen_ucoef = case_degen_lcoef
+        case_degen_ucnst = case_degen_lcnst
+        full_lcoef = torch.where(full_bits(lbub_same, True), case_degen_lcoef, coef_zeros)
+        full_lcnst = torch.where(full_bits(lbub_same, False), case_degen_lcnst, cnst_zeros)
+        full_ucoef = torch.where(full_bits(lbub_same, True), case_degen_ucoef, coef_zeros)
+        full_ucnst = torch.where(full_bits(lbub_same, False), case_degen_ucnst, cnst_zeros)
+
+        denom = torch.where(lbub_same, torch.ones_like(lb), ub - lb)
+        # Batch x Dims...
+        k_lbub = (sigmoid_ub - sigmoid_lb) / denom  # the slope for LB-UB
+        k_lb = sigmoid_lb - sigmoid_lb ** 2  # the slope for sigmoid on LB, sigmoid' = (1 - sigmoid)sigmoid
+        k_ub = sigmoid_ub - sigmoid_ub ** 2  # the slope for sigmoid on UB
+
+        # Batch x Dims...
+        b_lower_lbub_smaller = sigmoid_lb - k_lbub * lb  # the bias for LB', using k_lbub
+        b_lower_lb_smaller = sigmoid_lb - k_lb * lb  # the bias for LB', using k_lb
+        b_upper_lbub_smaller = sigmoid_ub - k_lbub * ub  # the bias for UB', using k_lbub
+        b_upper_ub_smaller = sigmoid_ub - k_ub * ub  # the bias for UB', using k_ub
+
+        # for LB'
+        lbub_smaller = (k_lbub < k_lb) & (~lbub_same)
+        full_lcoef = torch.where(full_bits(lbub_smaller, True), lcoef * k_lbub.unsqueeze(dim=1), full_lcoef)
+        full_lcnst = torch.where(full_bits(lbub_smaller, False),
+                                 lcnst * k_lbub.unsqueeze(dim=1) + b_lower_lbub_smaller.unsqueeze(dim=1), full_lcnst)
+
+        lb_smaller = (~lbub_smaller) & (~lbub_same)
+        full_lcoef = torch.where(full_bits(lb_smaller, True), lcoef * k_lb.unsqueeze(dim=1), full_lcoef)
+        full_lcnst = torch.where(full_bits(lb_smaller, False),
+                                 lcnst * k_lb.unsqueeze(dim=1) + b_lower_lb_smaller.unsqueeze(dim=1), full_lcnst)
+
+        # for UB'
+        lbub_smaller = (k_lbub < k_ub) & (~lbub_same)
+        full_ucoef = torch.where(full_bits(lbub_smaller, True), ucoef * k_lbub.unsqueeze(dim=1), full_ucoef)
+        full_ucnst = torch.where(full_bits(lbub_smaller, False),
+                                 ucnst * k_lbub.unsqueeze(dim=1) + b_upper_lbub_smaller.unsqueeze(dim=1), full_ucnst)
+
+        ub_smaller = (~lbub_smaller) & (~lbub_same)
+        full_ucoef = torch.where(full_bits(ub_smaller, True), ucoef * k_ub.unsqueeze(dim=1), full_ucoef)
+        full_ucnst = torch.where(full_bits(ub_smaller, False),
+                                 ucnst * k_ub.unsqueeze(dim=1) + b_upper_ub_smaller.unsqueeze(dim=1), full_ucnst)
+
+        # utils.pp_cuda_mem('Tanh: After everything')
+        new_e = Ele(full_lcoef, full_lcnst, full_ucoef, full_ucnst, e.dlb, e.dub)
+        return new_e if input_is_ele else tuple(new_e)
+    pass
 
 class MaxPool1d(nn.MaxPool1d):
     """ I have to implement the forward computation by myself, because F.max_pool1d() requires input to be Tensors.
