@@ -159,6 +159,12 @@ class Ele(AbsEle):
             # cache, assuming no changes to those coefficients
             self._ub = self.ub_of(self._ucoef, self._ucnst, self.dlb, self.dub)
             return self._ub
+    
+    def expand_as(self, e: Ele) -> Ele:
+        '''
+        this method is only used in support and patch; we use e's dlb and dub to expand self, because self's dlb and dub are indexed before
+        '''
+        return Ele(self._lcoef.expand_as(e._lcoef), self._lcnst.expand_as(e._lcnst), self._ucoef.expand_as(e._ucoef), self._ucnst.expand_as(e._ucnst), e.dlb, e.dub)
 
     def view(self, *shape) -> Ele:
         assert len(shape) > 1
