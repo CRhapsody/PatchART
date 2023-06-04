@@ -235,7 +235,7 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
         scheduler_support = args.scheduler_fn(opti_support)  # could be None
 
         # certain epoch to train support network
-        initial_training_support_epoch = 400
+        initial_training_support_epoch = 800
 
         criterion = args.support_loss  # 分类任务的损失函数
 
@@ -736,7 +736,7 @@ if __name__ == '__main__':
         'exp_fn': 'test_goal_safety',
         # 'exp_fn': 'test_patch_distribution',
 
-        'no_repair': False,
+        'no_repair': True,
         'reassure_support_and_patch_combine': True
         # 'no_refine': True
     }
