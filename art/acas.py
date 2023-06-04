@@ -148,10 +148,11 @@ class AcasNetID(object):
         ids = phi2.applicable.bool() | phi8.applicable.bool()
         ids = ids.nonzero(as_tuple=False)  # Batch x 2
         # ids = [AcasNetID(row[0] + 1, row[1] + 1) for row in ids]
-        ids = [AcasNetID(torch.tensor(2),torch.tensor(9))]
+        # ids = [AcasNetID(torch.tensor(2),torch.tensor(9))]
         # ids = [AcasNetID(torch.tensor(2), torch.tensor(1)),AcasNetID(torch.tensor(2), torch.tensor(3)),
         # AcasNetID(torch.tensor(2), torch.tensor(4)),AcasNetID(torch.tensor(2), torch.tensor(6)),
         # AcasNetID(torch.tensor(2), torch.tensor(8))]
+        ids = [AcasNetID(torch.tensor(1),torch.tensor(1)),AcasNetID(torch.tensor(1),torch.tensor(9)),AcasNetID(torch.tensor(2),torch.tensor(9)),AcasNetID(torch.tensor(3),torch.tensor(3)),AcasNetID(torch.tensor(4),torch.tensor(5))]
         return ids
     
     def goal_adv_ids(cls, dom: AbsDom) -> List[AcasNetID]:
