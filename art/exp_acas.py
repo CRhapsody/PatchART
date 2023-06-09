@@ -736,7 +736,7 @@ if __name__ == '__main__':
         'exp_fn': 'test_goal_safety',
         # 'exp_fn': 'test_patch_distribution',
 
-        'no_repair': False,
+        'no_repair': True,
         'reassure_support_and_patch_combine': True
         # 'no_refine': True
     }
