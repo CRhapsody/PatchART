@@ -19,6 +19,8 @@ from art.prop import AndProp
 from art.bisecter import Bisecter
 from art import exp, acas, utils
 
+from mnist_net import Mnist_net
+
 RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'acas' / 'repair' / 'debug'
 RES_DIR.mkdir(parents=True, exist_ok=True)
 REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'reassure_format'
@@ -122,20 +124,21 @@ def eval_test(net: acas.AcasNet, testset: AcasPoints, categories=None) -> float:
 
 
 from repair_moudle import SupportNet, PatchNet, Netsum, IntersectionNetSum
-def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tuple[int, float, bool, float]:
-    fpath = nid.fpath()
-    net, bound_mins, bound_maxs = acas.AcasNet.load_nnet(fpath, args.dom, device)
-    if args.reset_params:
-        net.reset_parameters()
-    logging.info(net)
+def repair_mnist(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tuple[int, float, bool, float]:
+    fpath = '/home/chizm/PatchART/pgd/model/pdg_net.pth'
+    trainset = torch.load('/home/chizm/PatchART/data/MNIST/processed/train_attack_data_part.pt', map_location=device)
+    testset = torch.load('/home/chizm/PatchART/data/MNIST/processed/test_attack_data_part.pt', map_location=device)
+
+    net = Mnist_net(dom=args.dom).to(device)
+    net.load_state_dict(torch.load(fpath, map_location=device))
+
+
+    bound_mins = torch.zeros_like(trainset[0])
+    bound_maxs = torch.ones_like(trainset[0])
+
+    # TODO clusttering
 
     
-    
-
-
-    # TODO the combine of support and patch network
-    # repair_net = IntersectionNetSum(dom=args.dom, target_net=net, support_nets=support_lists, patch_nets=patch_lists, device = device)
-    # logging.info(repair_net)
 
 
     all_props = AndProp(nid.applicable_props(args.dom))

@@ -8,7 +8,7 @@ from torch import optim
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 import os
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 
 py_file_location = "/home/chizm/PatchART/pgd"
@@ -160,8 +160,7 @@ if __name__ == "__main__":
     train_attack_labels = torch.cat(train_labels)
 
     torch.save((train_attack_data,train_attack_labels),'./data/MNIST/processed/train_attack_data_full.pt')
-    torch.save((train_attack_data[1000],train_attack_labels[1000]),'./data/MNIST/processed/train_attack_data_part.pt')
-
+    torch.save((train_attack_data[:1000],train_attack_labels[:1000]),'./data/MNIST/processed/train_attack_data_part.pt')
     for i in range(test_nbatch):
         images,labels = iter_test.next()
         images = images.to(device)
@@ -177,7 +176,7 @@ if __name__ == "__main__":
     test_attack_labels = torch.cat(test_labels)
 
     torch.save((test_attack_data,test_attack_labels),'./data/MNIST/processed/test_attack_data_full.pt')
-    torch.save((test_attack_data[500],test_attack_labels[500]),'./data/MNIST/processed/test_attack_data_part.pt')
+    torch.save((test_attack_data[:500],test_attack_labels[:500]),'./data/MNIST/processed/test_attack_data_part.pt')
 
 
 
