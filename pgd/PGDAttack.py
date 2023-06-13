@@ -65,7 +65,8 @@ class NeuralNet(nn.Module):
     self.conv2 = nn.Conv2d(32, 64, kernel_size=5)
     self.maxpool = nn.MaxPool2d(2)
     self.relu = nn.ReLU()
-    self.fc1 = nn.Linear(1024, 10)
+    self.fc1 = nn.Linear(1024, 32)
+    self.fc2 = nn.Linear(32, 10)
 
   def forward(self,x):
     x = self.conv1(x)
@@ -77,7 +78,8 @@ class NeuralNet(nn.Module):
     # x = torch.flatten(x, 1)
     x = x.view(-1,1024)
     x = self.fc1(x)
-    x = F.softmax(x)
+    x = self.fc2(x)
+    x = torch.sigmoid(x)
     return x
 
 class CustomDataset(torch.utils.data.Dataset):
@@ -144,7 +146,7 @@ if __name__ == "__main__":
     test_attacked_data = []
     test_labels = []
 
-    pgd = PGD(model=model, eps=0.2, alpha=2/255, steps=40, random_start=True)
+    pgd = PGD(model=model, eps=0.3, alpha=2/255, steps=40, random_start=True)
     for i in range(train_nbatch):
         images,labels = iter_train.next()
         images = images.to(device)
