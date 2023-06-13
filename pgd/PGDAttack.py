@@ -145,8 +145,10 @@ if __name__ == "__main__":
     train_labels = []
     test_attacked_data = []
     test_labels = []
+    for name, param in model.named_parameters():
+        print(f"Layer: {name} | Size: {param.size()} | Values : {param[:2]} \n")
 
-    pgd = PGD(model=model, eps=0.3, alpha=2/255, steps=40, random_start=True)
+    pgd = PGD(model=model, eps=0.1, alpha=2/255, steps=80, random_start=True)
     for i in range(train_nbatch):
         images,labels = iter_train.next()
         images = images.to(device)
@@ -158,6 +160,10 @@ if __name__ == "__main__":
             print(f"train attack success {i}")
             train_attacked_data.append(adv_images)
             train_labels.append(labels)
+        else:
+            train_attacked_data.append(images[labels != predicted])
+            train_labels.append(labels[labels != predicted])
+
     train_attack_data = torch.cat(train_attacked_data)
     train_attack_labels = torch.cat(train_labels)
 
@@ -174,6 +180,9 @@ if __name__ == "__main__":
             print(f"test attack success {i}")
             test_attacked_data.append(adv_images)
             test_labels.append(labels)
+        else:
+            test_attacked_data.append(images[labels != predicted])
+            test_labels.append(labels[labels != predicted])
     test_attack_data = torch.cat(test_attacked_data)
     test_attack_labels = torch.cat(test_labels)
 
