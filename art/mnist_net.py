@@ -26,7 +26,9 @@ class Mnist_net(nn.Module):
         self.conv2 = dom.Conv2d(32, 64, kernel_size=5)
         self.maxpool = dom.MaxPool2d(2)
         self.relu = dom.ReLU()
-        self.fc1 = dom.Linear(1024, 10)
+        self.fc1 = dom.Linear(1024, 32)
+        self.fc2 = dom.Linear(32, 10)
+        self.sigmoid = dom.sigmoid(dim=1)
 
     def forward(self, x: Union[Tensor, AbsEle]) -> Union[Tensor, AbsEle]:
         x = self.conv1(x)
@@ -36,7 +38,8 @@ class Mnist_net(nn.Module):
         x = self.maxpool(x)
         x = self.relu(x)
         # x = torch.flatten(x, 1)
-        x = x.view(x.size(0), -1)
+        x = x.view(-1,1024)
         x = self.fc1(x)
-        x = F.softmax(x)
+        x = self.fc2(x)
+        x = self.sigmoid(x)
         return x
