@@ -166,6 +166,30 @@ class Ele(AbsEle):
         '''
         return Ele(self._lcoef.expand_as(e._lcoef), self._lcnst.expand_as(e._lcnst), self._ucoef.expand_as(e._ucoef), self._ucnst.expand_as(e._ucnst), e.dlb, e.dub)
 
+
+    # define the flatten operation of abstract elements using view()
+    def flatten(self, start_dim = 2,end_dim = -1) -> Ele:
+        '''
+        flatten the abstract element to a 2D tensor
+        input element: Batch x FlatDim0 x OutC x FilterH x FilterW
+        '''
+        shape = self._lcoef.size()
+        shape = list(shape)
+        flatten_size = 1
+        for size in shape[start_dim:end_dim]:
+            flatten_size *= size
+        flatten_size *= shape[end_dim]
+        shape = shape[:start_dim] + [flatten_size] + shape[end_dim+1:]
+
+        cnsts_shape = shape.insert(1,1)
+
+        shape = tuple(shape)
+        newl_coefs = self._lcoef.view(*shape)
+        newl_cnsts = self._lcnst.view(*shape)
+        newu_coefs = self._ucoef.view(*cnsts_shape)
+        newu_cnsts = self._ucnst.view(*cnsts_shape)
+        return Ele(newl_coefs, newl_cnsts, newu_coefs, newu_cnsts, self.dlb, self.dub) 
+
     def view(self, *shape) -> Ele:
         assert len(shape) > 1
 
@@ -578,6 +602,37 @@ class Linear(nn.Linear):
         return out if input_is_ele else tuple(out)
     pass
 
+class Flatten(nn.Flatten):
+    # def __init__(self, start_dim: int = 1, end_dim: int = -1) -> None:
+    #     super(Flatten, self).__init__()
+    #     self.start_dim = start_dim
+    #     self.end_dim = end_dim
+
+    def __str__(self):
+        return f'{Dom.name}.' + super().__str__()
+    def export(self) -> nn.Flatten:
+        return nn.Flatten()
+
+    def forward(self, *ts: Union[Tensor, Ele]) -> Union[Tensor, Ele, Tuple[Tensor, ...]]:
+        input_is_ele = True
+        if len(ts) == 1:
+            if isinstance(ts[0], Tensor):
+                return super().forward(ts[0])  # plain tensor, no abstraction
+            elif isinstance(ts[0], Ele):
+                e = ts[0]  # abstract element
+            else:
+                raise ValueError(f'Not supported argument type {type(ts[0])}.')
+        else:
+            input_is_ele = False
+            e = Ele(*ts)  # reconstruct abstract element
+
+        # lbs, ubs = e.gamma()  # Batch x Dims...
+        # new_lcoefs = e._lcoef.view(e._lcoef.shape[0], -1)  # Batch x FlatDim0
+        # new_lcnsts = e._lcnst.view(e._lcnst.shape[0], -1)
+        # new_ucoefs = e._ucoef.view(e._ucoef.shape[0], -1)
+        # new_ucnsts = e._ucnst.view(e._ucnst.shape[0], -1)
+
+        return e.flatten(start_dim=self.start_dim+1, end_dim=self.end_dim) # because the conv2d lcoef of abstract element is Batch x FlatDim0 x OutC x FilterH x FilterW
 
 class Conv2d(nn.Conv2d):
     """ Conv2d actually shows a disadvantage of the DeepPoly implementation here, where the memory usage during training
