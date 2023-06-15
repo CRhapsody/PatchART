@@ -17,17 +17,19 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from art.prop import AndProp
 from art.bisecter import Bisecter
-from art import exp, acas, utils
+from art import exp, utils
 
 from mnist_net import Mnist_net
 
-RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'acas' / 'repair' / 'debug'
+MNIST_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'MNIST' / 'processed'
+MNIST_NET_DIR = Path(__file__).resolve().parent.parent / 'pgd' / 'model'
+RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'debug'
 RES_DIR.mkdir(parents=True, exist_ok=True)
 REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'reassure_format'
 REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 
-class AcasArgParser(exp.ExpArgParser):
+class MnistArgParser(exp.ExpArgParser):
     """ Parsing and storing all ACAS experiment configuration arguments. """
 
     def __init__(self, log_path: Optional[str], *args, **kwargs):
@@ -40,6 +42,9 @@ class AcasArgParser(exp.ExpArgParser):
         # the combinational form of support and patch net
         self.add_argument('--reassure_support_and_patch_combine',type=bool, default=False,
                         help='use REASSURE method to combine support and patch network')
+
+        self.add_argument('--repair_radius',type=float, default=0.1, 
+                          help='the radius of repairing datas or features')
 
         # training
         self.add_argument('--accuracy_loss', type=str, choices=['L1', 'MSE', 'CE'], default='CE',
@@ -85,23 +90,21 @@ class AcasArgParser(exp.ExpArgParser):
         return
     pass
 
-
-class AcasPoints(exp.ConcIns):
+class MnistPoints(exp.ConcIns):
     """ Storing the concrete data points for one ACAS network sampled.
         Loads to CPU/GPU automatically.
     """
     @classmethod
-    def load(cls, nid: acas.AcasNetID, train: bool, device):
+    def load(cls, train: bool, device):
         suffix = 'train' if train else 'test'
-        fname = f'{str(nid)}-orig-{suffix}.pt'  # note that it is using original data
-        combine = torch.load(Path(acas.ACAS_DIR, fname), device)
+        fname = f'{suffix}_attack_data_part.pt'  # note that it is using original data
+        combine = torch.load(Path(MNIST_DATA_DIR, fname), device)
         inputs, labels = combine
         assert len(inputs) == len(labels)
         return cls(inputs, labels)
     pass
 
-
-def eval_test(net: acas.AcasNet, testset: AcasPoints, categories=None) -> float:
+def eval_test(net: Mnist_net, testset: MnistPoints, categories=None) -> float:
     """ Evaluate accuracy on test set.
     :param categories: e.g., acas.AcasOut
     """
@@ -124,19 +127,41 @@ def eval_test(net: acas.AcasNet, testset: AcasPoints, categories=None) -> float:
 
 
 from repair_moudle import SupportNet, PatchNet, Netsum, IntersectionNetSum
-def repair_mnist(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tuple[int, float, bool, float]:
-    fpath = '/home/chizm/PatchART/pgd/model/pdg_net.pth'
-    trainset = torch.load('/home/chizm/PatchART/data/MNIST/processed/train_attack_data_part.pt', map_location=device)
-    testset = torch.load('/home/chizm/PatchART/data/MNIST/processed/test_attack_data_part.pt', map_location=device)
+def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool, float]:
+    fname = 'pdg_net.pth'
+    fpath = Path(MNIST_NET_DIR, fname)
 
-    net = Mnist_net(dom=args.dom).to(device)
+
+    trainset = MnistPoints.load(train=True, device=device)
+    testset = MnistPoints.load(train=False, device=device)
+
+    net = Mnist_net(dom=args.dom)
     net.load_state_dict(torch.load(fpath, map_location=device))
 
 
-    bound_mins = torch.zeros_like(trainset[0])
-    bound_maxs = torch.ones_like(trainset[0])
+    # bound_mins = torch.zeros_like(trainset[0])
+    # bound_maxs = torch.ones_like(trainset[0])
 
     # TODO clusttering
+
+    # get the features of the dataset using mnist_net.split
+    model1,_ = net.split()
+    feature = model1(trainset)
+
+    # set the box bound of the features, which the length of the box is 2*radius
+    radius = args.repair_radius
+    bound_mins = feature - radius
+    bound_maxs = feature + radius
+
+    # the steps are as follows:
+    # 1. TODO construct a mnist prop file include Mnistprop Module, which inherits from Oneprop
+    # 2. TODO use the features to construct the Mnistprop
+    # 3. TODO use the Mnistprop to construct the Andprop(join) 
+
+    
+
+
+
 
     
 
@@ -431,251 +456,41 @@ def repair_mnist(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> T
     #             mins = bound_mins, maxs = bound_maxs) 
     
     return epoch, train_time, certified, accuracies[-1]
-    pass
-
-def train_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False) -> Tuple[int, float, bool, float]:
-    """ The almost completed skeleton of training ACAS networks using ART.
-    :return: trained_epochs, train_time, certified, final accuracies
-    """
-    fpath = nid.fpath()
-    net, bound_mins, bound_maxs = acas.AcasNet.load_nnet(fpath, args.dom, device)
-    if args.reset_params:
-        net.reset_parameters()
-    logging.info(net)
-
-    all_props = AndProp(nid.applicable_props(args.dom))
-    v = Bisecter(args.dom, all_props)
-
-    def run_abs(batch_abs_lb: Tensor, batch_abs_ub: Tensor, batch_abs_bitmap: Tensor) -> Tensor:
-        """ Return the safety distances over abstract domain. """
-        batch_abs_ins = args.dom.Ele.by_intvl(batch_abs_lb, batch_abs_ub)
-        batch_abs_outs = net(batch_abs_ins)
-        return all_props.safe_dist(batch_abs_outs, batch_abs_bitmap)
-
-    def run_abs_support(batch_abs_lb: Tensor, batch_abs_ub: Tensor, batch_abs_bitmap: Tensor) -> Tensor:
-        """ Return the safety distances over abstract domain. """
-        batch_abs_ins = args.dom.Ele.by_intvl(batch_abs_lb, batch_abs_ub)
-        batch_abs_outs = net(batch_abs_ins)
-        return all_props.safe_dist_support(batch_abs_outs, batch_abs_bitmap)
-
-    # 包含所有的性质(以及若两个性质的输入区间有交，则将交集单独拿出来，
-    # 并设置其对应的safe_dist function为两个性质的safe_dist相加)
-    in_lb, in_ub = all_props.lbub(device)
-    in_bitmap = all_props.bitmap(device)
-    in_lb = net.normalize_inputs(in_lb, bound_mins, bound_maxs)
-    in_ub = net.normalize_inputs(in_ub, bound_mins, bound_maxs)
-
-    # already moved to GPU if necessary
-    trainset = AcasPoints.load(nid, train=True, device=device)
-    testset = AcasPoints.load(nid, train=False, device=device)
-
-    start = timer()
-
-    if args.no_abs or args.no_refine:
-        curr_abs_lb, curr_abs_ub, curr_abs_bitmap = in_lb, in_ub, in_bitmap
-    else:
-        # refine it at the very beginning to save some steps in later epochs
-        curr_abs_lb, curr_abs_ub, curr_abs_bitmap = v.split(in_lb, in_ub, in_bitmap, net, args.refine_top_k,
-                                                            # tiny_width=args.tiny_width,
-                                                            stop_on_k_all=args.start_abs_cnt)
-
-    opti = Adam(net.parameters(), lr=args.lr)
-    scheduler = args.scheduler_fn(opti)  # could be None
-    origin_parameters_list = []
-    # for origin_i_parameter in net.parameters():
-    #     origin_parameters_list.append(origin_i_parameter.data.clone())
-
-    accuracies = []  # epoch 0: ratio
-    certified = False
-    epoch = 0
-    record_full_dists_list = [100]
-    while True:
-        # first, evaluate current model
-        logging.info(f'[{utils.time_since(start)}] After epoch {epoch}:')
-        if not args.no_pts:
-            logging.info(f'Loaded {trainset.real_len()} points for training.')
-        # if epoch == 44:
-        #     print('full_dists:\n',full_dists)
-        #     pass
-        if not args.no_abs:
-            logging.info(f'Loaded {len(curr_abs_lb)} abstractions for training.')
-            with torch.no_grad():
-                full_dists = run_abs(curr_abs_lb, curr_abs_ub, curr_abs_bitmap)
-            logging.info(f'min loss {full_dists.min()}, max loss {full_dists.max()}.')
-            # print("min_full_dist_max_history:",min(record_full_dists_list))
-            # if full_dists.max() < min(record_full_dists_list):
-            #     s = full_dists.max().cpu().numpy()
-            #     net.save_nnet(f'./0.01/ART_{nid.x.numpy().tolist()}_{nid.y.numpy().tolist()}_repair2p_clamp_0.01_epoch_{epoch}_ldloss_max_{s}.nnet',
-            #     mins = bound_mins, maxs = bound_maxs) 
-            # print("full_dist_max_now",full_dists.max())
-            # record_full_dists_list.append(full_dists.max())
-            if full_dists.max() <= 0:
-                certified = True
-                logging.info(f'All {len(curr_abs_lb)} abstractions certified.')
-            else:
-                _, worst_idx = full_dists.max(dim=0)
-                logging.info(f'Max loss at LB: {curr_abs_lb[worst_idx]}, UB: {curr_abs_ub[worst_idx]}, rule: {curr_abs_bitmap[worst_idx]}.')
-
-        accuracies.append(eval_test(net, testset))
-        logging.info(f'Test set accuracy {accuracies[-1]}.')
-
-        # check termination
-        if certified and epoch >= args.min_epochs:
-            # all safe and sufficiently trained
-            break
-
-        if epoch >= args.max_epochs:
-            break
-
-        epoch += 1
-        certified = False
-        logging.info(f'\n[{utils.time_since(start)}] Starting epoch {epoch}:')
-
-        absset = exp.AbsIns(curr_abs_lb, curr_abs_ub, curr_abs_bitmap)
-
-        # dataset may have expanded, need to update claimed length to date
-        if not args.no_pts:
-            trainset.reset_claimed_len()
-        if not args.no_abs:
-            absset.reset_claimed_len()
-        if (not args.no_pts) and (not args.no_abs):
-            ''' Might simplify this to just using the amount of abstractions, is it unnecessarily complicated? '''
-            # need to enumerate both
-            max_claimed_len = max(trainset.claimed_len, absset.claimed_len)
-            trainset.claimed_len = max_claimed_len
-            absset.claimed_len = max_claimed_len
-
-        if not args.no_pts:
-            conc_loader = data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
-            nbatches = len(conc_loader)
-            conc_loader = iter(conc_loader)
-        if not args.no_abs:
-            abs_loader = data.DataLoader(absset, batch_size=args.batch_size, shuffle=True)
-            nbatches = len(abs_loader)  # doesn't matter rewriting len(conc_loader), they are the same
-            abs_loader = iter(abs_loader)
-
-        total_loss = 0.
-        for i in range(nbatches):
-            opti.zero_grad()
-            batch_loss = 0.
-            if not args.no_pts:
-                batch_inputs, batch_labels = next(conc_loader)
-                batch_outputs = net(batch_inputs)
-                batch_loss += args.accuracy_loss(batch_outputs, batch_labels)
-            if not args.no_abs:
-                batch_abs_lb, batch_abs_ub, batch_abs_bitmap = next(abs_loader)
-                batch_dists = run_abs(batch_abs_lb, batch_abs_ub, batch_abs_bitmap)
-                
-                #这里又对batch的loss求了个均值，作为最后的safe_loss(下面的没看懂，好像类似于l1)
-                safe_loss = batch_dists.mean()  # L1, need to upgrade to batch_worsts to unlock loss other than L1
-                total_loss += safe_loss.item()
-                batch_loss += safe_loss
-            logging.debug(f'Epoch {epoch}: {i / nbatches * 100 :.2f}%. Batch loss {batch_loss.item()}')
-            batch_loss.backward()
-            # now_parameters_list = []
-            # for now_i_parameter in net.parameters():
-            #     now_parameters_list.append(now_i_parameter.data.clone())
-
-            def get_clamp_weights(grad,weight_top,weight_below):
-                for i, combine_i in enumerate(zip(weight_below,weight_top)):
-                    (below_i,top_i) = combine_i
-                    for j,combine_j in enumerate(zip(below_i,top_i)):
-                        below_ij,top_ij = combine_j
-                        min = torch.min(below_ij,top_ij)
-                        max = torch.max(below_ij,top_ij)
-                        if grad[i][j] < min:
-                            grad[i][j] = min
-                        elif grad[i][j] > max:
-                            grad[i][j] = max
-                        else:
-                            continue
-                pass
-                return grad
-            
-            def get_clamp_bias(grad,bias_top,bias_below):
-                for i,combine_i in enumerate(zip(bias_below,bias_top)):
-                    below_ij,top_ij = combine_i
-                    min = torch.min(below_ij,top_ij)
-                    max = torch.max(below_ij,top_ij)
-                    if grad[i] < min:
-                        grad[i] = min
-                    elif grad[i] > max:
-                        grad[i] = max
-                    else:
-                        continue
-                pass
-                return grad
-            opti.step()
-            if weight_clamp:
-                with torch.no_grad():
-                    for i,parameter in enumerate(net.parameters()):
-                        parameter_i_min = origin_parameters_list[i]*(0.99)
-                        parameter_i_max = origin_parameters_list[i]*(1.01)
-                        newp = parameter.clamp(min = parameter_i_min,max=parameter_i_max)
-                        parameter.data = newp
-                        pass
-            # print(parameter.requires_grad)
-
-        # inspect the trained weights after another epoch
-        # meta.inspect_params(net.state_dict())
-
-        total_loss /= nbatches
-        if scheduler is not None:
-            scheduler.step(total_loss)
-        logging.info(f'[{utils.time_since(start)}] At epoch {epoch}: avg accuracy training loss {total_loss}.')
-
-        # Refine abstractions, note that restart from scratch may output much fewer abstractions thus imprecise.
-        if (not args.no_refine) and len(curr_abs_lb) < args.max_abs_cnt:
-            curr_abs_lb, curr_abs_ub, curr_abs_bitmap = v.split(curr_abs_lb, curr_abs_ub, curr_abs_bitmap, net,
-                                                                args.refine_top_k,
-                                                                # tiny_width=args.tiny_width,
-                                                                stop_on_k_new=args.refine_top_k)
-        pass
-
-    # summarize
-    train_time = timer() - start
-    logging.info(f'Accuracy at every epoch: {accuracies}')
-    logging.info(f'After {epoch} epochs / {utils.pp_time(train_time)}, ' +
-                 f'eventually the trained network got certified? {certified}, ' +
-                 f'with {accuracies[-1]:.4f} accuracy on test set.')
-    # net.save_nnet(f'./ART_{nid.x.numpy().tolist()}_{nid.y.numpy().tolist()}_repair2p_noclamp_epoch_{epoch}.nnet',
-    #             mins = bound_mins, maxs = bound_maxs) 
-    
-    return epoch, train_time, certified, accuracies[-1]
 
 
 
-def _run(nids: List[acas.AcasNetID], args: Namespace):
-    """ Run for different networks with specific configuration. """
-    res = []
-    for nid in nids:
-        logging.info(f'For {nid}')
-        outs = train_acas(nid, args,weight_clamp=False)
-        res.append(outs)
 
-    avg_res = torch.tensor(res).mean(dim=0)
-    logging.info(f'=== Avg <epochs, train_time, certified, accuracy> for {len(nids)} networks:')
-    logging.info(avg_res)
-    return
+# def _run(nids: List[acas.AcasNetID], args: Namespace):
+#     """ Run for different networks with specific configuration. """
+#     res = []
+#     for nid in nids:
+#         logging.info(f'For {nid}')
+#         outs = train_acas(nid, args,weight_clamp=False)
+#         res.append(outs)
 
-def _run_repair(nids: List[acas.AcasNetID], args: Namespace):
+#     avg_res = torch.tensor(res).mean(dim=0)
+#     logging.info(f'=== Avg <epochs, train_time, certified, accuracy> for {len(nids)} networks:')
+#     logging.info(avg_res)
+#     return
+
+def _run_repair(args: Namespace):
     """ Run for different networks with specific configuration. """
     logging.info('===== start repair ======')
     res = []
-    for nid in nids:
-        logging.info(f'For {nid}')
-        outs = repair_acas(nid, args,weight_clamp=False)
-        res.append(outs)
+    # for nid in nids:
+    logging.info(f'For pgd attack net')
+    outs = repair_mnist(args,weight_clamp=False)
+    res.append(outs)
 
     avg_res = torch.tensor(res).mean(dim=0)
-    logging.info(f'=== Avg <epochs, train_time, certified, accuracy> for {len(nids)} networks:')
+    logging.info(f'=== Avg <epochs, train_time, certified, accuracy> for pgd attack networks:')
     logging.info(avg_res)
     return
 
 
 
 
-def test_goal_safety(parser: AcasArgParser):
+def test_goal_safety(parser: MnistArgParser):
     """ Q1: Show that we can train previously unsafe networks to safe. """
     defaults = {
         # 'start_abs_cnt': 5000,
@@ -687,45 +502,45 @@ def test_goal_safety(parser: AcasArgParser):
     args = parser.parse_args()
 
     logging.info(utils.fmt_args(args))
-    nids = acas.AcasNetID.goal_safety_ids(args.dom)
+    # nids = acas.AcasNetID.goal_safety_ids(args.dom)
     if args.no_repair:
-        _run(nids, args)
+        print('why not repair?')
     else:
-        _run_repair(nids, args)
+        _run_repair(args)
     return
 
-def test_goal_adv(parser: AcasArgParser):
-    """ Q1: Show that we can train previously unsafe networks to safe. """
-    defaults = {
-        # 'start_abs_cnt': 5000,
-        'batch_size': 100,  # to make it faster
-        'min_epochs': 25,
-        'max_epochs': 35
-    }
-    parser.set_defaults(**defaults)
-    args = parser.parse_args()
+# def test_goal_adv(parser: MnistArgParser):
+#     """ Q1: Show that we can train previously unsafe networks to safe. """
+#     defaults = {
+#         # 'start_abs_cnt': 5000,
+#         'batch_size': 100,  # to make it faster
+#         'min_epochs': 25,
+#         'max_epochs': 35
+#     }
+#     parser.set_defaults(**defaults)
+#     args = parser.parse_args()
 
-    logging.info(utils.fmt_args(args))
-    nids = acas.AcasNetID.goal_adv_ids(args.dom)
-    _run(nids, args)
-    return
+#     logging.info(utils.fmt_args(args))
+#     nids = acas.AcasNetID.goal_adv_ids(args.dom)
+#     _run(nids, args)
+#     return
 
 
-def test_goal_accuracy(parser: AcasArgParser):
-    """ Q2: Show that the safe-by-construction overhead on accuracy is mild. """
-    defaults = {
-        # 'start_abs_cnt': 5000,
-        'batch_size': 100,  # to make it faster
-        'min_epochs': 25,
-        'max_epochs': 35
-    }
-    parser.set_defaults(**defaults)
-    args = parser.parse_args()
+# def test_goal_accuracy(parser: MnistArgParser):
+#     """ Q2: Show that the safe-by-construction overhead on accuracy is mild. """
+#     defaults = {
+#         # 'start_abs_cnt': 5000,
+#         'batch_size': 100,  # to make it faster
+#         'min_epochs': 25,
+#         'max_epochs': 35
+#     }
+#     parser.set_defaults(**defaults)
+#     args = parser.parse_args()
 
-    logging.info(utils.fmt_args(args))
-    nids = acas.AcasNetID.goal_accuracy_ids(args.dom)
-    _run(nids, args)
-    return
+#     logging.info(utils.fmt_args(args))
+#     nids = acas.AcasNetID.goal_accuracy_ids(args.dom)
+#     _run(nids, args)
+#     return
 
 
 
@@ -738,12 +553,14 @@ if __name__ == '__main__':
     test_defaults = {
         'exp_fn': 'test_goal_safety',
         # 'exp_fn': 'test_patch_distribution',
-
-        'no_repair': False,
-        'reassure_support_and_patch_combine': True
         # 'no_refine': True
+        'no_repair': False,
+        'reassure_support_and_patch_combine': True,
+        'repair_radius': 0.01,
+
+        
     }
-    parser = AcasArgParser(RES_DIR, description='ACAS Xu Correct by Construction')
+    parser = MnistArgParser(RES_DIR, description='MNIST Correct by Construction')
     parser.set_defaults(**test_defaults)
     args, _ = parser.parse_known_args()
 

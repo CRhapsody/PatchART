@@ -28,6 +28,8 @@ class Mnist_net(nn.Module):
         self.relu = dom.ReLU()
         self.fc1 = dom.Linear(1024, 32)
         self.fc2 = dom.Linear(32, 10)
+        # TODO: flatten
+        self.flatten = dom.Flatten()
         self.sigmoid = dom.sigmoid(dim=1)
 
     def forward(self, x: Union[Tensor, AbsEle]) -> Union[Tensor, AbsEle]:
@@ -38,8 +40,26 @@ class Mnist_net(nn.Module):
         x = self.maxpool(x)
         x = self.relu(x)
         # x = torch.flatten(x, 1)
-        x = x.view(-1,1024)
+        # x = x.view(x.size[0], 1024)
+        x = self.flatten(x)
         x = self.fc1(x)
         x = self.fc2(x)
         x = self.sigmoid(x)
         return x
+    
+    def split(self):
+        return nn.Sequential(
+            self.conv1,
+            self.maxpool,
+            self.relu,
+            self.conv2,
+            self.maxpool,
+            self.relu,
+            # torch.flatten(x, 1),
+            self.flatten,
+            self.fc1
+        ), nn.Sequential(
+            
+            self.fc2,
+            self.sigmoid()
+        )
