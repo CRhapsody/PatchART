@@ -19,7 +19,7 @@ from art.prop import AndProp
 from art.bisecter import Bisecter
 from art import exp, utils
 
-from mnist_net import Mnist_net
+from mnist import Mnist_net, MnistFeatureProp
 
 MNIST_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'MNIST' / 'processed'
 MNIST_NET_DIR = Path(__file__).resolve().parent.parent / 'pgd' / 'model'
@@ -146,56 +146,35 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
     # get the features of the dataset using mnist_net.split
     model1,_ = net.split()
-    feature = model1(trainset)
+    feature = model1(trainset.inputs)
+
 
     # set the box bound of the features, which the length of the box is 2*radius
-    radius = args.repair_radius
-    bound_mins = feature - radius
-    bound_maxs = feature + radius
+    # bound_mins = feature - radius
+    # bound_maxs = feature + radius
 
     # the steps are as follows:
     # 1. TODO construct a mnist prop file include Mnistprop Module, which inherits from Oneprop
     # 2. TODO use the features to construct the Mnistprop
     # 3. TODO use the Mnistprop to construct the Andprop(join) 
 
-    
+    featurelist = [(data[0],data[1]) for data in zip(feature, trainset.labels)]
 
+    feature_prop_list = MnistFeatureProp.all_props(args.dom, DataList=featurelist, input_dimension = feature.size[1],radius= args.repair_radius)
 
-
-
-    
-
-
-    all_props = AndProp(nid.applicable_props(args.dom))
+    # get the all props after join all l_0 ball feature property
+    all_props = AndProp(props=feature_prop_list)
     v = Bisecter(args.dom, all_props)
 
-    def run_abs(net, batch_abs_lb: Tensor, batch_abs_ub: Tensor, batch_abs_bitmap: Tensor) -> Tensor:
-        """ Return the safety distances over abstract domain. """
-        batch_abs_ins = args.dom.Ele.by_intvl(batch_abs_lb, batch_abs_ub)
-        batch_abs_outs = net(batch_abs_ins)
-        return all_props.safe_dist(batch_abs_outs, batch_abs_bitmap)
-    
-    
-
-    
     in_lb, in_ub = all_props.lbub(device)
     in_bitmap = all_props.bitmap(device)
-    in_lb = net.normalize_inputs(in_lb, bound_mins, bound_maxs)
-    in_ub = net.normalize_inputs(in_ub, bound_mins, bound_maxs)
-
-
-    # params = list(net.parameters()) 
-    # for patch in patch_lists:
-    #     params.extend(patch.parameters())
-    # for support in support_lists:
-    #     params.extend(support.parameters())
-
+    
     # repair part
     # the number of repair patch network,which is equal to the number of properties
-    n_repair = len(in_bitmap[0])
+    n_repair = MnistFeatureProp.LABEL_NUMBER
     # the construction of support and patch network
-    input_size = 5
-    hidden_size = [10,10,10]
+    input_size = feature.size[1]
+    hidden_size = [10,10,10,10]
     patch_lists = []
 
     support_net = SupportNet(input_size=input_size, dom=args.dom, hidden_sizes=hidden_size, output_size=n_repair,
@@ -208,51 +187,14 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         patch_net.to(device)
         patch_lists.append(patch_net)
 
-    # process the bounds above to the training data
-    # def process_data(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra):
-    #     # process the safe bounds and unsafe bounds(wl bounds) with label respectively
-    #     def process_bounds(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra):
-    #         # already normalized
-    #         # combine lb and ub into one tensor
-    #         def combine_tensors(A, B):
-    #             # 将A和B在最后一个维度上进行拼接
-    #             C = torch.cat((A, B), dim=-1)
-    #             C = torch.zeros_like(C)
-    #             for i in range(C.shape[1]):
-    #                 if i % 2 == 0:
-    #                     C[:, i] = A[:, i//2]
-    #                 else:
-    #                     C[:, i] = B[:, i//2]
-    #             return C
 
 
-    #         safe_region_data = combine_tensors(safe_lb, safe_ub)    # batch_size * 2 * input_size
-    #         unsafe_region_data = combine_tensors(wl_lb, wl_ub)
-
-    #         safe_label = torch.tensor([1,0])    # batch_size * 2
-    #         safe_label.repeat(safe_region_data.shape[0])
-
-            
-    #         unsafe_label = torch.tensor([0,1]) # batch_size * 2
-    #         unsafe_label.repeat(unsafe_region_data.shape[0])
-
-
-
-
-    #         return safe_region_data,safe_extra, safe_label, unsafe_region_data, wl_extra, unsafe_label
-
-    #     safe_region_data, safe_extra, safe_label, unsafe_region_data, wl_extra, unsafe_label = process_bounds(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra)
-    #     input_regions = torch.cat((safe_region_data, unsafe_region_data), dim=0)
-    #     violate_labels = torch.cat((safe_label, unsafe_label), dim=0)
-    #     property_labels = torch.cat((safe_extra, wl_extra), dim=0)
-
-    #     shuffle = True  # 是否对数据进行洗牌
-
-    #     from torch.utils.data import TensorDataset, DataLoader
-    #     dataset = TensorDataset(input_regions, violate_labels, property_labels)
-    #     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=shuffle)
-
-    #     return dataloader
+    def run_abs(net, batch_abs_lb: Tensor, batch_abs_ub: Tensor, batch_abs_bitmap: Tensor) -> Tensor:
+        """ Return the safety distances over abstract domain. """
+        batch_abs_ins = args.dom.Ele.by_intvl(batch_abs_lb, batch_abs_ub)
+        batch_abs_outs = net(batch_abs_ins)
+        return all_props.safe_dist(batch_abs_outs, batch_abs_bitmap)
+    
 
 
     # train the support network
