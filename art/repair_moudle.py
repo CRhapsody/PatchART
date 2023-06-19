@@ -8,6 +8,7 @@ from torch import Tensor, nn
 from diffabs import AbsDom, AbsEle
 
 from acas import AcasNet
+from mnist import MnistNet
 
 class SupportNet(nn.Module):
     '''
@@ -47,7 +48,7 @@ class SupportNet(nn.Module):
         # this layer is to judge whether the property is violated; but it will lead the discontinuity of the NN
         # self.violate_judge_layer = nn.Linear(self.hidden_sizes[-1], 2)
         # add a sigmoid layer to the end of the network
-        self.sigmoid = dom.sigmoid()
+        self.sigmoid = dom.Sigmoid()
         # x = self.sigmoid(x)
         return 
     
@@ -206,7 +207,98 @@ class Netsum(nn.Module):
         """ Just print everything for information. """
         # TODO information for each support and patch net as components
         ss = [
-            '--- IntersectionNetSum ---',
+            '--- InputNetSum ---',
+            'Num net: support %d , patch %d' % (len(self.support_nets),len(self.patch_nets)),
+            'Input size: %d' % self.target_net.input_size,
+            'Output size: %d' % self.target_net.output_size,
+            'Threshold value: %d' % self.k,
+            '--- End of IntersectionNetSum ---'
+        ]
+        return '\n'.join(ss)
+
+
+class NetFeatureSum(nn.Module):
+    '''
+    This class is to add the patch net to target net:
+    
+    '''
+    def __init__(self, dom: AbsDom, target_net: MnistNet, support_nets: nn.Module, patch_nets: List[nn.Module], device = None, ):
+        '''
+        :params 
+        '''
+        super().__init__()
+        self.target_net = target_net
+        self.support_net = support_nets
+        
+        # for support, patch in zip(support_nets, patch_nets):
+        #     assert(support.name == patch.name), 'support and patch net is one-to-one'
+
+        # self.support_nets = support_nets
+        self.patch_nets = patch_nets
+        self.acti = dom.ReLU()
+        self.len_patch_lists = len(self.patch_nets)
+
+        if device is not None:
+            for i,patch in enumerate(self.patch_nets):
+                self.add_module(f'patch{i}',patch)
+                patch.to(device)
+        self.sigmoid = dom.Sigmoid()
+        
+        # self.connect_layers = []
+
+
+
+    def forward(self, x):
+        # split the target net to two parts, 1st part is the feature extractor, 2nd part is the classifier without sigmoid
+        self.model1,self.model2 = self.target_net.split()
+        feature = self.model1(x)
+        origin_before_sigmoid = self.model2(feature)
+
+        classes_score = self.support_net(feature) # batchsize * repair_num_propertys
+        
+        
+        # we should make sure that the violate_score is not trainable, otherwise the net will not linear
+        # violate_score.requires_grad_(False)
+
+        # compute the K in reassure
+        # norms = torch.norm(classes_score, p=float('inf'), dim=1)
+        # norms.requires_grad_(False)
+
+        for i,patch in enumerate(self.patch_nets):
+            # violate_score[...,0] is the score of safe, violate_score[...,1] is the score of violate
+            # we repair the property according to the violate score
+            pa = patch(feature)
+            if isinstance(pa, Tensor):
+                K = pa.norm(p = float('inf'),dim = -1).view(-1,1)
+                K = K.detach()
+                bar = (K * classes_score[:,i].view(-1,1))
+                origin_before_sigmoid += self.acti(pa + bar -K)\
+                    + -1*self.acti(-1*pa + bar -K)
+                
+
+
+            else:
+                K = pa.ub().norm(p = float('inf'),dim = -1).view(-1,1)
+
+                # avoid multiply grad
+                # K.requires_grad_(False)
+                K = K.detach()
+
+                bar = (K * classes_score[:,:,i])
+                bar = bar.unsqueeze(dim = 2).expand_as(pa)
+                # using the upper bound of the patch net to instead of the inf norm of patch net
+                origin_before_sigmoid += self.acti(pa + bar + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)) )\
+                    + -1*self.acti(-1*pa + bar + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)))
+                
+        # origin add patch repair, then sigmoid
+        out = self.sigmoid(origin_before_sigmoid)
+        return out
+    
+    def __str__(self):
+        """ Just print everything for information. """
+        # TODO information for each support and patch net as components
+        ss = [
+            '--- FeatureNetSum ---',
             'Num net: support %d , patch %d' % (len(self.support_nets),len(self.patch_nets)),
             'Input size: %d' % self.target_net.input_size,
             'Output size: %d' % self.target_net.output_size,

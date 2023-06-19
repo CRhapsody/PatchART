@@ -15,11 +15,11 @@ from torch.utils import data
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from art.prop import AndProp
+from art.prop import AndProp,FeatureAndProp
 from art.bisecter import Bisecter
 from art import exp, utils
 
-from mnist import Mnist_net, MnistFeatureProp
+from mnist import MnistNet, MnistFeatureProp
 
 MNIST_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'MNIST' / 'processed'
 MNIST_NET_DIR = Path(__file__).resolve().parent.parent / 'pgd' / 'model'
@@ -104,7 +104,7 @@ class MnistPoints(exp.ConcIns):
         return cls(inputs, labels)
     pass
 
-def eval_test(net: Mnist_net, testset: MnistPoints, categories=None) -> float:
+def eval_test(net: MnistNet, testset: MnistPoints, categories=None) -> float:
     """ Evaluate accuracy on test set.
     :param categories: e.g., acas.AcasOut
     """
@@ -126,7 +126,7 @@ def eval_test(net: Mnist_net, testset: MnistPoints, categories=None) -> float:
     return ratio
 
 
-from repair_moudle import SupportNet, PatchNet, Netsum, IntersectionNetSum
+from repair_moudle import SupportNet, PatchNet, NetFeatureSum
 def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool, float]:
     fname = 'pdg_net.pth'
     fpath = Path(MNIST_NET_DIR, fname)
@@ -135,7 +135,8 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     trainset = MnistPoints.load(train=True, device=device)
     testset = MnistPoints.load(train=False, device=device)
 
-    net = Mnist_net(dom=args.dom)
+    net = MnistNet(dom=args.dom)
+    net.to(device)
     net.load_state_dict(torch.load(fpath, map_location=device))
 
 
@@ -159,21 +160,23 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     # 3. TODO use the Mnistprop to construct the Andprop(join) 
 
     featurelist = [(data[0],data[1]) for data in zip(feature, trainset.labels)]
+    input_size = feature.size()[1]
 
-    feature_prop_list = MnistFeatureProp.all_props(args.dom, DataList=featurelist, input_dimension = feature.size[1],radius= args.repair_radius)
+    feature_prop_list = MnistFeatureProp.all_props(args.dom, DataList=featurelist, input_dimension = input_size,radius= args.repair_radius)
 
     # get the all props after join all l_0 ball feature property
-    all_props = AndProp(props=feature_prop_list)
+    all_props = FeatureAndProp(props=feature_prop_list)
     v = Bisecter(args.dom, all_props)
 
     in_lb, in_ub = all_props.lbub(device)
     in_bitmap = all_props.bitmap(device)
+
     
     # repair part
     # the number of repair patch network,which is equal to the number of properties
     n_repair = MnistFeatureProp.LABEL_NUMBER
     # the construction of support and patch network
-    input_size = feature.size[1]
+    
     hidden_size = [10,10,10,10]
     patch_lists = []
 
@@ -236,7 +239,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                 # batch_dists = run_abs(support_net, in_lb, in_ub, in_bitmap)
                 abs_ins = args.dom.Ele.by_intvl(in_lb, in_ub)
                 abs_outs = support_net(abs_ins)
-                loss = all_props.safe_dist_support(abs_outs, in_bitmap)
+                loss = all_props.safe_dist(abs_outs, in_bitmap)
 
                 # only one property
                 if loss is None:
@@ -265,12 +268,8 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
     # TODO(complete) construct the repair network 
     # the number of repair patch network,which is equal to the number of properties 
-    repair_net =  Netsum(args.dom, target_net= net, support_nets= support_net, patch_nets= patch_lists, device=device)
+    repair_net =  NetFeatureSum(args.dom, target_net = net, support_nets= support_net, patch_nets= patch_lists, device=device)
 
-
-    # already moved to GPU if necessary
-    trainset = AcasPoints.load(nid, train=True, device=device)
-    testset = AcasPoints.load(nid, train=False, device=device)
 
     start = timer()
 
@@ -290,6 +289,12 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     opti = Adam(repair_net.parameters(), lr=args.lr)
     scheduler = args.scheduler_fn(opti)  # could be None
 
+    # freeze the parameters of the original network for extracting features
+    for name, param in repair_net.named_parameters():
+        if 'conv1' or 'conv2' or 'fc1' in name:
+            param.requires_grad = False
+            opti.param_groups[0]['params'].append(param)
+            opti.param_groups[0]['lr'] = 0
 
     accuracies = []  # epoch 0: ratio
     certified = False
