@@ -239,7 +239,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                 # batch_dists = run_abs(support_net, in_lb, in_ub, in_bitmap)
                 abs_ins = args.dom.Ele.by_intvl(in_lb, in_ub)
                 abs_outs = support_net(abs_ins)
-                loss = all_props.safe_dist(abs_outs, in_bitmap)
+                loss = all_props.safe_feature_dist(abs_outs, in_bitmap)
 
                 # only one property
                 if loss is None:
