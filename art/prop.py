@@ -566,6 +566,40 @@ class FeatureAndProp(AbsProp):
 
         res = torch.stack(res, dim=-1)  # Batch x nprops
         return torch.sum(res, dim=-1)
+    
+    def safe_feature_dist(self, outs: AbsEle, bitmap: Tensor, *args, **kwargs):
+        """ sum(every prop's safe_dists)
+        :param bitmap: the bit-vectors corresponding to outputs, showing what rules they should obey
+        """
+        if len(self.props) == 1:
+            assert torch.equal(bitmap, torch.ones_like(bitmap))
+            dists = self.props[0].safe_dist(outs, *args, **kwargs)
+            return dists
+
+        res = []
+        num_feature_labels = self.labels.size()[-1]
+        for i in range(num_feature_labels):
+            # bits = bitmap[..., i]
+            bits = torch.nonzero(bitmap[:, i] == 1).squeeze(1)
+            if not bits.any():
+                # no one here needs to obey this property
+                continue
+
+            ''' The default nonzero(as_tuple=True) returns a tuple, make scatter_() unhappy.
+                Here we just extract the real data from it to make it the same as old nonzero().squeeze(dim=-1).
+            '''
+            # bits = bits.nonzero(as_tuple=True)[0]
+            assert bits.dim() == 1
+            piece_outs = outs[bits]
+            # piece_dists = prop.safe_dist(piece_outs, *args, **kwargs)
+            piece_dists = deeppoly.Dist.cols_feature_is_max(piece_outs, i, *args, **kwargs)
+            full_dists = torch.zeros(len(bitmap), *piece_dists.size()[1:], device=piece_dists.device)
+            full_dists.scatter_(0, bits, piece_dists)
+            res.append(full_dists)
+
+        res = torch.stack(res, dim=-1)  # Batch x nprops
+        # return torch.sum(res, dim=-1)
+        return torch.sum(res)
 
     def viol_dist(self, outs: AbsEle, bitmap: Tensor, *args, **kwargs):
         """ min(every prop's viol_dists)
