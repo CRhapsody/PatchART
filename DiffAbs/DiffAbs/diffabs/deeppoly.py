@@ -351,6 +351,37 @@ class Dist(AbsDist):
         self.eps = eps
         return
 
+    @staticmethod
+    def cols_feature_is_max(e: Ele, *idxs: int) -> Tensor:
+        """ Intuitively, some-is-max => exists target . target > all_others is always true.
+            Therefore, other_col.UB() - target_col.LB() should < 0, if not, that is the distance.
+            All of the others should be accounted (i.e., max).
+        """
+        others_idxs = AbsDist._idxs_not(e, *idxs)
+        others_coef = e._ucoef[:, :, others_idxs]  # Batch x Dim0 x (Dim-|idxs|)
+        others_cnst = e._ucnst[:, :, others_idxs]  # Batch x 1 x (Dim-|idxs|)
+
+        res = []
+        for i in idxs:
+            target_coef = e._lcoef[:, :, [i]]  # Batch x Dim0 x 1
+            target_cnst = e._lcnst[:, :, [i]]  # Batch x 1 x 1
+            diff_coefs = others_coef - target_coef  # will broadcast
+            diff_cnsts = others_cnst - target_cnst
+
+            diffs = e.ub_of(diff_coefs, diff_cnsts, e.dlb, e.dub)  # Batch x (Dim-|ids|)
+            diffs = F.relu(diffs + 1e-5)
+            res.append(diffs)
+
+        if len(idxs) == 1:
+            all_diffs = res[0]
+        else:
+            all_diffs = torch.stack(res, dim=-1)
+            all_diffs, _ = torch.min(all_diffs, dim=-1)  # it's OK to have either one to be max, thus use torch.min()
+
+        # then it needs to surpass everybody else, thus use torch.max() for maximum distance
+        diffs, _ = torch.max(all_diffs, dim=-1)
+        return diffs
+
     def cols_not_max(self, e: Ele, *idxs: int) -> Tensor:
         """ Intuitively, always-not-max => exists col . target < col is always true.
             Therefore, target_col.UB() - other_col.LB() should < 0, if not, that is the distance.
