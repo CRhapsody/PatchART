@@ -30,7 +30,7 @@ class Mnist_net(nn.Module):
         self.fc2 = dom.Linear(32, 10)
         # TODO: flatten
         self.flatten = dom.Flatten()
-        self.sigmoid = dom.sigmoid(dim=1)
+        self.sigmoid = dom.Sigmoid()
 
     def forward(self, x: Union[Tensor, AbsEle]) -> Union[Tensor, AbsEle]:
         x = self.conv1(x)

@@ -30,7 +30,7 @@ class PhotoProp(OneProp):
     def __init__(self, input_dimension: int, name: str, dom: Optional[AbsDom], safe_fn: str, viol_fn: str, fn_args: Iterable):
         super().__init__(name, dom, safe_fn, viol_fn, fn_args)
         self.input_dimension = input_dimension
-        self.input_bounds = [(0, 1) for _ in range(input_dimension)]
+        self.input_bounds = [(-1000000, 1000000) for _ in range(input_dimension)]
     
     def lbub(self, device=None) -> Tuple[Tensor, Tensor]:
         """ Return <LB, UB>, both of size <1xDim0>. """
@@ -92,20 +92,20 @@ class MnistFeatureProp(PhotoProp):
         names = [(DataList[i][0], DataList[i][1]) for i in range(datalen)]
         a_list = []
         for data,label in names:
-            a = getattr(cls, tasktype)(dom, input_dimension, data, label, radius)
+            a = getattr(cls, tasktype)(dom, input_dimension, data, label.item(), radius)
             a_list.append(a)
         
         return a_list
     
     @classmethod
-    def attack_feature(cls, tasktype: str, dom: AbsDom, input_dimension: int, data: Tensor, label: int, radius: float):
+    def attack_feature(cls, dom: AbsDom, input_dimension: int, data: Tensor, label: int, radius: float):
         '''
         The mnist feature property is Data-based property. One data point correspond to one l_0 ball.
         :params input_dimension: the input/feature dimension
         :params label: the output which should be retained
         :params radius: the radius of the attack input/feature
         '''
-        p = MnistFeatureProp(name=tasktype, input_dimension=input_dimension, dom=dom, safe_fn='cols_is_max', viol_fn='col_not_max',
+        p = MnistFeatureProp(name='attack_feature', input_dimension=input_dimension, dom=dom, safe_fn='cols_is_max', viol_fn='col_not_max',
                     fn_args=[label])  # mean/range hardcoded 
         for j in range(input_dimension):
             p.set_input_bound(j, new_low=data[j].item() - radius)
@@ -115,7 +115,7 @@ class MnistFeatureProp(PhotoProp):
         return p
 
 
-class Mnist_net(nn.Module):
+class MnistNet(nn.Module):
     '''
     abstract module of bank, credit and census
     # :param json file: The configuration file of Fairness task in Socrates
@@ -135,7 +135,7 @@ class Mnist_net(nn.Module):
         self.fc2 = dom.Linear(32, 10)
         # TODO: flatten
         self.flatten = dom.Flatten()
-        self.sigmoid = dom.sigmoid(dim=1)
+        self.sigmoid = dom.Sigmoid()
 
     def forward(self, x: Union[Tensor, AbsEle]) -> Union[Tensor, AbsEle]:
         x = self.conv1(x)
@@ -166,7 +166,7 @@ class Mnist_net(nn.Module):
         ), nn.Sequential(
             
             self.fc2,
-            self.sigmoid()
+            # self.sigmoid()
         )
 
 
