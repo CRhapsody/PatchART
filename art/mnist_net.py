@@ -63,3 +63,11 @@ class Mnist_net(nn.Module):
             self.fc2,
             self.sigmoid()
         )
+    
+    @classmethod
+    def add_sigmoid(cls, dom: AbsDom,module: nn.Module) -> nn.Module:
+        return nn.Sequential(module, dom.Sigmoid())
+    
+    # @classmethod
+    # def combine(cls, net1: nn.Module, net2: nn.Module) -> nn.Module:
+

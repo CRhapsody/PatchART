@@ -43,7 +43,7 @@ class MnistArgParser(exp.ExpArgParser):
         self.add_argument('--reassure_support_and_patch_combine',type=bool, default=False,
                         help='use REASSURE method to combine support and patch network')
 
-        self.add_argument('--repair_radius',type=float, default=0.1, 
+        self.add_argument('--repair_radius',type=float, default=0.2, 
                           help='the radius of repairing datas or features')
 
         # training
@@ -126,7 +126,7 @@ def eval_test(net: MnistNet, testset: MnistPoints, categories=None) -> float:
     return ratio
 
 
-from repair_moudle import SupportNet, PatchNet, NetFeatureSum
+from repair_moudle import SupportNet, PatchNet, NetFeatureSum,Netsum
 def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool, float]:
     fname = 'pdg_net.pth'
     fpath = Path(MNIST_NET_DIR, fname)
@@ -146,7 +146,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     # TODO clusttering
 
     # get the features of the dataset using mnist_net.split
-    model1,_ = net.split()
+    model1, model2 = net.split()
     feature = model1(trainset.inputs)
 
 
@@ -268,7 +268,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
     # TODO(complete) construct the repair network 
     # the number of repair patch network,which is equal to the number of properties 
-    repair_net =  NetFeatureSum(args.dom, target_net = net, support_nets= support_net, patch_nets= patch_lists, device=device)
+    finally_net =  NetFeatureSum(args.dom, target_net = net, support_nets= support_net, patch_nets= patch_lists, device=device)
 
 
     start = timer()
@@ -279,11 +279,12 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         # refine it at the very beginning to save some steps in later epochs
         # and use the refined bounds as the initial bounds for support network training
         
-        curr_abs_lb, curr_abs_ub, curr_abs_bitmap = v.split(in_lb, in_ub, in_bitmap, net, args.refine_top_k,
+        curr_abs_lb, curr_abs_ub, curr_abs_bitmap = v.split(in_lb, in_ub, in_bitmap, model2, args.refine_top_k,
                                                                 tiny_width=args.tiny_width,
                                                                 stop_on_k_all=args.start_abs_cnt) #,for_support=False
     
-    
+    # repair the classifer without feature extractor
+    repair_net = Netsum(args.dom, target_net = model2, support_nets= support_net, patch_nets= patch_lists, device=device)
 
     # train the patch and original network
     opti = Adam(repair_net.parameters(), lr=args.lr)
@@ -318,7 +319,8 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                 _, worst_idx = full_dists.max(dim=0)
                 logging.info(f'Max loss at LB: {curr_abs_lb[worst_idx]}, UB: {curr_abs_ub[worst_idx]}, rule: {curr_abs_bitmap[worst_idx]}.')
 
-        accuracies.append(eval_test(repair_net, testset))
+        # test the repaired model which combines the feature extractor, classifier and the patch network
+        accuracies.append(eval_test(finally_net, testset))
         logging.info(f'Test set accuracy {accuracies[-1]}.')
 
         # check termination
@@ -503,7 +505,7 @@ if __name__ == '__main__':
         # 'no_refine': True
         'no_repair': False,
         'reassure_support_and_patch_combine': True,
-        'repair_radius': 0.01,
+        'repair_radius': 0.1,
 
         
     }
