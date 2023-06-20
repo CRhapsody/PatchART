@@ -54,7 +54,7 @@ class Bisecter(object):
         return
 
     def _grad_dists_of_batch(self, new_lb: Tensor, new_ub: Tensor, new_extra: Optional[Tensor],
-                             forward_fn: nn.Module) -> Tuple[Tensor, Tensor]:
+                             forward_fn: nn.Module,for_feature = False) -> Tuple[Tensor, Tensor]:
         """ Get the gradient value for each abstraction as heuristic, as long as safe distances. """
         with torch.enable_grad(): #设置可以求梯度
             new_lb = new_lb.detach().requires_grad_()
@@ -66,8 +66,10 @@ class Bisecter(object):
 
             ins = self.d.Ele.by_intvl(new_lb, new_ub)
             outs = forward_fn(ins)
-
-            new_safe_dist = self.prop.safe_dist(outs) if new_extra is None else self.prop.safe_dist(outs, new_extra)
+            if for_feature:
+                new_safe_dist = self.prop.safe_feature_dist(outs) if new_extra is None else self.prop.safe_feature_dist(outs, new_extra)
+            else:
+                new_safe_dist = self.prop.safe_dist(outs) if new_extra is None else self.prop.safe_dist(outs, new_extra)
             grad_dist = new_safe_dist
 
             ''' Sum safe/viol_dists to get one single value for backprop. Otherwise it needs to pass in 'grad_outputs'
@@ -87,7 +89,7 @@ class Bisecter(object):
         return new_grad, new_safe_dist
 
     def _grad_dists_of(self, new_lb: Tensor, new_ub: Tensor, new_extra: Optional[Tensor], forward_fn: nn.Module,
-                       batch_size: int) -> Tuple[Tensor, Tensor]:
+                       batch_size: int, for_feature = False) -> Tuple[Tensor, Tensor]:
         """ Dispatch the computation to be batch-by-batch.
         :param batch_size: compute the gradients batch-by-batch, so as to avoid huge memory consumption at once.
         """
@@ -101,7 +103,10 @@ class Bisecter(object):
                 batch_extra = None
             else:
                 batch_lb, batch_ub, batch_extra = batch
-            new_grad, new_safe_dist = self._grad_dists_of_batch(batch_lb, batch_ub, batch_extra, forward_fn)
+            if for_feature:
+                new_grad, new_safe_dist = self._grad_dists_of_batch(batch_lb, batch_ub, batch_extra, forward_fn, for_feature = True)
+            else:
+                new_grad, new_safe_dist = self._grad_dists_of_batch(batch_lb, batch_ub, batch_extra, forward_fn)
             split_grads.append(new_grad)
             split_safe_dists.append(new_safe_dist)
 
@@ -291,7 +296,7 @@ class Bisecter(object):
               stop_on_k_new: int = None,
               stop_on_k_ops: int = None,
               tiny_width: float = None,
-              collapse_res: bool = True, for_support = False) -> Union[Tuple[Tensor, Tensor], Tuple[Tensor, Tensor, Tensor]]:
+              collapse_res: bool = True, for_support = False, for_feature = False) -> Union[Tuple[Tensor, Tensor], Tuple[Tensor, Tensor, Tensor]]:
         """ Different from verify(), split() does breadth-first traversal. Its objective is to have roughly even
             abstractions with small safety losses for the optimization later.
 
@@ -311,6 +316,7 @@ class Bisecter(object):
                            e.g., setting tiny_width=1e-3 would ensure all refined abstraction dimension width > 5e-4.
         :param collapse_res: if True, return the safe and violated regions and their extra together, otherwise return the violated regions and its extra
         :param for_support: if True, return the safe and violated regions and their extra respectively, otherwise return the above together
+        :param for_feature: if True, it splits the feature region, then we call safe_feature_dist() to compute the safe distance
         :return: <LB, UB> when extra is None, otherwise <LB, UB, extra>
         """
         assert valid_lb_ub(lb, ub)
@@ -348,7 +354,10 @@ class Bisecter(object):
                     ''' It's important to have no_grad() here, otherwise the GPU memory will keep growing. With
                         no_grad(), the GPU memory usage is stable. enable_grad() is called inside for grad computation.
                     '''
-                    new_grad, new_safe_dist = self._grad_dists_of(new_lb, new_ub, new_extra, forward_fn, batch_size)
+                    if for_feature:
+                        new_grad, new_safe_dist = self._grad_dists_of(new_lb, new_ub, new_extra, forward_fn, batch_size,for_feature=True)
+                    else:
+                        new_grad, new_safe_dist = self._grad_dists_of(new_lb, new_ub, new_extra, forward_fn, batch_size)
 
                 logging.debug(f'At iter {iter}, another {len(new_lb)} boxes are processed.')
 
