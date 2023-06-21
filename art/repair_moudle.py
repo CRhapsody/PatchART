@@ -89,7 +89,7 @@ class PatchNet(nn.Module):
     The construction of it is full connection network. Its input is the input of neural networks.
     '''
     def __init__(self, input_size: int, dom :AbsDom, hidden_sizes: List[int],
-                name: str, output_size=5 ) -> None:
+                name: str, output_size: int ) -> None:
         '''
         :param hidden_sizes: the size of all hidden layers
         :param output_size: The patch network directly add to the output , and its input is the input of neural network. So its outputsize should be equal to the orignal outputsize
@@ -162,7 +162,7 @@ class Netsum(nn.Module):
                 self.add_module(f'patch{i}',patch)
                 patch.to(device)
         
-        
+        self.sigmoid = dom.Sigmoid()
         # self.connect_layers = []
 
 
@@ -201,6 +201,8 @@ class Netsum(nn.Module):
                 # using the upper bound of the patch net to instead of the inf norm of patch net
                 out += self.acti(pa + bar + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)) )\
                     + -1*self.acti(-1*pa + bar + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)))
+                
+        # out = self.sigmoid(out)
         return out
     
     def __str__(self):
@@ -252,7 +254,7 @@ class NetFeatureSum(nn.Module):
         # split the target net to two parts, 1st part is the feature extractor, 2nd part is the classifier without sigmoid
         self.model1,self.model2 = self.target_net.split()
         feature = self.model1(x)
-        origin_before_sigmoid = self.model2(feature)
+        out = self.model2(feature)
 
         classes_score = self.support_net(feature) # batchsize * repair_num_propertys
         
@@ -272,7 +274,7 @@ class NetFeatureSum(nn.Module):
                 K = pa.norm(p = float('inf'),dim = -1).view(-1,1)
                 K = K.detach()
                 bar = (K * classes_score[:,i].view(-1,1))
-                origin_before_sigmoid += self.acti(pa + bar -K)\
+                out += self.acti(pa + bar -K)\
                     + -1*self.acti(-1*pa + bar -K)
                 
 
@@ -287,11 +289,11 @@ class NetFeatureSum(nn.Module):
                 bar = (K * classes_score[:,:,i])
                 bar = bar.unsqueeze(dim = 2).expand_as(pa)
                 # using the upper bound of the patch net to instead of the inf norm of patch net
-                origin_before_sigmoid += self.acti(pa + bar + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)) )\
+                out += self.acti(pa + bar + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)) )\
                     + -1*self.acti(-1*pa + bar + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)))
                 
         # origin add patch repair, then sigmoid
-        out = self.sigmoid(origin_before_sigmoid)
+        # out = self.sigmoid(origin_before_sigmoid)
         return out
     
     def __str__(self):

@@ -365,8 +365,8 @@ class Dist(AbsDist):
         for i in idxs:
             target_coef = e._lcoef[:, :, [i]]  # Batch x Dim0 x 1
             target_cnst = e._lcnst[:, :, [i]]  # Batch x 1 x 1
-            diff_coefs = others_coef - target_coef  # will broadcast
-            diff_cnsts = others_cnst - target_cnst
+            diff_coefs = 5*others_coef - target_coef  # will broadcast
+            diff_cnsts = 5*others_cnst - target_cnst
 
             diffs = e.ub_of(diff_coefs, diff_cnsts, e.dlb, e.dub)  # Batch x (Dim-|ids|)
             diffs = F.relu(diffs + 1e-5)
