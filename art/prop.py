@@ -579,18 +579,18 @@ class FeatureAndProp(AbsProp):
         res = []
         num_feature_labels = self.labels.size()[-1]
         for i in range(num_feature_labels):
-            # bits = bitmap[..., i]
-            bits = torch.nonzero(bitmap[:, i] == 1).squeeze(1)
+            bits = bitmap[..., i]
+            # bits = torch.nonzero(bitmap[:, i] == 1).squeeze(1)
             # transfer bit to int8
             # bits = bits.type(torch.int8)
-            # if not bits.any():
-                # no one here needs to obey this property
-                # continue
+            if not bits.any():
+                #no one here needs to obey this property
+                continue
 
             ''' The default nonzero(as_tuple=True) returns a tuple, make scatter_() unhappy.
                 Here we just extract the real data from it to make it the same as old nonzero().squeeze(dim=-1).
             '''
-            # bits = bits.nonzero(as_tuple=True)[0]
+            bits = bits.nonzero(as_tuple=True)[0]
             assert bits.dim() == 1
             piece_outs = outs[bits]
             # piece_dists = prop.safe_dist(piece_outs, *args, **kwargs)
@@ -600,8 +600,8 @@ class FeatureAndProp(AbsProp):
             res.append(full_dists)
 
         res = torch.stack(res, dim=-1)  # Batch x nprops
-        # return torch.sum(res, dim=-1)
-        return torch.sum(res) # sum over all the dists to get a scalar value
+        return torch.sum(res, dim=-1)
+        # return torch.sum(res) # sum over all the dists to get a scalar value
 
     def viol_dist(self, outs: AbsEle, bitmap: Tensor, *args, **kwargs):
         """ min(every prop's viol_dists)

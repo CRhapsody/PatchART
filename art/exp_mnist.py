@@ -149,6 +149,8 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     model1, model2 = net.split()
     feature = model1(trainset.inputs)
 
+    feature_trainset = MnistPoints(feature, trainset.labels)
+
 
     # set the box bound of the features, which the length of the box is 2*radius
     # bound_mins = feature - radius
@@ -185,7 +187,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     support_net.to(device)
     
     for i in range(n_repair):
-        patch_net = PatchNet(input_size=input_size, dom=args.dom, hidden_sizes=hidden_size,
+        patch_net = PatchNet(input_size=input_size, dom=args.dom, hidden_sizes=hidden_size, output_size=n_repair,
             name = f'patch network {i}')
         patch_net.to(device)
         patch_lists.append(patch_net)
@@ -196,7 +198,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         """ Return the safety distances over abstract domain. """
         batch_abs_ins = args.dom.Ele.by_intvl(batch_abs_lb, batch_abs_ub)
         batch_abs_outs = net(batch_abs_ins)
-        return all_props.safe_dist(batch_abs_outs, batch_abs_bitmap)
+        return all_props.safe_feature_dist(batch_abs_outs, batch_abs_bitmap)
     
 
 
@@ -208,7 +210,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         scheduler_support = args.scheduler_fn(opti_support)  # could be None
 
         # certain epoch to train support network
-        initial_training_support_epoch = 800
+        initial_training_support_epoch = 400
 
         criterion = args.support_loss  # 分类任务的损失函数
 
@@ -240,6 +242,9 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                 abs_ins = args.dom.Ele.by_intvl(in_lb, in_ub)
                 abs_outs = support_net(abs_ins)
                 loss = all_props.safe_feature_dist(abs_outs, in_bitmap)
+
+                # TODO can adjust
+                loss = loss.mean()
 
                 # only one property
                 if loss is None:
@@ -281,7 +286,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         
         curr_abs_lb, curr_abs_ub, curr_abs_bitmap = v.split(in_lb, in_ub, in_bitmap, model2, args.refine_top_k,
                                                                 tiny_width=args.tiny_width,
-                                                                stop_on_k_all=args.start_abs_cnt) #,for_support=False
+                                                                stop_on_k_all=args.start_abs_cnt,for_feature=True) #,for_support=False
     
     # repair the classifer without feature extractor
     repair_net = Netsum(args.dom, target_net = model2, support_nets= support_net, patch_nets= patch_lists, device=device)
@@ -339,18 +344,18 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
         # dataset may have expanded, need to update claimed length to date
         if not args.no_pts:
-            trainset.reset_claimed_len()
+            feature_trainset.reset_claimed_len()
         if not args.no_abs:
             absset.reset_claimed_len()
         if (not args.no_pts) and (not args.no_abs):
             ''' Might simplify this to just using the amount of abstractions, is it unnecessarily complicated? '''
             # need to enumerate both
-            max_claimed_len = max(trainset.claimed_len, absset.claimed_len)
-            trainset.claimed_len = max_claimed_len
+            max_claimed_len = max(feature_trainset.claimed_len, absset.claimed_len)
+            feature_trainset.claimed_len = max_claimed_len
             absset.claimed_len = max_claimed_len
 
         if not args.no_pts:
-            conc_loader = data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
+            conc_loader = data.DataLoader(feature_trainset, batch_size=args.batch_size, shuffle=True)
             nbatches = len(conc_loader)
             conc_loader = iter(conc_loader)
         if not args.no_abs:
@@ -359,24 +364,27 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
             abs_loader = iter(abs_loader)
 
         total_loss = 0.
-        for i in range(nbatches):
-            opti.zero_grad()
-            batch_loss = 0.
-            if not args.no_pts:
-                batch_inputs, batch_labels = next(conc_loader)
-                batch_outputs = repair_net(batch_inputs)
-                batch_loss += args.accuracy_loss(batch_outputs, batch_labels)
-            if not args.no_abs:
-                batch_abs_lb, batch_abs_ub, batch_abs_bitmap = next(abs_loader)
-                batch_dists = run_abs(repair_net,batch_abs_lb, batch_abs_ub, batch_abs_bitmap)
-                
-                #这里又对batch的loss求了个均值，作为最后的safe_loss(下面的没看懂，好像类似于l1)
-                safe_loss = batch_dists.mean()  # L1, need to upgrade to batch_worsts to unlock loss other than L1
-                total_loss += safe_loss.item()
-                batch_loss += safe_loss
-            logging.debug(f'Epoch {epoch}: {i / nbatches * 100 :.2f}%. Batch loss {batch_loss.item()}')
-            batch_loss.backward()
-            opti.step()
+        with torch.enable_grad():
+            for i in range(nbatches):
+                opti.zero_grad()
+                batch_loss = 0.
+                if not args.no_pts:
+                    batch_inputs, batch_labels = next(conc_loader)
+                    batch_outputs = repair_net(batch_inputs)
+                    batch_loss += args.accuracy_loss(batch_outputs, batch_labels)
+                if not args.no_abs:
+                    batch_abs_lb, batch_abs_ub, batch_abs_bitmap = next(abs_loader)
+                    batch_dists = run_abs(repair_net,batch_abs_lb, batch_abs_ub, batch_abs_bitmap)
+                    
+                    #这里又对batch的loss求了个均值，作为最后的safe_loss(下面的没看懂，好像类似于l1)
+                    safe_loss = batch_dists.mean()  # L1, need to upgrade to batch_worsts to unlock loss other than L1
+                    total_loss += safe_loss.item()
+                    batch_loss += safe_loss
+                logging.debug(f'Epoch {epoch}: {i / nbatches * 100 :.2f}%. Batch loss {batch_loss.item()}')
+
+                #TODO 这里怎么办
+                batch_loss.backward()
+                opti.step()
 
 
         
@@ -393,7 +401,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
             curr_abs_lb, curr_abs_ub, curr_abs_bitmap = v.split(curr_abs_lb, curr_abs_ub, curr_abs_bitmap, repair_net,
                                                                 args.refine_top_k,
                                                                 # tiny_width=args.tiny_width,
-                                                                stop_on_k_new=args.refine_top_k)
+                                                                stop_on_k_new=args.refine_top_k,for_feature=True)
         pass
     train_time = timer() - start
     logging.info(f'Accuracy at every epoch: {accuracies}')
