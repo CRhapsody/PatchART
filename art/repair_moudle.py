@@ -48,7 +48,7 @@ class SupportNet(nn.Module):
         # this layer is to judge whether the property is violated; but it will lead the discontinuity of the NN
         # self.violate_judge_layer = nn.Linear(self.hidden_sizes[-1], 2)
         # add a sigmoid layer to the end of the network
-        self.sigmoid = dom.Sigmoid()
+        # self.sigmoid = dom.Sigmoid()
         # x = self.sigmoid(x)
         return 
     
@@ -59,10 +59,10 @@ class SupportNet(nn.Module):
             
         
         x = self.all_linears[-1](x)
-        classes_score = self.sigmoid(x)
+        # classes_score = self.sigmoid(x)
         # violate_score = self.violate_judge_layer(x)
 
-        return classes_score
+        return x
         
     
     def __str__(self):
@@ -162,7 +162,7 @@ class Netsum(nn.Module):
                 self.add_module(f'patch{i}',patch)
                 patch.to(device)
         
-        self.sigmoid = dom.Sigmoid()
+        # self.sigmoid = dom.Sigmoid()
         # self.connect_layers = []
 
 
@@ -244,7 +244,7 @@ class NetFeatureSum(nn.Module):
             for i,patch in enumerate(self.patch_nets):
                 self.add_module(f'patch{i}',patch)
                 patch.to(device)
-        self.sigmoid = dom.Sigmoid()
+        # self.sigmoid = dom.Sigmoid()
         
         # self.connect_layers = []
 
