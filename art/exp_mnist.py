@@ -71,8 +71,7 @@ class MnistArgParser(exp.ExpArgParser):
         def ce_loss(outs: Tensor, labels: Tensor):
             softmax = nn.Softmax(dim=1)
             ce = nn.CrossEntropyLoss()
-            # *= -1 because ACAS picks smallest value as suggestion
-            return ce(softmax(outs * -1.), labels)
+            return ce(softmax(outs), labels)
 
         def Bce_loss(outs: Tensor, labels: Tensor):
             bce = nn.BCEWithLogitsLoss()
@@ -210,7 +209,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         scheduler_support = args.scheduler_fn(opti_support)  # could be None
 
         # certain epoch to train support network
-        initial_training_support_epoch = 400
+        initial_training_support_epoch = 200
 
         criterion = args.support_loss  # 分类任务的损失函数
 
@@ -227,28 +226,27 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         with torch.enable_grad():
             for epoch in range(initial_training_support_epoch):
                 # for j in range(len(nbatches)):
-                loss = 0
-                opti_support.zero_grad()
-                # train_data, class_labels, binary_labels = next(input_region_dataloader)
-                # class_output, binary_output = support_net(train_data)
-                # train_data, class_labels = next(abs_loader)
-                # class_output = support_net(train_data)
-                # loss = criterion(class_output, class_labels)
-                # binary_loss = binary_criterion(binary_output, binary_labels)
-                
-                # TODO (complete) rewrite the safe dists
-                # TODO (complete) write a abstract domain of sigmoid function
-                # batch_dists = run_abs(support_net, in_lb, in_ub, in_bitmap)
-                abs_ins = args.dom.Ele.by_intvl(in_lb, in_ub)
-                abs_outs = support_net(abs_ins)
-                loss = all_props.safe_feature_dist(abs_outs, in_bitmap)
+                # loss = 0
+                batch_loss = 0.
+                # opti_support.zero_grad()
+                # abs_ins = args.dom.Ele.by_intvl(in_lb, in_ub)
+                # abs_outs = support_net(abs_ins)
+                # loss = all_props.safe_feature_dist(abs_outs, in_bitmap)
+                conc_loader = data.DataLoader(feature_trainset, batch_size=args.batch_size, shuffle=True)
+                nbatches = len(conc_loader)
+                conc_loader = iter(conc_loader)
+                for j in range(nbatches):
+                    opti_support.zero_grad()
 
+                    batch_inputs, batch_labels = next(conc_loader)
+                    batch_outputs = support_net(batch_inputs)
+                    batch_loss += args.accuracy_loss(batch_outputs, batch_labels)
                 # TODO can adjust
-                loss = loss.mean()
+                # loss = loss.mean()
 
                 # only one property
-                if loss is None:
-                    break
+                # if loss is None:
+                #     break
 
                 # TODO as above(complete, not batch) 
                 # loss = batch_dists.mean()
@@ -256,19 +254,20 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
                 
                 # loss = class_loss + binary_loss
-                loss.backward()
+                # loss.backward()
+                batch_loss.backward()
                 opti_support.step()
                 if epoch % 10 == 0:
-                    logging.info(f'Epoch {epoch}: support loss {loss.item()}')
+                    logging.info(f'Epoch {epoch}: support loss {batch_loss.item()}')
                 if scheduler_support is not None:
-                    scheduler_support.step(loss)
+                    scheduler_support.step(batch_loss)
 
 
     # TODO it is necessary to test the support network?
 
     #first train the support network
-    with torch.no_grad():
-        train_model(support_net, in_lb, in_ub, in_bitmap)
+    # with torch.no_grad():
+    train_model(support_net, in_lb, in_ub, in_bitmap)
 
 
     # TODO(complete) construct the repair network 
