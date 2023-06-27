@@ -109,7 +109,7 @@ def eval_test(net: MnistNet, testset: MnistPoints, categories=None) -> float:
     :param categories: e.g., acas.AcasOut
     """
     with torch.no_grad():
-        outs = net(testset.inputs) * -1
+        outs = net(testset.inputs)
         predicted = outs.argmax(dim=1)
         correct = (predicted == testset.labels).sum().item()
         ratio = correct / len(testset)
@@ -138,6 +138,8 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     net = MnistNet(dom=args.dom)
     net.to(device)
     net.load_state_dict(torch.load(fpath, map_location=device))
+
+    acc = eval_test(net, testset)
 
 
     # bound_mins = torch.zeros_like(trainset[0])
@@ -341,7 +343,10 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
         # test the repaired model which combines the feature extractor, classifier and the patch network
         accuracies.append(eval_test(finally_net, testset))
+        with torch.no_grad():
+            evel_acc = eval_test(repair_net, feature_trainset)
         logging.info(f'Test set accuracy {accuracies[-1]}.')
+        logging.info(f'Train set accuracy {evel_acc}.')
 
         # check termination
         if certified and epoch >= args.min_epochs:
@@ -386,7 +391,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
             if not args.no_pts:
                 batch_inputs, batch_labels = next(conc_loader)
                 batch_outputs = repair_net(batch_inputs)
-                batch_loss += args.accuracy_loss(batch_outputs, batch_labels)
+                batch_loss += 10*args.accuracy_loss(batch_outputs, batch_labels)
             if not args.no_abs:
                 batch_abs_lb, batch_abs_ub, batch_abs_bitmap = next(abs_loader)
                 batch_dists = run_abs(repair_net,batch_abs_lb, batch_abs_ub, batch_abs_bitmap)

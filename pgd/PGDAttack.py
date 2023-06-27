@@ -78,8 +78,9 @@ class NeuralNet(nn.Module):
         # x = torch.flatten(x, 1)
         x = x.view(-1,1024)
         x = self.fc1(x)
+        x = self.relu(x)
         x = self.fc2(x)
-        x = torch.sigmoid(x)
+        # x = torch.sigmoid(x)
         return x
     
     # split the model into two parts, first part is the feature extractor until fc1, second part is the classifier
@@ -93,11 +94,12 @@ class NeuralNet(nn.Module):
             self.relu,
             # torch.flatten(x, 1),
             nn.Flatten(),
-            self.fc1
+            self.fc1,
+            self.relu
         ), nn.Sequential(
             
-            self.fc2,
-            nn.Sigmoid()
+            self.fc2
+            # nn.Sigmoid()
         )
     
     # use the self.split() to get the feature extractor until fc1
@@ -285,7 +287,7 @@ def pgd():
             train_labels.append(labels)
             train_attacked.append(predicted)
         else:
-            train_attacked_data.append(images[labels != predicted])
+            train_attacked_data.append(adv_images[labels != predicted])
             train_labels.append(labels[labels != predicted])
             train_attacked.append(predicted[labels != predicted])
 
@@ -310,7 +312,7 @@ def pgd():
             test_labels.append(labels)
             test_attacked.append(predicted)
         else:
-            test_attacked_data.append(images[labels != predicted])
+            test_attacked_data.append(adv_images[labels != predicted])
             test_labels.append(labels[labels != predicted])
             test_attacked.append(predicted[labels != predicted])
     test_attack_data = torch.cat(test_attacked_data)
@@ -324,8 +326,8 @@ def pgd():
 
 if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    cluster(device=device)
-    # pgd()
+    # cluster(device=device)
+    pgd()
 
 
 

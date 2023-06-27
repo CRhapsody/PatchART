@@ -442,9 +442,9 @@ class Bisecter(object):
         else:
             if collapse_res:
                 # with torch.no_grad():
-                #     all_lb = cat0(wl_lb, safe_lb, tiny_lb)
-                #     all_ub = cat0(wl_ub, safe_ub, tiny_ub)
-                #     all_extra = cat0(wl_extra, safe_extra, tiny_extra)
+                all_lb = cat0(wl_lb, safe_lb, tiny_lb)
+                all_ub = cat0(wl_ub, safe_ub, tiny_ub)
+                all_extra = cat0(wl_extra, safe_extra, tiny_extra)
 
                 if all_extra is None:
                     return safe_lb, safe_ub, wl_lb, wl_ub
