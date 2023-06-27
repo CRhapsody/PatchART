@@ -308,15 +308,18 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     scheduler = args.scheduler_fn(opti)  # could be None
 
     # freeze the parameters of the original network for extracting features
-    for name, param in repair_net.named_parameters():
-        if 'conv1' or 'conv2' or 'fc1' in name:
-            param.requires_grad = False
-            opti.param_groups[0]['params'].append(param)
-            opti.param_groups[0]['lr'] = 0
+    # for name, param in repair_net.named_parameters():
+    #     if 'conv1' or 'conv2' or 'fc1' in name:
+    #         param.requires_grad = False
+    #         opti.param_groups[0]['params'].append(param)
+    #         opti.param_groups[0]['lr'] = 0
 
     accuracies = []  # epoch 0: ratio
     certified = False
     epoch = 0
+
+    feature.requires_grad = True
+    feature_trainset = MnistPoints(feature, trainset.labels)
 
     while True:
         # first, evaluate current model
@@ -376,27 +379,27 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
             abs_loader = iter(abs_loader)
 
         total_loss = 0.
-        with torch.enable_grad():
-            for i in range(nbatches):
-                opti.zero_grad()
-                batch_loss = 0.
-                if not args.no_pts:
-                    batch_inputs, batch_labels = next(conc_loader)
-                    batch_outputs = repair_net(batch_inputs)
-                    batch_loss += args.accuracy_loss(batch_outputs, batch_labels)
-                if not args.no_abs:
-                    batch_abs_lb, batch_abs_ub, batch_abs_bitmap = next(abs_loader)
-                    batch_dists = run_abs(repair_net,batch_abs_lb, batch_abs_ub, batch_abs_bitmap)
-                    
-                    #这里又对batch的loss求了个均值，作为最后的safe_loss(下面的没看懂，好像类似于l1)
-                    safe_loss = batch_dists.mean()  # L1, need to upgrade to batch_worsts to unlock loss other than L1
-                    total_loss += safe_loss.item()
-                    batch_loss += safe_loss
-                logging.debug(f'Epoch {epoch}: {i / nbatches * 100 :.2f}%. Batch loss {batch_loss.item()}')
+        # with torch.enable_grad():
+        for i in range(nbatches):
+            opti.zero_grad()
+            batch_loss = 0.
+            if not args.no_pts:
+                batch_inputs, batch_labels = next(conc_loader)
+                batch_outputs = repair_net(batch_inputs)
+                batch_loss += args.accuracy_loss(batch_outputs, batch_labels)
+            if not args.no_abs:
+                batch_abs_lb, batch_abs_ub, batch_abs_bitmap = next(abs_loader)
+                batch_dists = run_abs(repair_net,batch_abs_lb, batch_abs_ub, batch_abs_bitmap)
+                
+                #这里又对batch的loss求了个均值，作为最后的safe_loss(下面的没看懂，好像类似于l1)
+                safe_loss = batch_dists.mean()  # L1, need to upgrade to batch_worsts to unlock loss other than L1
+                total_loss += safe_loss.item()
+                batch_loss += safe_loss
+            logging.debug(f'Epoch {epoch}: {i / nbatches * 100 :.2f}%. Batch loss {batch_loss.item()}')
 
-                #TODO 这里怎么办
-                batch_loss.backward()
-                opti.step()
+            #TODO 这里怎么办
+            batch_loss.backward()
+            opti.step()
 
 
         
@@ -463,6 +466,7 @@ def test_goal_safety(parser: MnistArgParser):
     """ Q1: Show that we can train previously unsafe networks to safe. """
     defaults = {
         # 'start_abs_cnt': 5000,
+        # 'max_abs_cnt': 
         'batch_size': 100,  # to make it faster
         'min_epochs': 25,
         'max_epochs': 35
