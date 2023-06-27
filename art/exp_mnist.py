@@ -12,6 +12,7 @@ import torch
 from torch import Tensor, nn
 from torch.optim import Adam
 from torch.utils import data
+import time
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
@@ -146,7 +147,8 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
     # get the features of the dataset using mnist_net.split
     model1, model2 = net.split()
-    feature = model1(trainset.inputs)
+    with torch.no_grad():
+        feature = model1(trainset.inputs)
 
     feature_trainset = MnistPoints(feature, trainset.labels)
 
@@ -161,6 +163,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     # 3. TODO use the Mnistprop to construct the Andprop(join) 
 
     featurelist = [(data[0],data[1]) for data in zip(feature, trainset.labels)]
+    # featurelist = [(data[0],data[1]) for data in feature_trainset]
     input_size = feature.size()[1]
 
     feature_prop_list = MnistFeatureProp.all_props(args.dom, DataList=featurelist, input_dimension = input_size,radius= args.repair_radius)
@@ -209,7 +212,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         scheduler_support = args.scheduler_fn(opti_support)  # could be None
 
         # certain epoch to train support network
-        initial_training_support_epoch = 200
+        initial_training_support_epoch = 10
 
         criterion = args.support_loss  # 分类任务的损失函数
 
@@ -223,24 +226,32 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         # nbatches = len(abs_loader)  # doesn't matter rewriting len(conc_loader), they are the same
         # abs_loader = iter(abs_loader)[0]
         logging.info('start pre-training support network:')
+        conc_loader = data.DataLoader(feature_trainset, batch_size=32, shuffle=True,drop_last=True)
+        nbatches = len(conc_loader)
+        
         with torch.enable_grad():
             for epoch in range(initial_training_support_epoch):
+                total_loss = 0.
                 # for j in range(len(nbatches)):
                 # loss = 0
-                batch_loss = 0.
+                
                 # opti_support.zero_grad()
                 # abs_ins = args.dom.Ele.by_intvl(in_lb, in_ub)
                 # abs_outs = support_net(abs_ins)
                 # loss = all_props.safe_feature_dist(abs_outs, in_bitmap)
-                conc_loader = data.DataLoader(feature_trainset, batch_size=args.batch_size, shuffle=True)
-                nbatches = len(conc_loader)
-                conc_loader = iter(conc_loader)
-                for j in range(nbatches):
+                conc_data_iter = iter(conc_loader)
+                # for j in range(nbatches):
+                for batch in conc_data_iter:
+                    time.sleep(0.003)               
                     opti_support.zero_grad()
-
-                    batch_inputs, batch_labels = next(conc_loader)
+                    # scheduler_support.zero_grad()
+                    batch_inputs, batch_labels = batch
+                    batch_loss = 0.
+                    # batch_inputs, batch_labels = next(conc_data_iter)
                     batch_outputs = support_net(batch_inputs)
-                    batch_loss += args.accuracy_loss(batch_outputs, batch_labels)
+                    batch_loss = args.accuracy_loss(batch_outputs, batch_labels)
+                    # loss = torch.sum(batch_loss,dim = 1)
+                    total_loss += batch_loss.item()
                 # TODO can adjust
                 # loss = loss.mean()
 
@@ -255,19 +266,21 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                 
                 # loss = class_loss + binary_loss
                 # loss.backward()
-                batch_loss.backward()
-                opti_support.step()
+                    batch_loss.backward()
+                    opti_support.step()
+                    # scheduler_support.step()
                 if epoch % 10 == 0:
                     logging.info(f'Epoch {epoch}: support loss {batch_loss.item()}')
                 if scheduler_support is not None:
-                    scheduler_support.step(batch_loss)
+                #     total_loss /= nbatches
+                    scheduler_support.step(total_loss)
 
 
     # TODO it is necessary to test the support network?
 
     #first train the support network
-    # with torch.no_grad():
-    train_model(support_net, in_lb, in_ub, in_bitmap)
+    with torch.no_grad():
+        train_model(support_net, in_lb, in_ub, in_bitmap)
 
 
     # TODO(complete) construct the repair network 
