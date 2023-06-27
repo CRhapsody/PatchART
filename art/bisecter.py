@@ -421,20 +421,20 @@ class Bisecter(object):
 
         if not for_support:
             if collapse_res:
-                with torch.no_grad():
-                    all_lb = cat0(wl_lb, safe_lb, tiny_lb)
-                    all_ub = cat0(wl_ub, safe_ub, tiny_ub)
-                    all_extra = cat0(wl_extra, safe_extra, tiny_extra)
+                # with torch.no_grad():
+                all_lb = cat0(wl_lb, safe_lb, tiny_lb)
+                all_ub = cat0(wl_ub, safe_ub, tiny_ub)
+                all_extra = cat0(wl_extra, safe_extra, tiny_extra)
 
                 if all_extra is None:
                     return all_lb, all_ub
                 else:
                     return all_lb, all_ub, all_extra
             else:
-                with torch.no_grad():
-                    wl_lb = cat0(wl_lb, tiny_lb)
-                    wl_ub = cat0(wl_ub, tiny_ub)
-                    wl_extra = cat0(wl_extra, tiny_extra)
+                # with torch.no_grad():
+                wl_lb = cat0(wl_lb, tiny_lb)
+                wl_ub = cat0(wl_ub, tiny_ub)
+                wl_extra = cat0(wl_extra, tiny_extra)
                 if wl_extra is None:
                     return wl_lb, wl_ub
                 else:
@@ -451,10 +451,10 @@ class Bisecter(object):
                 else:
                     return safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra
             else:
-                with torch.no_grad():
-                    wl_lb = cat0(wl_lb, tiny_lb)
-                    wl_ub = cat0(wl_ub, tiny_ub)
-                    wl_extra = cat0(wl_extra, tiny_extra)
+                # with torch.no_grad():
+                wl_lb = cat0(wl_lb, tiny_lb)
+                wl_ub = cat0(wl_ub, tiny_ub)
+                wl_extra = cat0(wl_extra, tiny_extra)
                 if wl_extra is None:
                     return wl_lb, wl_ub
                 else:
