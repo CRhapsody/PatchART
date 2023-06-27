@@ -235,7 +235,7 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False)-> Tu
         scheduler_support = args.scheduler_fn(opti_support)  # could be None
 
         # certain epoch to train support network
-        initial_training_support_epoch = 800
+        initial_training_support_epoch = 10
 
         criterion = args.support_loss  # 分类任务的损失函数
 
