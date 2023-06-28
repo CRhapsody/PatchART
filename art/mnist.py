@@ -135,7 +135,7 @@ class MnistNet(nn.Module):
         self.fc2 = dom.Linear(32, 10)
         # TODO: flatten
         self.flatten = dom.Flatten()
-        self.sigmoid = dom.Sigmoid()
+        # self.sigmoid = dom.Sigmoid()
 
     def forward(self, x: Union[Tensor, AbsEle]) -> Union[Tensor, AbsEle]:
         x = self.conv1(x)
@@ -148,8 +148,8 @@ class MnistNet(nn.Module):
         # x = x.view(x.size[0], 1024)
         x = self.flatten(x)
         x = self.fc1(x)
+        x = self.relu(x)
         x = self.fc2(x)
-        x = self.sigmoid(x)
         return x
     
     def split(self):
@@ -162,7 +162,8 @@ class MnistNet(nn.Module):
             self.relu,
             # torch.flatten(x, 1),
             self.flatten,
-            self.fc1
+            self.fc1,
+            self.relu
         ), nn.Sequential(
             
             self.fc2,
