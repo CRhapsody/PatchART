@@ -295,6 +295,12 @@ def pgd():
     train_attack_labels = torch.cat(train_labels)
     train_attacked = torch.cat(train_attacked)
 
+    with torch.no_grad():
+        outs = model(train_attack_data)
+        predicted = outs.argmax(dim=1)
+        correct = (predicted == train_attack_labels).sum().item()
+        ratio = correct / len(train_attack_data)
+
     torch.save((train_attack_data,train_attack_labels),'./data/MNIST/processed/train_attack_data_full.pt')
     torch.save((train_attack_data[:1000],train_attack_labels[:1000]),'./data/MNIST/processed/train_attack_data_part.pt')
     torch.save(train_attacked[:1000],'./data/MNIST/processed/train_attack_data_part_label.pt')
