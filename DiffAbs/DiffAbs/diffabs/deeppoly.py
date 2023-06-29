@@ -1252,7 +1252,7 @@ class Tanh(nn.Tanh):
         return new_e if input_is_ele else tuple(new_e)
     pass
 
-class sigmoid(nn.Sigmoid):
+class Sigmoid(nn.Sigmoid):
     def __str__(self):
         return f'{Dom.name}.' + super().__str__()
 
