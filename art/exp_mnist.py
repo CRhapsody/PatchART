@@ -320,8 +320,17 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     certified = False
     epoch = 0
 
+    # set the
     feature.requires_grad = True
     feature_trainset = MnistPoints(feature, trainset.labels)
+
+    # freeze the parameters of the original network for extracting features
+    for name, param in repair_net.named_parameters():
+        # if 'conv1' or 'conv2' or 'fc1' in name:
+        if 'target_net.0.weight' or 'target_net.0.bias' in name:
+            param.requires_grad = False
+            # opti.param_groups[0]['params'].append(param)
+            # opti.param_groups[0]['lr'] = 0
 
     while True:
         # first, evaluate current model
