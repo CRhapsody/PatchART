@@ -316,6 +316,38 @@ class Ele(AbsEle):
             # ucnst = torch.where(ucnst > 0, torch.dot(self._ucnst, flt.max(dim = -1).value ), torch.dot(self._lcnst, flt.max(dim = -1).value ))
             return Ele(lcoef, lcnst, ucoef, ucnst, self.dlb, self.dub)
            
+        elif isinstance(flt, Ele) and flt.size() == self.size() and torch.equal(self.dlb, flt.dlb) and torch.equal(self.dub, flt.dub):
+            # for abstract domain multiplication, we use crown method in verify ,see https://arxiv.org/pdf/2002.06622.pdf
+            alpha_lower = flt.lb()
+            beta_lower = self.lb()    
+            gamma_lower = -1*self.lb() * self.ub()
+            assert gamma_lower.shape == self._lb.shape
+
+            alpha_upper = flt.ub()
+            beta_upper = self.lb()
+            gamma_upper = -1*self.lb() * self.ub()
+            assert gamma_upper.shape == self._ub.shape
+
+            alpha_lower_coefs = alpha_lower.expand_as(self._lcoef)
+            alpha_lower_cnsts = alpha_lower.expand_as(self._lcnst)
+            alpha_upper_coefs = alpha_upper.expand_as(self._ucoef)
+            alpha_upper_cnsts = alpha_upper.expand_as(self._ucnst)
+            beta_lower_coefs = beta_lower.expand_as(self._lcoef)
+            beta_lower_cnsts = beta_lower.expand_as(self._lcnst)
+            beta_upper_coefs = beta_upper.expand_as(self._ucoef)
+            beta_upper_cnsts = beta_upper.expand_as(self._ucnst)
+            gamma_lower_coefs = gamma_lower.expand_as(self._lcoef)
+            gamma_lower_cnsts = gamma_lower.expand_as(self._lcnst)
+            gamma_upper_coefs = gamma_upper.expand_as(self._ucoef)
+            gamma_upper_cnsts = gamma_upper.expand_as(self._ucnst)
+
+            a_lcoef = torch.where(self._lcoef > 0, self._lcoef * alpha_lower_coefs, self._ucoef * alpha_lower_coefs)
+            b_lcoef = torch.where(beta_lower > 0, self._lcoef * beta_lower_coefs, self._ucoef * beta_lower_coefs)
+
+
+
+
+
             
 
         elif not (isinstance(flt, float) or isinstance(flt, int)):
@@ -1150,6 +1182,146 @@ class ReLU(nn.ReLU):
         return new_e if input_is_ele else tuple(new_e)
     pass
 
+class reciprocal_conc(nn.Module):
+    
+    def forward(self, input: Tensor) -> Tensor:
+        return torch.reciprocal(input)
+    
+class Reciprocal(reciprocal_conc):
+    def __str__(self) -> str:
+        return f'{Dom.name}.reciprocal' + super().__str__()
+    
+    def export(self) -> reciprocal_conc:
+        return reciprocal_conc()
+    
+    def forward(self, *ts: Union[Tensor, Ele]) -> Union[Tensor, Ele, Tuple[Tensor, ...]]:
+        '''
+        The abstract element a = <a^{\leq}, a^{\geq}, lb, ub> is as follows:
+        lb = ub = 1/ub.
+        If lb = ub, then a^{\leq} = a^{\geq} = 1/ub,
+        else, let lambda_lb = -1/(lb^2), lambda_ub = 1/(lb*ub),
+        then a^{\leq} = lambda_lb * x_ub + (1-lambda_lb*lb) * x_lb,
+        a^{\geq} = lambda_ub * x_lb + (1-lambda_ub*ub) * x_ub.
+        '''
+        input_is_ele = True
+        if len(ts) == 1:
+            if isinstance(ts[0], Tensor):
+                return super().forward(ts[0])
+            elif isinstance(ts[0], Ele):
+                e = ts[0]
+            else:
+                raise ValueError(f'Not supported argument type {type(ts[0])}')
+        else:
+            input_is_ele = False
+            e = Ele(*ts) # reconstruct abstract element
+        
+        flat_size = e._locef.size()[1] # FlatDim0
+
+
+
+
+class Exp_conc(nn.Module):
+
+    def forward(self, input: Tensor) -> Tensor:
+        return torch.exp(input)
+
+# from diffabs import utils
+class Exponent(Exp_conc):
+    def __str__(self) -> str:
+        return f'{Dom.name}.exp' + super().__str__()
+    
+    def export(self) -> Exp_conc:
+        return Exp_conc()
+    
+    def forward(self, *ts: Union[Tensor, Ele]) -> Union[Tensor, Ele, Tuple[Tensor, ...]]:
+        '''
+        The abstract element a = <a^{\leq}, a^{\geq}, lb, ub> is as follows:
+        lb = ub = exp(lb).
+        If lb = ub, then a^{\leq} = a^{\geq} = exp(lb),
+        else, let lambda_lb = exp'(lb), lambda_ub = (exp(ub) - exp(lb))/(ub - lb),
+        then a^{\leq} = lambda_lb * x_j + exp(lb) - lambda_lb * lb , a^{\geq} = lambda_ub * x_j + exp(lb) - lambda_ub * lb.        
+        '''
+        input_is_ele = True
+        if len(ts) == 1:
+            if isinstance(ts[0], Tensor):
+                return super().forward(ts[0])
+            elif isinstance(ts[0], Ele):
+                e = ts[0]
+            else:
+                raise ValueError(f'Not supported argument type {type(ts[0])}')
+        else:
+            input_is_ele = False
+            e = Ele(*ts) # reconstruct abstract element
+        
+        flat_size = e._locef.size()[1] # FlatDim0
+
+        # was flattening the dimensions, actually no need to do that
+        lcoef = e._lcoef  # Batch x FlatDim0 x Dims...
+        lcnst = e._lcnst
+        ucoef = e._ucoef
+        ucnst = e._ucnst
+
+        # utils.pp_cuda_mem('exp: Before gamma()')
+        lb, ub = e.gamma()  # Batch x Dims
+        coef_zeros = torch.zeros_like(lcoef)
+        cnst_zeros = torch.zeros_like(lcnst)
+        lbub_zeros = torch.zeros_like(lb)
+
+        # utils.pp_cuda_mem('exp: After gamma()')
+        exp_lb, exp_ub = torch.exp(lb), torch.exp(ub)
+        lbub_same = exp_lb >= exp_ub  # perhaps the extra > would cover a bit of numerical error as well?
+
+        def full_bits(bits: Tensor, is_coef: bool) -> Tensor:
+            sizes = list(bits.size())
+            bits = bits.unsqueeze(dim=1)  # right after Batch x ...
+            if is_coef:
+                sizes.insert(1, flat_size)  # Batch x FlatDim0 x ...
+            else:
+                sizes.insert(1, 1)  # Batch x 1 x ...
+            return bits.expand(*sizes)
+        
+        # when L = U, just reset them to a constant value
+        case_degen_lcoef = coef_zeros
+        case_degen_lcnst = exp_lb.unsqueeze(dim=1)  # Batch x 1 x Dims
+        case_degen_ucoef = case_degen_lcoef
+        case_degen_ucnst = case_degen_lcnst
+        full_lcoef = torch.where(full_bits(lbub_same, True), case_degen_lcoef, coef_zeros)
+        full_lcnst = torch.where(full_bits(lbub_same, False), case_degen_lcnst, cnst_zeros)
+        full_ucoef = torch.where(full_bits(lbub_same, True), case_degen_ucoef, coef_zeros)
+        full_ucnst = torch.where(full_bits(lbub_same, False), case_degen_ucnst, cnst_zeros)
+
+        denom = torch.where(lbub_same, torch.ones_like(lb), ub - lb)
+        # Batch x Dims...
+        # 若 lb = ub，则 denom = 1，k_ub = 0; 若 lb != ub，则为简单的slope
+        k_ub = (exp_ub - exp_lb) / denom  # the slope for LB-UB
+        k_lb = exp_lb  # the slope for exp on LB, exp' = exp
+
+        # Batch x Dims...
+        b_lb = exp_lb - k_lb * lb  # the bias for LB', using k_lb
+        b_ub = exp_lb - k_ub * lb  # the bias for UB', using k_ub
+
+        # for LB'
+        lbub_equal = lbub_same
+        full_lcoef = torch.where(full_bits(lbub_equal, True), lcoef * k_lb.unsqueeze(dim=1), full_lcoef)
+        full_lcnst = torch.where(full_bits(lbub_equal, False),
+                                 lcnst * k_lb.unsqueeze(dim=1) + b_lb.unsqueeze(dim=1), full_lcnst)
+
+        # for UB'
+        lbub_equal = lbub_same
+        full_ucoef = torch.where(full_bits(lbub_equal, True), ucoef * k_ub.unsqueeze(dim=1), full_ucoef)
+        full_ucnst = torch.where(full_bits(lbub_equal, False),
+                                 ucnst * k_ub.unsqueeze(dim=1) + b_ub.unsqueeze(dim=1), full_ucnst)
+
+        # utils.pp_cuda_mem('Tanh: After everything')
+        new_e = Ele(full_lcoef, full_lcnst, full_ucoef, full_ucnst, e.dlb, e.dub)
+        return new_e if input_is_ele else tuple(new_e)
+
+class Softmax(nn.Softmax):
+    def __str__(self):
+        return f'{Dom.name}.' + super().__str__()
+    
+    def export(self) -> nn.Softmax:
+        return nn.Softmax(dim=self.dim)
 
 class Tanh(nn.Tanh):
     def __str__(self):
@@ -1251,6 +1423,65 @@ class Tanh(nn.Tanh):
         new_e = Ele(full_lcoef, full_lcnst, full_ucoef, full_ucnst, e.dlb, e.dub)
         return new_e if input_is_ele else tuple(new_e)
     pass
+
+class Softmax(nn.Softmax):
+    def __str__(self):
+        return f'{Dom.name}.' + super().__str__()
+
+    def export(self) -> nn.Softmax:
+        return nn.Softmax(self.dim[-1])
+    
+
+
+    def forward(self, *ts: Union[Tensor, Ele]) -> Union[Tensor, Ele, Tuple[Tensor, ...]]:
+        """ For both LB' and UB', it chooses the smaller slope between LB-UB and LB'/UB'. Specifically,
+            when L > 0, LB' chooses LB-UB, otherwise LB';
+            when U < 0, UB' chooses LB-UB, otherwise UB'.
+        """
+        input_is_ele = True
+        if len(ts) == 1:
+            if isinstance(ts[0], Tensor):
+                return super().forward(ts[0])  # plain tensor, no abstraction
+            elif isinstance(ts[0], Ele):
+                e = ts[0]  # abstract element
+            else:
+                raise ValueError(f'Not supported argument type {type(ts[0])}.')
+        else:
+            input_is_ele = False
+            e = Ele(*ts)  # reconstruct abstract element
+
+        # utils.pp_cuda_mem('Softmax: Before everything')
+        element_numerator =  Exponent().forward(e)  # compute the numerator of softmax first
+
+        lcoef = element_numerator._lcoef
+        lcnst = element_numerator._lcnst
+        ucoef = element_numerator._ucoef
+        ucnst = element_numerator._ucnst
+
+        # sum the last dimension of the cofficients and constants
+        lcoef_sum = lcoef.sum(dim=-1) # Batch x Flatdim0 x 1...
+        lcnst_sum = lcnst.sum(dim=-1) # Batch x 1 x 1...
+        ucoef_sum = ucoef.sum(dim=-1) # Batch x Flatdim0 x 1...
+        ucnst_sum = ucnst.sum(dim=-1) # Batch x 1 x 1...
+
+        # unsqueeze at last dimension, then broadcast to the same shape as the original
+        lcoef_sum = lcoef_sum.unsqueeze(dim=-1).expand_as(lcoef)
+        lcnst_sum = lcnst_sum.unsqueeze(dim=-1).expand_as(lcnst)
+        ucoef_sum = ucoef_sum.unsqueeze(dim=-1).expand_as(ucoef)
+        ucnst_sum = ucnst_sum.unsqueeze(dim=-1).expand_as(ucnst)
+
+        # construct the element for denominator
+        element_denominator = Ele(lcoef_sum, lcnst_sum, ucoef_sum, ucnst_sum, e.dlb, e.dub)
+
+        # call the reciprocal function
+        element_reciprocal = Reciprocal().forward(element_denominator)
+
+        # multiply the reciprocal with the numerator
+        element_result = Multiply().forward(element_numerator, element_reciprocal)
+
+        return element_result if input_is_ele else tuple(element_result)
+
+
 
 class Sigmoid(nn.Sigmoid):
     def __str__(self):
