@@ -329,23 +329,23 @@ class Ele(AbsEle):
             assert gamma_upper.shape == self._ub.shape
 
             alpha_lower_coefs = alpha_lower.expand_as(self._lcoef)
-            alpha_lower_cnsts = alpha_lower.expand_as(self._lcnst)
             alpha_upper_coefs = alpha_upper.expand_as(self._ucoef)
-            alpha_upper_cnsts = alpha_upper.expand_as(self._ucnst)
             beta_lower_coefs = beta_lower.expand_as(self._lcoef)
-            beta_lower_cnsts = beta_lower.expand_as(self._lcnst)
             beta_upper_coefs = beta_upper.expand_as(self._ucoef)
-            beta_upper_cnsts = beta_upper.expand_as(self._ucnst)
-            gamma_lower_coefs = gamma_lower.expand_as(self._lcoef)
+
             gamma_lower_cnsts = gamma_lower.expand_as(self._lcnst)
-            gamma_upper_coefs = gamma_upper.expand_as(self._ucoef)
             gamma_upper_cnsts = gamma_upper.expand_as(self._ucnst)
 
-            a_lcoef = torch.where(self._lcoef > 0, self._lcoef * alpha_lower_coefs, self._ucoef * alpha_lower_coefs)
-            b_lcoef = torch.where(beta_lower > 0, self._lcoef * beta_lower_coefs, self._ucoef * beta_lower_coefs)
+            # a_lcoef = torch.where(self._lcoef > 0, self._lcoef * alpha_lower_coefs, self._ucoef * alpha_lower_coefs)
+            # b_lcoef = torch.where(beta_lower > 0, self._lcoef * beta_lower_coefs, self._ucoef * beta_lower_coefs)
 
+            lcoef = self._lcoef * alpha_lower_coefs + flt._lcoef * beta_lower_coefs
+            ucoef = self._ucoef * alpha_upper_coefs + flt._ucoef * beta_upper_coefs
+            
+            lcnst = self._lcnst * alpha_lower_coefs + flt._lcnst * beta_lower_coefs + gamma_lower_cnsts
+            ucnst = self._ucnst * alpha_upper_coefs + flt._ucnst * beta_upper_coefs + gamma_upper_cnsts
 
-
+            return Ele(lcoef, lcnst, ucoef, ucnst, self.dlb, self.dub)
 
 
             
@@ -1477,7 +1477,7 @@ class Softmax(nn.Softmax):
         element_reciprocal = Reciprocal().forward(element_denominator)
 
         # multiply the reciprocal with the numerator
-        element_result = Multiply().forward(element_numerator, element_reciprocal)
+        element_result = element_numerator * element_reciprocal
 
         return element_result if input_is_ele else tuple(element_result)
 
