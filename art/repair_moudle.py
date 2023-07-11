@@ -49,6 +49,7 @@ class SupportNet(nn.Module):
         # self.violate_judge_layer = nn.Linear(self.hidden_sizes[-1], 2)
         # add a sigmoid layer to the end of the network
         self.sigmoid = dom.Sigmoid()
+        self.softmax = dom.Softmax()
         return 
     
     def forward(self, x):
@@ -58,6 +59,7 @@ class SupportNet(nn.Module):
             
         
         x = self.all_linears[-1](x)
+        # x = self.softmax(x)
         x = self.sigmoid(x)
         # violate_score = self.violate_judge_layer(x)
 
@@ -186,8 +188,9 @@ class Netsum(nn.Module):
                 K = pa.norm(p = float('inf'),dim = -1).view(-1,1)
                 K = K.detach()
                 bar = (K * classes_score[:,i].view(-1,1))
-                out += self.acti(pa + bar -K)\
-                    + -1*self.acti(-1*pa + bar -K)
+                # -K, -K
+                out += self.acti(pa + bar)
+                    # + -1*self.acti(-1*pa + bar)
             else:
                 K = pa.ub().norm(p = float('inf'),dim = -1).view(-1,1)
 
@@ -198,8 +201,9 @@ class Netsum(nn.Module):
                 bar = (K * classes_score[:,:,i])
                 bar = bar.unsqueeze(dim = 2).expand_as(pa)
                 # using the upper bound of the patch net to instead of the inf norm of patch net
-                out += self.acti(pa + bar + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)) )\
-                    + -1*self.acti(-1*pa + bar + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)))
+                # + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)), + (-1*K.unsqueeze(-1).expand_as(pa._lcnst))
+                out += self.acti(pa + bar  )
+                    #+ -1*self.acti(-1*pa + bar)
                 
         # out = self.sigmoid(out)
         return out

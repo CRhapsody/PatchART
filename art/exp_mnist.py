@@ -50,7 +50,7 @@ class MnistArgParser(exp.ExpArgParser):
         # training
         self.add_argument('--accuracy_loss', type=str, choices=['L1', 'MSE', 'CE'], default='CE',
                           help='canonical loss function for concrete points training')
-        self.add_argument('--support_loss', type=str, choices=['L1', 'MSE', 'CE','BCE'], default='BCE',
+        self.add_argument('--support_loss', type=str, choices=['L1', 'MSE', 'CE','BCE'], default='L2',
                           help= 'canonical loss function for patch net training')
         self.add_argument('--sample_amount', type=int, default=5000,
                           help='specifically for data points sampling from spec')
@@ -70,9 +70,10 @@ class MnistArgParser(exp.ExpArgParser):
         super().setup_rest(args)
 
         def ce_loss(outs: Tensor, labels: Tensor):
-            softmax = nn.Softmax(dim=1)
+            # softmax = nn.Softmax(dim=1)
             ce = nn.CrossEntropyLoss()
-            return ce(softmax(outs), labels)
+            # return ce(softmax(outs), labels)
+            return ce(outs, labels)
 
         def Bce_loss(outs: Tensor, labels: Tensor):
             bce = nn.BCEWithLogitsLoss()
@@ -85,7 +86,10 @@ class MnistArgParser(exp.ExpArgParser):
         }[args.accuracy_loss]
 
         args.support_loss = {
-            'BCE' : Bce_loss
+            # 'BCE' : Bce_loss,
+            'L2': nn.MSELoss(),
+
+
         }[args.support_loss]
         return
     pass
@@ -248,10 +252,11 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                     opti_support.zero_grad()
                     # scheduler_support.zero_grad()
                     batch_inputs, batch_labels = batch
+                    batch_labels = torch.nn.functional.one_hot(batch_labels, num_classes=10)
                     batch_loss = 0.
                     # batch_inputs, batch_labels = next(conc_data_iter)
                     batch_outputs = support_net(batch_inputs)
-                    batch_loss = args.accuracy_loss(batch_outputs, batch_labels)
+                    batch_loss = args.support_loss(batch_outputs, batch_labels.float())
                     # loss = torch.sum(batch_loss,dim = 1)
                     total_loss += batch_loss.item()
                 # TODO can adjust
