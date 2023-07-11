@@ -2,7 +2,7 @@ import torch
 from torch import Tensor
 
 from diffabs.deeppoly import Dom
-from tests import common
+import common
 
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -118,10 +118,20 @@ def test_ex_fig3_full():
 def test_relu_by_ub():
     common.relu_by_ub(Dom())
     return
+def test_exponential_by_lbub():
+    common.exp_by_lbub(Dom())
+    return
 
+def test_reciprocal_by_lbub():
+    common.reciprocal_by_lbub(Dom())
+    return
 
 def test_tanh_by_lbub():
     common.tanh_by_lbub(Dom())
+    return
+
+def test_softmax_by_lbub():
+    common.softmax_by_lbub(Dom())
     return
 
 
@@ -158,3 +168,9 @@ def test_conv_degen():
 
 def test_clamp():
     return common.clamp(Dom())
+
+if __name__ == '__main__':
+    # test_exponential_by_lbub()
+    # test_reciprocal_by_lbub()
+    test_softmax_by_lbub()
+    

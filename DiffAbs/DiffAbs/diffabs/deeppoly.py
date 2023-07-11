@@ -1214,7 +1214,7 @@ class Reciprocal(reciprocal_conc):
             input_is_ele = False
             e = Ele(*ts) # reconstruct abstract element
         
-        flat_size = e._locef.size()[1] # FlatDim0
+        flat_size = e._lcoef.size()[1] # FlatDim0
 
         # was flattening the dimensions, actually no need to do that
         lcoef = e._lcoef  # Batch x FlatDim0 x Dims...
@@ -1224,7 +1224,7 @@ class Reciprocal(reciprocal_conc):
 
         # utils.pp_cuda_mem('reciprocal: Before gamma()')
         lb, ub = e.gamma()  # Batch x Dims
-        assert lb > 0
+        assert torch.all(lb > 0), f'lb = {lb} >= 0'
 
         coef_zeros = torch.zeros_like(lcoef)
         cnst_zeros = torch.zeros_like(lcnst)
@@ -1264,13 +1264,13 @@ class Reciprocal(reciprocal_conc):
         b_ub = recip_lb + recip_ub  # the bias for UB', using recip_lb + recip_ub
 
         # for LB'
-        lbub_equal = lbub_same
+        lbub_equal = ~lbub_same
         full_lcoef = torch.where(full_bits(lbub_equal, True), lcoef * k_lb.unsqueeze(dim=1), full_lcoef)
         full_lcnst = torch.where(full_bits(lbub_equal, False),
                                  lcnst * k_lb.unsqueeze(dim=1) + b_lb.unsqueeze(dim=1), full_lcnst)
 
         # for UB'
-        lbub_equal = lbub_same
+        lbub_equal = ~lbub_same
         full_ucoef = torch.where(full_bits(lbub_equal, True), ucoef * k_ub.unsqueeze(dim=1), full_ucoef)
         full_ucnst = torch.where(full_bits(lbub_equal, False),
                                  ucnst * k_ub.unsqueeze(dim=1) + b_ub.unsqueeze(dim=1), full_ucnst)
@@ -1279,9 +1279,6 @@ class Reciprocal(reciprocal_conc):
         new_e = Ele(full_lcoef, full_lcnst, full_ucoef, full_ucnst, e.dlb, e.dub)
         return new_e if input_is_ele else tuple(new_e)
         
-
-
-
 
 class Exp_conc(nn.Module):
 
@@ -1316,7 +1313,7 @@ class Exponent(Exp_conc):
             input_is_ele = False
             e = Ele(*ts) # reconstruct abstract element
         
-        flat_size = e._locef.size()[1] # FlatDim0
+        flat_size = e._lcoef.size()[1] # FlatDim0
 
         # was flattening the dimensions, actually no need to do that
         lcoef = e._lcoef  # Batch x FlatDim0 x Dims...
@@ -1364,13 +1361,13 @@ class Exponent(Exp_conc):
         b_ub = exp_lb - k_ub * lb  # the bias for UB', using k_ub
 
         # for LB'
-        lbub_equal = lbub_same
+        lbub_equal = ~lbub_same
         full_lcoef = torch.where(full_bits(lbub_equal, True), lcoef * k_lb.unsqueeze(dim=1), full_lcoef)
         full_lcnst = torch.where(full_bits(lbub_equal, False),
                                  lcnst * k_lb.unsqueeze(dim=1) + b_lb.unsqueeze(dim=1), full_lcnst)
 
         # for UB'
-        lbub_equal = lbub_same
+        lbub_equal = ~lbub_same
         full_ucoef = torch.where(full_bits(lbub_equal, True), ucoef * k_ub.unsqueeze(dim=1), full_ucoef)
         full_ucnst = torch.where(full_bits(lbub_equal, False),
                                  ucnst * k_ub.unsqueeze(dim=1) + b_ub.unsqueeze(dim=1), full_ucnst)

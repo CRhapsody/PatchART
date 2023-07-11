@@ -91,6 +91,36 @@ def relu_by_ub(dom: AbsDom, ntimes: int = 10):
         assert _is_close(final.lb(), out.lb(), approx, v2_alt=0)
     return
 
+def softmax_by_lbub(dom: AbsDom, ntimes: int = 10):
+    """ Validate that the Tanh approximation is correct by checking its afterward LB/UB. """
+    for _ in range(ntimes):
+        t1t2 = torch.stack((torch.randn(3, 3, device=device), torch.randn(3, 3, device=device)), dim=-1)
+        lb, _ = torch.min(t1t2, dim=-1)
+        ub, _ = torch.max(t1t2, dim=-1)
+        e = dom.Ele.by_intvl(lb, ub)
+
+        lin = dom.Linear(3, 2).to(device)
+        softmax = dom.Softmax()
+
+        out = lin(e)
+
+        out_lb, out_ub = out.gamma()  # DP for linear layer is already validated
+
+        conc_final_lb = softmax(out_lb)
+        conc_final_ub = softmax(out_ub)
+        abs_final = softmax(out)
+        abs_final_lb, abs_final_ub = abs_final.gamma()
+
+        threshold = 1e-6  # allow some numerical error
+
+        # sometimes error larger than torch.allclose() accepts
+        # self.assertTrue(torch.allclose(conc_final_lb, abs_final_lb))
+        # self.assertTrue(torch.allclose(conc_final_ub, abs_final_ub))
+        diff_lb = (conc_final_lb - abs_final_lb).abs()
+        diff_ub = (conc_final_ub - abs_final_ub).abs()
+        assert diff_lb.max() < threshold
+        assert diff_ub.max() < threshold
+    return
 
 def tanh_by_lbub(dom: AbsDom, ntimes: int = 10):
     """ Validate that the Tanh approximation is correct by checking its afterward LB/UB. """
@@ -123,6 +153,68 @@ def tanh_by_lbub(dom: AbsDom, ntimes: int = 10):
         assert diff_ub.max() < threshold
     return
 
+def reciprocal_by_lbub(dom: AbsDom, ntimes: int = 10):
+    """ Validate that the Tanh approximation is correct by checking its afterward LB/UB. """
+    for _ in range(ntimes):
+        t1t2 = torch.stack((torch.randn(3, 3, device=device), torch.randn(3, 3, device=device)), dim=-1)
+        t1t2 = torch.clamp(t1t2, min= 0.1)
+        lb, _ = torch.min(t1t2, dim=-1)
+        ub, _ = torch.max(t1t2, dim=-1)
+        e = dom.Ele.by_intvl(lb, ub)
+
+        lin = dom.Linear(3, 2).to(device)
+        Recip = dom.Reciprocal()
+
+        out = lin(e)
+
+        out_lb, out_ub = out.gamma()  # DP for linear layer is already validated
+
+        conc_final_lb = Recip(out_lb)
+        conc_final_ub = Recip(out_ub)
+        abs_final = Recip(out)
+        abs_final_lb, abs_final_ub = abs_final.gamma()
+
+        threshold = 1e-6  # allow some numerical error
+
+        # sometimes error larger than torch.allclose() accepts
+        # self.assertTrue(torch.allclose(conc_final_lb, abs_final_lb))
+        # self.assertTrue(torch.allclose(conc_final_ub, abs_final_ub))
+        diff_lb = (conc_final_lb - abs_final_lb).abs()
+        diff_ub = (conc_final_ub - abs_final_ub).abs()
+        assert diff_lb.max() < threshold
+        assert diff_ub.max() < threshold
+    return
+
+def exp_by_lbub(dom: AbsDom, ntimes: int = 10):
+    """ Validate that the Tanh approximation is correct by checking its afterward LB/UB. """
+    for _ in range(ntimes):
+        t1t2 = torch.stack((torch.randn(3, 3, device=device), torch.randn(3, 3, device=device)), dim=-1)
+        lb, _ = torch.min(t1t2, dim=-1)
+        ub, _ = torch.max(t1t2, dim=-1)
+        e = dom.Ele.by_intvl(lb, ub)
+
+        lin = dom.Linear(3, 2).to(device)
+        exp = dom.Exponent()
+
+        out = lin(e)
+
+        out_lb, out_ub = out.gamma()  # DP for linear layer is already validated
+
+        conc_final_lb = exp(out_lb)
+        conc_final_ub = exp(out_ub)
+        abs_final = exp(out)
+        abs_final_lb, abs_final_ub = abs_final.gamma()
+
+        threshold = 1e-6  # allow some numerical error
+
+        # sometimes error larger than torch.allclose() accepts
+        # self.assertTrue(torch.allclose(conc_final_lb, abs_final_lb))
+        # self.assertTrue(torch.allclose(conc_final_ub, abs_final_ub))
+        diff_lb = (conc_final_lb - abs_final_lb).abs()
+        diff_ub = (conc_final_ub - abs_final_ub).abs()
+        assert diff_lb.max() < threshold
+        assert diff_ub.max() < threshold
+    return
 
 def maxpool1d_by_lbub(dom: AbsDom, ntimes: int = 10):
     """ Validate that the MaxPool1d layer is correct by checking its afterward LB/UB. """
