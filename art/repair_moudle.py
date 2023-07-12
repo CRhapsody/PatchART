@@ -49,7 +49,7 @@ class SupportNet(nn.Module):
         # self.violate_judge_layer = nn.Linear(self.hidden_sizes[-1], 2)
         # add a sigmoid layer to the end of the network
         self.sigmoid = dom.Sigmoid()
-        self.softmax = dom.Softmax()
+        # self.softmax = dom.Softmax()
         return 
     
     def forward(self, x):
@@ -76,6 +76,7 @@ class SupportNet(nn.Module):
             'Hidden sizes (len %d): ' % len(self.hidden_sizes) + str(self.hidden_sizes),
             'Output size: %d' % self.output_size,
             'Activation: %s' % self.acti,
+            'last function: %s' % self.sigmoid,
             '--- End of SupportNet ---'
         ]
         return '\n'.join(ss)
@@ -142,7 +143,7 @@ class Netsum(nn.Module):
     This class is to add the patch net to target net:
     
     '''
-    def __init__(self, dom: AbsDom, target_net: AcasNet, support_nets: nn.Module, patch_nets: List[nn.Module], device = None, ):
+    def __init__(self, dom: AbsDom, target_net: AcasNet, support_nets: nn.Module, patch_nets: List[nn.Module], A, device = None ):
         '''
         :params 
         '''
@@ -162,6 +163,7 @@ class Netsum(nn.Module):
             for i,patch in enumerate(self.patch_nets):
                 self.add_module(f'patch{i}',patch)
                 patch.to(device)
+        self.A = A
         
         # self.sigmoid = dom.Sigmoid()
         # self.connect_layers = []
@@ -189,8 +191,8 @@ class Netsum(nn.Module):
                 K = K.detach()
                 bar = (K * classes_score[:,i].view(-1,1))
                 # -K, -K
-                out += self.acti(pa + bar)
-                    # + -1*self.acti(-1*pa + bar)
+                out += self.acti(pa + bar - self.A*K)\
+                    + -1*self.acti(-1*pa + bar -self.A*K )
             else:
                 K = pa.ub().norm(p = float('inf'),dim = -1).view(-1,1)
 
@@ -202,8 +204,8 @@ class Netsum(nn.Module):
                 bar = bar.unsqueeze(dim = 2).expand_as(pa)
                 # using the upper bound of the patch net to instead of the inf norm of patch net
                 # + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)), + (-1*K.unsqueeze(-1).expand_as(pa._lcnst))
-                out += self.acti(pa + bar  )
-                    #+ -1*self.acti(-1*pa + bar)
+                out += self.acti(pa + bar + (-self.A*K.unsqueeze(-1).expand_as(pa._lcnst)) )\
+                    + -1*self.acti(-1*pa + bar + (-self.A*K.unsqueeze(-1).expand_as(pa._lcnst)))
                 
         # out = self.sigmoid(out)
         return out
@@ -227,7 +229,7 @@ class NetFeatureSum(nn.Module):
     This class is to add the patch net to target net:
     
     '''
-    def __init__(self, dom: AbsDom, target_net: MnistNet, support_nets: nn.Module, patch_nets: List[nn.Module], device = None, ):
+    def __init__(self, dom: AbsDom, target_net: MnistNet, support_nets: nn.Module, patch_nets: List[nn.Module], A,  device = None,):
         '''
         :params 
         '''
@@ -250,7 +252,7 @@ class NetFeatureSum(nn.Module):
         # self.sigmoid = dom.Sigmoid()
         
         # self.connect_layers = []
-
+        self.A = A
 
 
     def forward(self, x):
@@ -277,8 +279,8 @@ class NetFeatureSum(nn.Module):
                 K = pa.norm(p = float('inf'),dim = -1).view(-1,1)
                 K = K.detach()
                 bar = (K * classes_score[:,i].view(-1,1))
-                out += self.acti(pa + bar -K)\
-                    + -1*self.acti(-1*pa + bar -K)
+                out += self.acti(pa + bar - self.A*K)\
+                    + -1*self.acti(-1*pa + bar -self.A*K )
                 
 
 
@@ -292,8 +294,8 @@ class NetFeatureSum(nn.Module):
                 bar = (K * classes_score[:,:,i])
                 bar = bar.unsqueeze(dim = 2).expand_as(pa)
                 # using the upper bound of the patch net to instead of the inf norm of patch net
-                out += self.acti(pa + bar + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)) )\
-                    + -1*self.acti(-1*pa + bar + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)))
+                out += self.acti(pa + bar + (-self.A*K.unsqueeze(-1).expand_as(pa._lcnst)) )\
+                    + -1*self.acti(-1*pa + bar + (-self.A*K.unsqueeze(-1).expand_as(pa._lcnst)))
                 
         # origin add patch repair, then sigmoid
         # out = self.sigmoid(origin_before_sigmoid)

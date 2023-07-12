@@ -119,7 +119,7 @@ class ExpArgParser(argparse.ArgumentParser):
                           help='refine a dimension only when its width still > this tiny_width')
 
         # training hyper-parameters
-        self.add_argument('--lr', type=float, default=1e-3,
+        self.add_argument('--lr', type=float, default=1e-2,
                           help='initial learning rate during training')
         self.add_argument('--batch_size', type=int, default=32,
                           help='mini batch size during each training epoch')
@@ -167,7 +167,7 @@ class ExpArgParser(argparse.ArgumentParser):
             logger.setLevel(logging.INFO)
 
         timestamp = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
-        args.stamp = f'{args.exp_fn}-{timestamp}'
+        args.stamp = f'lr{args.lr}-weight_decay{args.weight_decay}-kcoeff{args.k_coeff}-support_loss{args.support_loss}-accuracy_loss{args.accuracy_loss}-rapair_radius{args.repair_radius}-{timestamp}'
         logger.handlers = []  # reset, otherwise it may duplicate many times when calling setup_logger() multiple times
         if self.log_dir is not None:
             log_path = Path(self.log_dir, f'{args.stamp}.log')
@@ -236,3 +236,28 @@ class timeout:
         signal.alarm(0)
         return
     pass
+
+class EarlyStopper(object):
+    '''
+    patience: how many epochs to wait before early stopping
+    min_delta: minimum change in the monitored quantity to qualify as an improvement
+
+    '''
+    def __init__(self, patience=1, min_delta=0):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.min_validation_loss = np.inf
+
+    def early_stop(self, model,validation_loss):
+        if validation_loss < self.min_validation_loss:
+            self.min_validation_loss = validation_loss
+            self.counter = 0
+            torch.save(model.state_dict(), f'support_checkpoint{validation_loss}.pt')
+        elif validation_loss >= (self.min_validation_loss + self.min_delta):
+            self.counter += 1
+            if self.counter >= self.patience:
+                return True
+        return False
+    def get_best_model(self, model:torch.nn.Module, device):
+        return model.load_state_dict(torch.load(f'support_checkpoint{self.min_validation_loss}.pt', map_location=device))

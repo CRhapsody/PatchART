@@ -235,11 +235,11 @@ def pgd():
     
     test = datasets.MNIST('./data/', train=False, transform=transforms.Compose([transforms.ToTensor(),]),download=False)
 
-    train_loader = DataLoader(train, batch_size=32)
+    train_loader = DataLoader(train, batch_size=256)
     iter_train = iter(train_loader)
     # atk_images, atk_labels = iter_train.next()
 
-    test_loader = DataLoader(test, batch_size=16)
+    test_loader = DataLoader(test, batch_size=64)
     iter_test = iter(test_loader)
     # atk_images, atk_labels = iter_test.next()
 
@@ -249,7 +249,7 @@ def pgd():
     # print(train_set[0].shape,train_set[1].shape)
     # print(test_set[0].shape,test_set[1].shape)
     import math
-    train_nbatch = math.ceil(60000/128)
+    train_nbatch = math.ceil(60000/256)
     test_nbatch = math.ceil(10000/64)
 
 
@@ -273,9 +273,9 @@ def pgd():
     for name, param in model.named_parameters():
         print(f"Layer: {name} | Size: {param.size()} | Values : {param[:2]} \n")
 
-    pgd = PGD(model=model, eps=0.1, alpha=2/255, steps=80, random_start=True)
+    pgd = PGD(model=model, eps=0.1, alpha=2/255, steps=100, random_start=True)
     for i in range(train_nbatch):
-        images,labels = iter_train.next()
+        images,labels = iter_train.__next__()
         images = images.to(device)
         labels = labels.to(device)
         adv_images = pgd.forward(images,labels)
@@ -302,11 +302,11 @@ def pgd():
         ratio = correct / len(train_attack_data)
 
     torch.save((train_attack_data,train_attack_labels),'./data/MNIST/processed/train_attack_data_full.pt')
-    torch.save((train_attack_data[:1000],train_attack_labels[:1000]),'./data/MNIST/processed/train_attack_data_part.pt')
-    torch.save(train_attacked[:1000],'./data/MNIST/processed/train_attack_data_part_label.pt')
+    torch.save((train_attack_data[:5000],train_attack_labels[:5000]),'./data/MNIST/processed/train_attack_data_part_5000.pt')
+    torch.save(train_attacked[:5000],'./data/MNIST/processed/train_attack_data_part_label_5000.pt')
 
     for i in range(test_nbatch):
-        images,labels = iter_test.next()
+        images,labels = iter_test.__next__()
         images = images.to(device)
         labels = labels.to(device)
         adv_images = pgd.forward(images,labels)
@@ -326,8 +326,8 @@ def pgd():
     test_attacked = torch.cat(test_attacked)
 
     torch.save((test_attack_data,test_attack_labels),'./data/MNIST/processed/test_attack_data_full.pt')
-    torch.save((test_attack_data[:500],test_attack_labels[:500]),'./data/MNIST/processed/test_attack_data_part.pt')
-    torch.save(test_attacked[:500],'./data/MNIST/processed/test_attack_data_part_label.pt')
+    torch.save((test_attack_data[:2500],test_attack_labels[:2500]),'./data/MNIST/processed/test_attack_data_part_2500.pt')
+    torch.save(test_attacked[:2500],'./data/MNIST/processed/test_attack_data_part_label_2500.pt')
 
 
 if __name__ == "__main__":
