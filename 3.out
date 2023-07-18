@@ -1,0 +1,656 @@
+nohup: ignoring input
+[2023-07-12 15:22:32,457][INFO] 
+===== lr0.005-weight_decay0.0001-kcoeff0.4-support_lossSmoothL1-accuracy_lossCE-rapair_radius0.01-2023-07-12-15-22-32 configuration =====
+  exp_fn: test_goal_safety
+  seed: None
+  dom: deeppoly
+  start_abs_cnt: 5000
+  max_abs_cnt: 10000
+  refine_top_k: 200
+  tiny_width: 0.001
+  lr: 0.005
+  batch_size: 100
+  min_epochs: 25
+  max_epochs: 35
+  use_scheduler: True
+  no_pts: False
+  no_abs: False
+  no_refine: False
+  quiet: False
+  debug: False
+  no_repair: False
+  reassure_support_and_patch_combine: True
+  repair_radius: 0.01
+  weight_decay: 0.0001
+  k_coeff: 0.4
+  accuracy_loss: <function MnistArgParser.setup_rest.<locals>.ce_loss at 0x7f8a8c363c10>
+  support_loss: SmoothL1Loss()
+  sample_amount: 5000
+  reset_params: False
+  max_verifier_sec: 300
+  verifier_timeout_as_safe: True
+  scheduler_fn: <function ExpArgParser.setup_rest.<locals>.<lambda> at 0x7f8a8c363ca0>
+===== end of lr0.005-weight_decay0.0001-kcoeff0.4-support_lossSmoothL1-accuracy_lossCE-rapair_radius0.01-2023-07-12-15-22-32 configuration =====
+
+[2023-07-12 15:22:32,458][INFO] ===== start repair ======
+[2023-07-12 15:22:32,458][INFO] For pgd attack net
+[2023-07-12 15:22:34,947][INFO] --Support network: --- SupportNet ---
+Name: support network
+Num layers: 5 (i.e. hidden + output, excluding input layer)
+Input size: 32
+Hidden sizes (len 4): [10, 10, 10, 10]
+Output size: 10
+Activation: deeppoly.ReLU()
+last function: deeppoly.Sigmoid()
+--- End of SupportNet ---
+[2023-07-12 15:22:34,947][INFO] --Patch network: --- PatchNet ---
+Name: patch network 9
+Num layers: 5 (i.e. hidden + output, excluding input layer)
+Input size: 32
+Hidden sizes (len 4): [10, 10, 10, 10]
+Output size: 10
+Activation: deeppoly.ReLU()
+--- End of PatchNet ---
+[2023-07-12 15:22:34,948][INFO] start pre-training support network:
+[2023-07-12 15:22:35,195][INFO] Epoch 1: support loss 0.05647009429641259
+[2023-07-12 15:22:35,459][INFO] Epoch 2: support loss 0.03466570960023464
+[2023-07-12 15:22:35,701][INFO] Epoch 3: support loss 0.033671372379056916
+[2023-07-12 15:22:35,915][INFO] Epoch 4: support loss 0.03288708954380873
+[2023-07-12 15:22:36,131][INFO] Epoch 5: support loss 0.030466824101331908
+[2023-07-12 15:22:36,342][INFO] Epoch 6: support loss 0.028483783659071494
+[2023-07-12 15:22:36,630][INFO] Epoch 7: support loss 0.026849953768153984
+[2023-07-12 15:22:36,839][INFO] Epoch 8: support loss 0.025663032960624266
+[2023-07-12 15:22:37,063][INFO] Epoch 9: support loss 0.025168415158987045
+[2023-07-12 15:22:37,270][INFO] Epoch 10: support loss 0.02466220060029091
+[2023-07-12 15:22:37,500][INFO] Epoch 11: support loss 0.024306349981671724
+[2023-07-12 15:22:37,710][INFO] Epoch 12: support loss 0.023839309954872497
+[2023-07-12 15:22:37,930][INFO] Epoch 13: support loss 0.02357689229150613
+[2023-07-12 15:22:38,149][INFO] Epoch 14: support loss 0.023115055802731942
+[2023-07-12 15:22:38,356][INFO] Epoch 15: support loss 0.02261076681315899
+[2023-07-12 15:22:38,650][INFO] Epoch 16: support loss 0.02231838019230427
+[2023-07-12 15:22:38,918][INFO] Epoch 17: support loss 0.021736931891586535
+[2023-07-12 15:22:39,153][INFO] Epoch 18: support loss 0.021312367648650438
+[2023-07-12 15:22:39,410][INFO] Epoch 19: support loss 0.020697893741994332
+[2023-07-12 15:22:39,700][INFO] Epoch 20: support loss 0.02037050257413051
+[2023-07-12 15:22:39,908][INFO] Epoch 21: support loss 0.020180807986225072
+[2023-07-12 15:22:40,171][INFO] Epoch 22: support loss 0.019899195024313834
+[2023-07-12 15:22:40,416][INFO] Epoch 23: support loss 0.019838156894995615
+[2023-07-12 15:22:40,651][INFO] Epoch 24: support loss 0.019614854851403296
+[2023-07-12 15:22:40,899][INFO] Epoch 25: support loss 0.019342791241330978
+[2023-07-12 15:22:41,207][INFO] Epoch 26: support loss 0.019393792937103756
+[2023-07-12 15:22:41,469][INFO] Epoch 27: support loss 0.019348144423789702
+[2023-07-12 15:22:41,671][INFO] Epoch 28: support loss 0.01916130531865817
+[2023-07-12 15:22:41,899][INFO] Epoch 29: support loss 0.019096357747912407
+[2023-07-12 15:22:42,134][INFO] Epoch 30: support loss 0.01886357335994641
+[2023-07-12 15:22:42,362][INFO] Epoch 31: support loss 0.018857375635072973
+[2023-07-12 15:22:42,638][INFO] Epoch 32: support loss 0.018782836146270618
+[2023-07-12 15:22:42,876][INFO] Epoch 33: support loss 0.018509529698162507
+[2023-07-12 15:22:43,108][INFO] Epoch 34: support loss 0.01850728555701864
+[2023-07-12 15:22:43,345][INFO] Epoch 35: support loss 0.018370585014613774
+[2023-07-12 15:22:43,575][INFO] Epoch 36: support loss 0.018231011162965726
+[2023-07-12 15:22:43,838][INFO] Epoch 37: support loss 0.018007533923269082
+[2023-07-12 15:22:44,118][INFO] Epoch 38: support loss 0.018059119486655943
+[2023-07-12 15:22:44,326][INFO] Epoch 39: support loss 0.017914947480536424
+[2023-07-12 15:22:44,564][INFO] Epoch 40: support loss 0.01769879487796854
+[2023-07-12 15:22:44,794][INFO] Epoch 41: support loss 0.017810562052405797
+[2023-07-12 15:22:45,027][INFO] Epoch 42: support loss 0.017671242798081577
+[2023-07-12 15:22:45,278][INFO] Epoch 43: support loss 0.01770558012410616
+[2023-07-12 15:22:45,500][INFO] Epoch 44: support loss 0.01758638249996763
+[2023-07-12 15:22:45,790][INFO] Epoch 45: support loss 0.017522277011989783
+[2023-07-12 15:22:46,010][INFO] Epoch 46: support loss 0.01744824253882353
+[2023-07-12 15:22:46,222][INFO] Epoch 47: support loss 0.01733662746846676
+[2023-07-12 15:22:46,499][INFO] Epoch 48: support loss 0.017426312160797607
+[2023-07-12 15:22:46,817][INFO] Epoch 49: support loss 0.017186483045896657
+[2023-07-12 15:22:47,076][INFO] Epoch 50: support loss 0.017255960271144524
+[2023-07-12 15:22:47,362][INFO] Epoch 51: support loss 0.017216263744884577
+[2023-07-12 15:22:47,583][INFO] Epoch 52: support loss 0.017295007546169635
+[2023-07-12 15:22:47,836][INFO] Epoch 53: support loss 0.017207748805865262
+[2023-07-12 15:22:47,839][INFO] test support net accuracy: 0.7441176470588236
+/home/chizm/PatchART/art/bisecter.py:491: UserWarning: where received a uint8 condition tensor. This behavior is deprecated and will be removed in a future version of PyTorch. Use a boolean condition instead. (Triggered internally at /opt/conda/conda-bld/pytorch_1670525541702/work/aten/src/ATen/native/TensorCompare.cpp:413.)
+  lefts_ub = torch.where(onehot_idxs, mid, ub)
+[2023-07-12 21:14:17,540][INFO] [0m 0s (0.450 seconds)] After epoch 0:
+[2023-07-12 21:14:17,540][INFO] Loaded 10000 points for training.
+[2023-07-12 21:14:17,540][INFO] Loaded 5000 abstractions for training.
+[2023-07-12 21:14:17,633][INFO] min loss 13.246176719665527, max loss 88.86544799804688.
+[2023-07-12 21:14:17,635][INFO] Max loss at LB: tensor([-1.0000e-02,  3.2446e+00, -1.0000e-02,  1.9968e+00,  2.9712e+00,
+        -1.0000e-02,  2.0275e+00, -1.0000e-02,  4.5734e+00,  7.4135e+00,
+        -1.0000e-02, -1.0000e-02, -1.0000e-02,  5.7102e+00, -1.0000e-02,
+         5.6093e-01,  4.6088e+00,  7.5133e-01,  2.0412e+00,  1.3918e+01,
+         9.5334e-01,  2.4782e+00,  8.3979e+00,  1.7753e+00,  3.6660e+00,
+        -1.0000e-02,  1.7753e+00,  4.0005e-02,  2.2562e+00, -1.0000e-02,
+        -1.0000e-02, -1.0000e-02], device='cuda:3'), UB: tensor([1.0000e-02, 3.2546e+00, 0.0000e+00, 2.0068e+00, 2.9912e+00, 1.0000e-02,
+        2.0475e+00, 1.0000e-02, 4.5834e+00, 7.4185e+00, 0.0000e+00, 0.0000e+00,
+        1.0000e-02, 5.7302e+00, 1.0000e-02, 5.7093e-01, 4.6188e+00, 7.6133e-01,
+        2.0612e+00, 1.3928e+01, 9.6334e-01, 2.4832e+00, 8.4079e+00, 1.7853e+00,
+        3.6760e+00, 1.0000e-02, 1.7853e+00, 5.0005e-02, 2.2762e+00, 1.0000e-02,
+        1.0000e-02, 1.0000e-02], device='cuda:3'), rule: tensor([0, 0, 0, 0, 0, 0, 1, 0, 0, 0], device='cuda:3', dtype=torch.uint8).
+[2023-07-12 21:14:17,644][INFO] Test set accuracy 0.07352941176470588.
+[2023-07-12 21:14:17,644][INFO] Train set accuracy 0.0647.
+[2023-07-12 21:14:17,644][INFO] 
+[0m 0s (0.554 seconds)] Starting epoch 1:
+[2023-07-12 21:14:34,194][INFO] [0m 17s (17.104 seconds)] At epoch 1: avg accuracy training loss 13.845580636765808.
+[2023-07-12 21:14:38,552][INFO] [0m 21s (21.463 seconds)] After epoch 1:
+[2023-07-12 21:14:38,553][INFO] Loaded 10000 points for training.
+[2023-07-12 21:14:38,554][INFO] Loaded 5254 abstractions for training.
+[2023-07-12 21:14:38,624][INFO] min loss 0.0, max loss 8.862339973449707.
+[2023-07-12 21:14:38,626][INFO] Max loss at LB: tensor([-0.0100, -0.0100,  0.0221,  4.2033,  6.3098, -0.0100,  0.5984, -0.0100,
+        -0.0100,  1.2061,  4.1894,  0.7005, -0.0100, -0.0100,  9.3238,  2.2065,
+        -0.0100, -0.0100, -0.0100,  0.0675,  1.0865,  6.6496,  2.1452,  4.0930,
+         6.1404,  0.5187,  4.6058, -0.0100, -0.0100,  2.7388, -0.0100,  1.1685],
+       device='cuda:3'), UB: tensor([0.0100, 0.0100, 0.0421, 4.2233, 6.3298, 0.0100, 0.6184, 0.0100, 0.0000,
+        1.2261, 4.2094, 0.7205, 0.0100, 0.0000, 9.3438, 2.2265, 0.0100, 0.0100,
+        0.0100, 0.0775, 1.0965, 6.6696, 2.1552, 4.1130, 6.1604, 0.5387, 4.6158,
+        0.0100, 0.0000, 2.7588, 0.0100, 1.1885], device='cuda:3'), rule: tensor([0, 0, 0, 0, 0, 1, 0, 0, 0, 0], device='cuda:3', dtype=torch.uint8).
+[2023-07-12 21:14:38,634][INFO] Test set accuracy 0.5735294117647058.
+[2023-07-12 21:14:38,634][INFO] Train set accuracy 0.5746.
+[2023-07-12 21:14:38,634][INFO] 
+[0m 21s (21.544 seconds)] Starting epoch 2:
+[2023-07-12 21:14:54,611][INFO] [0m 37s (37.521 seconds)] At epoch 2: avg accuracy training loss 0.008190221972763539.
+[2023-07-12 21:14:58,727][INFO] [0m 41s (41.637 seconds)] After epoch 2:
+[2023-07-12 21:14:58,729][INFO] Loaded 10000 points for training.
+[2023-07-12 21:14:58,729][INFO] Loaded 5254 abstractions for training.
+[2023-07-12 21:14:58,805][INFO] min loss 0.0, max loss 0.0.
+[2023-07-12 21:14:58,806][INFO] All 5254 abstractions certified.
+[2023-07-12 21:14:58,815][INFO] Test set accuracy 0.6095588235294118.
+[2023-07-12 21:14:58,815][INFO] Train set accuracy 0.615.
+[2023-07-12 21:14:58,815][INFO] 
+[0m 41s (41.725 seconds)] Starting epoch 3:
+[2023-07-12 21:15:16,100][INFO] [0m 59s (59.010 seconds)] At epoch 3: avg accuracy training loss 0.0009253739786799997.
+[2023-07-12 21:15:21,125][INFO] [1m 4s (64.035 seconds)] After epoch 3:
+[2023-07-12 21:15:21,127][INFO] Loaded 10000 points for training.
+[2023-07-12 21:15:21,127][INFO] Loaded 5508 abstractions for training.
+[2023-07-12 21:15:21,203][INFO] min loss 0.0, max loss 4.748084545135498.
+[2023-07-12 21:15:21,205][INFO] Max loss at LB: tensor([-1.0000e-02, -1.0000e-02,  3.1993e+00,  2.2744e-02, -1.0000e-02,
+        -1.0000e-02,  6.2857e+00, -1.0000e-02, -1.0000e-02, -1.0000e-02,
+         2.5150e+00,  1.8324e+00, -1.0000e-02, -1.0000e-02,  1.1488e+01,
+         2.7618e+00, -1.0000e-02, -1.0000e-02,  3.6018e+00,  1.1824e+00,
+         7.7600e+00,  4.0298e+00, -1.0000e-02, -1.0000e-02,  8.8004e-01,
+         5.6648e+00, -1.0000e-02,  7.8729e-01,  9.9578e-01,  1.4207e+00,
+         5.5558e+00, -1.0000e-02], device='cuda:3'), UB: tensor([1.0000e-02, 0.0000e+00, 3.2193e+00, 3.2744e-02, 1.0000e-02, 1.0000e-02,
+        6.3057e+00, 1.0000e-02, 1.0000e-02, 1.0000e-02, 2.5350e+00, 1.8524e+00,
+        1.0000e-02, 1.0000e-02, 1.1508e+01, 2.7818e+00, 1.0000e-02, 1.0000e-02,
+        3.6218e+00, 1.2024e+00, 7.7800e+00, 4.0498e+00, 1.0000e-02, 0.0000e+00,
+        8.9004e-01, 5.6848e+00, 0.0000e+00, 8.0729e-01, 1.0058e+00, 1.4407e+00,
+        5.5658e+00, 0.0000e+00], device='cuda:3'), rule: tensor([0, 0, 1, 0, 0, 0, 0, 0, 0, 0], device='cuda:3', dtype=torch.uint8).
+[2023-07-12 21:15:21,215][INFO] Test set accuracy 0.6150735294117647.
+[2023-07-12 21:15:21,215][INFO] Train set accuracy 0.6211.
+[2023-07-12 21:15:21,215][INFO] 
+[1m 4s (64.125 seconds)] Starting epoch 4:
+[2023-07-12 21:15:38,659][INFO] [1m 21s (81.569 seconds)] At epoch 4: avg accuracy training loss 0.0050678206793963905.
+[2023-07-12 21:15:42,842][INFO] [1m 25s (85.752 seconds)] After epoch 4:
+[2023-07-12 21:15:42,844][INFO] Loaded 10000 points for training.
+[2023-07-12 21:15:42,844][INFO] Loaded 5508 abstractions for training.
+[2023-07-12 21:15:42,918][INFO] min loss 0.0, max loss 0.0.
+[2023-07-12 21:15:42,919][INFO] All 5508 abstractions certified.
+[2023-07-12 21:15:42,929][INFO] Test set accuracy 0.6352941176470588.
+[2023-07-12 21:15:42,929][INFO] Train set accuracy 0.6387.
+[2023-07-12 21:15:42,929][INFO] 
+[1m 25s (85.839 seconds)] Starting epoch 5:
+[2023-07-12 21:15:59,778][INFO] [1m 42s (102.688 seconds)] At epoch 5: avg accuracy training loss 0.0030660727620124817.
+[2023-07-12 21:16:04,508][INFO] [1m 47s (107.418 seconds)] After epoch 5:
+[2023-07-12 21:16:04,508][INFO] Loaded 10000 points for training.
+[2023-07-12 21:16:04,509][INFO] Loaded 5762 abstractions for training.
+[2023-07-12 21:16:04,582][INFO] min loss 0.0, max loss 7.190985202789307.
+[2023-07-12 21:16:04,592][INFO] Max loss at LB: tensor([-0.0100,  1.6444, -0.0100, -0.0100,  4.3079, -0.0100, -0.0100, -0.0100,
+         1.7468,  1.6387, -0.0100, -0.0100, -0.0100,  6.9451, -0.0100,  0.1560,
+         2.4029, -0.0100, -0.0100,  3.7462,  2.3473, -0.0100,  0.9957,  5.6833,
+         1.7825,  1.6585,  1.8424, -0.0100,  4.1483, -0.0100,  0.5286,  1.7175],
+       device='cuda:3'), UB: tensor([0.0100, 1.6644, 0.0000, 0.0000, 4.3279, 0.0100, 0.0000, 0.0100, 1.7668,
+        1.6587, 0.0100, 0.0100, 0.0100, 6.9651, 0.0000, 0.1760, 2.4229, 0.0100,
+        0.0100, 3.7662, 2.3573, 0.0100, 1.0157, 5.7033, 1.8025, 1.6785, 1.8624,
+        0.0100, 4.1683, 0.0100, 0.5386, 1.7275], device='cuda:3'), rule: tensor([0, 0, 0, 0, 1, 0, 0, 0, 0, 0], device='cuda:3', dtype=torch.uint8).
+[2023-07-12 21:16:04,601][INFO] Test set accuracy 0.6349264705882353.
+[2023-07-12 21:16:04,601][INFO] Train set accuracy 0.6439.
+[2023-07-12 21:16:04,601][INFO] 
+[1m 47s (107.511 seconds)] Starting epoch 6:
+[2023-07-12 21:16:22,080][INFO] [2m 4s (124.990 seconds)] At epoch 6: avg accuracy training loss 0.004884888869710267.
+[2023-07-12 21:16:26,467][INFO] [2m 9s (129.378 seconds)] After epoch 6:
+[2023-07-12 21:16:26,469][INFO] Loaded 10000 points for training.
+[2023-07-12 21:16:26,469][INFO] Loaded 5762 abstractions for training.
+[2023-07-12 21:16:26,537][INFO] min loss 0.0, max loss 0.0.
+[2023-07-12 21:16:26,537][INFO] All 5762 abstractions certified.
+[2023-07-12 21:16:26,546][INFO] Test set accuracy 0.6441176470588236.
+[2023-07-12 21:16:26,546][INFO] Train set accuracy 0.65.
+[2023-07-12 21:16:26,546][INFO] 
+[2m 9s (129.456 seconds)] Starting epoch 7:
+[2023-07-12 21:16:43,928][INFO] [2m 26s (146.839 seconds)] At epoch 7: avg accuracy training loss 0.0011376648209989071.
+[2023-07-12 21:16:49,058][INFO] [2m 31s (151.968 seconds)] After epoch 7:
+[2023-07-12 21:16:49,059][INFO] Loaded 10000 points for training.
+[2023-07-12 21:16:49,059][INFO] Loaded 6017 abstractions for training.
+[2023-07-12 21:16:49,129][INFO] min loss 0.0, max loss 1.6622868776321411.
+[2023-07-12 21:16:49,131][INFO] Max loss at LB: tensor([-1.0000e-02, -1.0000e-02,  2.0160e+00, -1.0000e-02, -1.0000e-02,
+        -1.0000e-02,  9.1701e+00,  3.3904e+00, -1.0000e-02, -1.0000e-02,
+         6.6979e+00, -1.0000e-02, -1.0000e-02, -1.0000e-02,  6.1752e+00,
+         9.4610e-01, -1.0000e-02, -1.0000e-02, -1.0000e-02,  2.6418e-01,
+         1.0091e+01, -1.0000e-02,  8.6011e-01,  1.4383e-01,  4.8404e+00,
+         1.0471e+01, -1.0000e-02,  2.0695e-01,  3.2486e+00, -1.0000e-02,
+         4.0929e+00, -1.0000e-02], device='cuda:3'), UB: tensor([ 1.0000e-02,  1.0000e-02,  2.0360e+00,  0.0000e+00,  1.0000e-02,
+         0.0000e+00,  9.1901e+00,  3.4104e+00,  1.0000e-02,  1.0000e-02,
+         6.7179e+00,  1.0000e-02,  1.0000e-02,  1.0000e-02,  6.1952e+00,
+         9.6610e-01,  1.0000e-02,  0.0000e+00,  1.0000e-02,  2.8418e-01,
+         1.0111e+01,  1.0000e-02,  8.8011e-01,  1.5383e-01,  4.8604e+00,
+         1.0491e+01,  0.0000e+00,  2.2695e-01,  3.2686e+00,  1.0000e-02,
+         4.1029e+00, -5.0000e-03], device='cuda:3'), rule: tensor([0, 0, 1, 0, 0, 0, 0, 0, 0, 0], device='cuda:3', dtype=torch.uint8).
+[2023-07-12 21:16:49,139][INFO] Test set accuracy 0.6408088235294118.
+[2023-07-12 21:16:49,139][INFO] Train set accuracy 0.6518.
+[2023-07-12 21:16:49,139][INFO] 
+[2m 32s (152.049 seconds)] Starting epoch 8:
+[2023-07-12 21:17:05,600][INFO] [2m 48s (168.510 seconds)] At epoch 8: avg accuracy training loss 0.0009186957031488419.
+[2023-07-12 21:17:10,007][INFO] [2m 52s (172.917 seconds)] After epoch 8:
+[2023-07-12 21:17:10,008][INFO] Loaded 10000 points for training.
+[2023-07-12 21:17:10,009][INFO] Loaded 6017 abstractions for training.
+[2023-07-12 21:17:10,079][INFO] min loss 0.0, max loss 0.0.
+[2023-07-12 21:17:10,079][INFO] All 6017 abstractions certified.
+[2023-07-12 21:17:10,088][INFO] Test set accuracy 0.6477941176470589.
+[2023-07-12 21:17:10,088][INFO] Train set accuracy 0.658.
+[2023-07-12 21:17:10,088][INFO] 
+[2m 52s (172.998 seconds)] Starting epoch 9:
+[2023-07-12 21:17:27,228][INFO] [3m 10s (190.138 seconds)] At epoch 9: avg accuracy training loss 0.0011423039436340332.
+[2023-07-12 21:17:31,681][INFO] [3m 14s (194.591 seconds)] After epoch 9:
+[2023-07-12 21:17:31,683][INFO] Loaded 10000 points for training.
+[2023-07-12 21:17:31,683][INFO] Loaded 6017 abstractions for training.
+[2023-07-12 21:17:31,758][INFO] min loss 0.0, max loss 0.0.
+[2023-07-12 21:17:31,759][INFO] All 6017 abstractions certified.
+[2023-07-12 21:17:31,767][INFO] Test set accuracy 0.6455882352941177.
+[2023-07-12 21:17:31,767][INFO] Train set accuracy 0.6584.
+[2023-07-12 21:17:31,767][INFO] 
+[3m 14s (194.677 seconds)] Starting epoch 10:
+[2023-07-12 21:17:48,795][INFO] [3m 31s (211.705 seconds)] At epoch 10: avg accuracy training loss 0.0004553310200572014.
+[2023-07-12 21:17:54,620][INFO] [3m 37s (217.531 seconds)] After epoch 10:
+[2023-07-12 21:17:54,623][INFO] Loaded 10000 points for training.
+[2023-07-12 21:17:54,623][INFO] Loaded 6272 abstractions for training.
+[2023-07-12 21:17:54,715][INFO] min loss 0.0, max loss 6.9449005126953125.
+[2023-07-12 21:17:54,717][INFO] Max loss at LB: tensor([-0.0100,  2.9246,  4.3792,  2.3829, -0.0100,  4.0412,  6.5484, -0.0100,
+         4.1984, -0.0100,  8.1987, -0.0100, -0.0100, -0.0100,  0.6002, -0.0100,
+        -0.0100, -0.0100,  2.5816,  1.4240,  5.4986, -0.0100,  6.2400,  0.7155,
+         1.0979, -0.0100,  1.3511, -0.0100, -0.0100,  0.1540,  0.1196, -0.0100],
+       device='cuda:3'), UB: tensor([0.0100, 2.9446, 4.3992, 2.4029, 0.0100, 4.0512, 6.5684, 0.0000, 4.2184,
+        0.0100, 8.2187, 0.0000, 0.0100, 0.0000, 0.6102, 0.0100, 0.0100, 0.0100,
+        2.6016, 1.4440, 5.5186, 0.0000, 6.2600, 0.7355, 1.1179, 0.0100, 1.3711,
+        0.0000, 0.0100, 0.1740, 0.1296, 0.0100], device='cuda:3'), rule: tensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 1], device='cuda:3', dtype=torch.uint8).
+[2023-07-12 21:17:54,726][INFO] Test set accuracy 0.6654411764705882.
+[2023-07-12 21:17:54,726][INFO] Train set accuracy 0.6804.
+[2023-07-12 21:17:54,726][INFO] 
+[3m 37s (217.636 seconds)] Starting epoch 11:
+[2023-07-12 21:18:12,101][INFO] [3m 55s (235.012 seconds)] At epoch 11: avg accuracy training loss 0.005904498547315598.
+[2023-07-12 21:18:18,321][INFO] [4m 1s (241.232 seconds)] After epoch 11:
+[2023-07-12 21:18:18,322][INFO] Loaded 10000 points for training.
+[2023-07-12 21:18:18,322][INFO] Loaded 6524 abstractions for training.
+[2023-07-12 21:18:18,406][INFO] min loss 0.0, max loss 0.1493958681821823.
+[2023-07-12 21:18:18,407][INFO] Max loss at LB: tensor([-0.0100,  0.4854,  1.7641,  0.8882,  2.4229, -0.0100,  3.1093,  4.5144,
+         0.2418,  0.7112,  6.3755, -0.0100, -0.0100, -0.0100,  5.0011, -0.0100,
+        -0.0100,  0.0000, -0.0100, -0.0100,  2.0011, -0.0100,  4.2189,  5.8585,
+         1.9115,  1.0183,  5.7826, -0.0100, -0.0100, -0.0100,  6.0322,  2.2603],
+       device='cuda:3'), UB: tensor([0.0100, 0.4954, 1.7841, 0.8982, 2.4429, 0.0100, 3.1193, 4.5344, 0.2618,
+        0.7212, 6.3855, 0.0100, 0.0100, 0.0000, 5.0211, 0.0100, 0.0100, 0.0100,
+        0.0000, 0.0000, 2.0111, 0.0100, 4.2389, 5.8785, 1.9215, 1.0383, 5.8026,
+        0.0100, 0.0000, 0.0100, 6.0522, 2.2803], device='cuda:3'), rule: tensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 1], device='cuda:3', dtype=torch.uint8).
+[2023-07-12 21:18:18,416][INFO] Test set accuracy 0.674264705882353.
+[2023-07-12 21:18:18,416][INFO] Train set accuracy 0.684.
+[2023-07-12 21:18:18,416][INFO] 
+[4m 1s (241.327 seconds)] Starting epoch 12:
+[2023-07-12 21:18:34,938][INFO] [4m 17s (257.848 seconds)] At epoch 12: avg accuracy training loss 0.00017762937466613948.
+[2023-07-12 21:18:40,010][INFO] [4m 22s (262.920 seconds)] After epoch 12:
+[2023-07-12 21:18:40,011][INFO] Loaded 10000 points for training.
+[2023-07-12 21:18:40,011][INFO] Loaded 6724 abstractions for training.
+[2023-07-12 21:18:40,090][INFO] min loss 0.0, max loss 2.1702001094818115.
+[2023-07-12 21:18:40,093][INFO] Max loss at LB: tensor([-0.0100,  0.4854,  1.7641,  0.8882,  2.4229, -0.0100,  3.1093,  4.5144,
+         0.2418,  0.7112,  6.3755, -0.0100, -0.0100, -0.0100,  5.0011, -0.0100,
+        -0.0100,  0.0000, -0.0100, -0.0100,  2.0011, -0.0100,  4.2189,  5.8585,
+         1.9115,  1.0183,  5.7826, -0.0100, -0.0100, -0.0100,  6.0322,  2.2603],
+       device='cuda:3'), UB: tensor([ 1.0000e-02,  4.9537e-01,  1.7841e+00,  8.9815e-01,  2.4429e+00,
+         1.0000e-02,  3.1193e+00,  4.5344e+00,  2.6180e-01,  7.2125e-01,
+         6.3855e+00,  1.0000e-02,  1.0000e-02,  0.0000e+00,  5.0211e+00,
+         1.0000e-02,  1.0000e-02,  1.0000e-02,  0.0000e+00,  0.0000e+00,
+         2.0111e+00,  1.0000e-02,  4.2389e+00,  5.8785e+00,  1.9215e+00,
+         1.0383e+00,  5.8026e+00,  1.0000e-02, -5.0000e-03,  1.0000e-02,
+         6.0522e+00,  2.2803e+00], device='cuda:3'), rule: tensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 1], device='cuda:3', dtype=torch.uint8).
+[2023-07-12 21:18:40,108][INFO] Test set accuracy 0.6841911764705882.
+[2023-07-12 21:18:40,108][INFO] Train set accuracy 0.6916.
+[2023-07-12 21:18:40,108][INFO] 
+[4m 23s (263.018 seconds)] Starting epoch 13:
+[2023-07-12 21:18:56,085][INFO] [4m 38s (278.995 seconds)] At epoch 13: avg accuracy training loss 0.0024287525564432146.
+[2023-07-12 21:19:02,482][INFO] [4m 45s (285.392 seconds)] After epoch 13:
+[2023-07-12 21:19:02,483][INFO] Loaded 10000 points for training.
+[2023-07-12 21:19:02,483][INFO] Loaded 6979 abstractions for training.
+[2023-07-12 21:19:02,570][INFO] min loss 0.0, max loss 4.2917256355285645.
+[2023-07-12 21:19:02,572][INFO] Max loss at LB: tensor([-1.0000e-02, -1.0000e-02, -1.0000e-02,  3.6448e+00,  1.7222e+00,
+        -1.0000e-02,  2.7579e+00,  1.8112e+00, -1.0000e-02,  2.0331e+00,
+         3.3957e+00, -1.0000e-02, -1.0000e-02, -1.0000e-02,  1.0333e+01,
+         3.3234e+00, -1.0000e-02, -1.0000e-02, -1.0000e-02, -1.0000e-02,
+         3.3324e+00,  6.6352e+00,  1.6733e+00,  1.3422e+00,  6.3193e+00,
+         3.4142e+00, -1.0000e-02,  2.1988e+00, -1.0000e-02,  3.5954e+00,
+        -1.0000e-02,  1.4065e+00], device='cuda:3'), UB: tensor([1.0000e-02, 1.0000e-02, 1.0000e-02, 3.6648e+00, 1.7422e+00, 1.0000e-02,
+        2.7779e+00, 1.8312e+00, 0.0000e+00, 2.0531e+00, 3.4157e+00, 0.0000e+00,
+        1.0000e-02, 0.0000e+00, 1.0353e+01, 3.3434e+00, 1.0000e-02, 1.0000e-02,
+        0.0000e+00, 0.0000e+00, 3.3424e+00, 6.6452e+00, 1.6933e+00, 1.3622e+00,
+        6.3393e+00, 3.4342e+00, 1.0000e-02, 2.2188e+00, 0.0000e+00, 3.6154e+00,
+        1.0000e-02, 1.4265e+00], device='cuda:3'), rule: tensor([0, 0, 1, 0, 0, 0, 0, 0, 0, 0], device='cuda:3', dtype=torch.uint8).
+[2023-07-12 21:19:02,581][INFO] Test set accuracy 0.6863970588235294.
+[2023-07-12 21:19:02,581][INFO] Train set accuracy 0.7044.
+[2023-07-12 21:19:02,581][INFO] 
+[4m 45s (285.491 seconds)] Starting epoch 14:
+[2023-07-12 21:19:19,356][INFO] [5m 2s (302.266 seconds)] At epoch 14: avg accuracy training loss 0.008552725315093995.
+[2023-07-12 21:19:25,405][INFO] [5m 8s (308.315 seconds)] After epoch 14:
+[2023-07-12 21:19:25,405][INFO] Loaded 10000 points for training.
+[2023-07-12 21:19:25,405][INFO] Loaded 7234 abstractions for training.
+[2023-07-12 21:19:25,493][INFO] min loss 0.0, max loss 5.596468925476074.
+[2023-07-12 21:19:25,495][INFO] Max loss at LB: tensor([-1.0000e-02,  1.5589e+00, -1.0000e-02,  3.5943e+00, -1.0000e-02,
+        -1.0000e-02,  6.8148e+00, -1.0000e-02,  5.7192e-02,  3.3566e+00,
+         3.1589e+00, -1.0000e-02, -1.0000e-02,  5.2955e-02,  2.2180e+00,
+         2.9676e+00,  1.7529e+00, -1.0000e-02, -1.0000e-02,  4.4538e+00,
+         1.1819e+01, -1.0000e-02,  6.3169e+00,  1.9863e-02,  1.0865e+01,
+         5.1724e+00, -1.0000e-02,  2.1518e+00,  2.9142e+00,  1.5333e+00,
+        -1.0000e-02, -1.0000e-02], device='cuda:3'), UB: tensor([ 1.0000e-02,  1.5789e+00, -5.0000e-03,  3.6143e+00,  1.0000e-02,
+         1.0000e-02,  6.8348e+00,  0.0000e+00,  7.7192e-02,  3.3766e+00,
+         3.1789e+00,  0.0000e+00,  1.0000e-02,  7.2955e-02,  2.2380e+00,
+         2.9876e+00,  1.7729e+00,  1.0000e-02,  1.0000e-02,  4.4738e+00,
+         1.1839e+01,  1.0000e-02,  6.3369e+00,  3.9863e-02,  1.0875e+01,
+         5.1924e+00,  0.0000e+00,  2.1618e+00,  2.9342e+00,  1.5533e+00,
+         1.0000e-02,  0.0000e+00], device='cuda:3'), rule: tensor([0, 0, 1, 0, 0, 0, 0, 0, 0, 0], device='cuda:3', dtype=torch.uint8).
+[2023-07-12 21:19:25,505][INFO] Test set accuracy 0.7198529411764706.
+[2023-07-12 21:19:25,505][INFO] Train set accuracy 0.7529.
+[2023-07-12 21:19:25,505][INFO] 
+[5m 8s (308.415 seconds)] Starting epoch 15:
+[2023-07-12 21:19:42,037][INFO] [5m 24s (324.948 seconds)] At epoch 15: avg accuracy training loss 0.0051080195605754854.
+[2023-07-12 21:19:47,070][INFO] [5m 29s (329.980 seconds)] After epoch 15:
+[2023-07-12 21:19:47,071][INFO] Loaded 10000 points for training.
+[2023-07-12 21:19:47,072][INFO] Loaded 7234 abstractions for training.
+[2023-07-12 21:19:47,151][INFO] min loss 0.0, max loss 0.0.
+[2023-07-12 21:19:47,151][INFO] All 7234 abstractions certified.
+[2023-07-12 21:19:47,161][INFO] Test set accuracy 0.7779411764705882.
+[2023-07-12 21:19:47,161][INFO] Train set accuracy 0.7951.
+[2023-07-12 21:19:47,161][INFO] 
+[5m 30s (330.071 seconds)] Starting epoch 16:
+[2023-07-12 21:20:02,959][INFO] [5m 45s (345.869 seconds)] At epoch 16: avg accuracy training loss 0.0002740212343633175.
+[2023-07-12 21:20:07,790][INFO] [5m 50s (350.700 seconds)] After epoch 16:
+[2023-07-12 21:20:07,792][INFO] Loaded 10000 points for training.
+[2023-07-12 21:20:07,794][INFO] Loaded 7234 abstractions for training.
+[2023-07-12 21:20:07,882][INFO] min loss 0.0, max loss 0.0.
+[2023-07-12 21:20:07,883][INFO] All 7234 abstractions certified.
+[2023-07-12 21:20:07,892][INFO] Test set accuracy 0.7849264705882353.
+[2023-07-12 21:20:07,892][INFO] Train set accuracy 0.8105.
+[2023-07-12 21:20:07,892][INFO] 
+[5m 50s (350.802 seconds)] Starting epoch 17:
+[2023-07-12 21:20:25,127][INFO] [6m 8s (368.037 seconds)] At epoch 17: avg accuracy training loss 0.001144290491938591.
+[2023-07-12 21:20:30,945][INFO] [6m 13s (373.855 seconds)] After epoch 17:
+[2023-07-12 21:20:30,948][INFO] Loaded 10000 points for training.
+[2023-07-12 21:20:30,948][INFO] Loaded 7234 abstractions for training.
+[2023-07-12 21:20:31,039][INFO] min loss 0.0, max loss 0.0.
+[2023-07-12 21:20:31,040][INFO] All 7234 abstractions certified.
+[2023-07-12 21:20:31,049][INFO] Test set accuracy 0.7963235294117647.
+[2023-07-12 21:20:31,049][INFO] Train set accuracy 0.8277.
+[2023-07-12 21:20:31,050][INFO] 
+[6m 13s (373.960 seconds)] Starting epoch 18:
+[2023-07-12 21:20:48,594][INFO] [6m 31s (391.504 seconds)] At epoch 18: avg accuracy training loss 0.0032429038826376198.
+[2023-07-12 21:20:53,877][INFO] [6m 36s (396.787 seconds)] After epoch 18:
+[2023-07-12 21:20:53,878][INFO] Loaded 10000 points for training.
+[2023-07-12 21:20:53,878][INFO] Loaded 7234 abstractions for training.
+[2023-07-12 21:20:53,955][INFO] min loss 0.0, max loss 0.0.
+[2023-07-12 21:20:53,955][INFO] All 7234 abstractions certified.
+[2023-07-12 21:20:53,963][INFO] Test set accuracy 0.79375.
+[2023-07-12 21:20:53,963][INFO] Train set accuracy 0.8255.
+[2023-07-12 21:20:53,963][INFO] 
+[6m 36s (396.873 seconds)] Starting epoch 19:
+[2023-07-12 21:21:11,041][INFO] [6m 53s (413.952 seconds)] At epoch 19: avg accuracy training loss 0.0.
+[2023-07-12 21:21:16,947][INFO] [6m 59s (419.857 seconds)] After epoch 19:
+[2023-07-12 21:21:16,949][INFO] Loaded 10000 points for training.
+[2023-07-12 21:21:16,949][INFO] Loaded 7488 abstractions for training.
+[2023-07-12 21:21:17,032][INFO] min loss 0.0, max loss 4.667782783508301.
+[2023-07-12 21:21:17,035][INFO] Max loss at LB: tensor([-1.0000e-02, -1.0000e-02, -1.0000e-02,  1.5596e+00, -1.0000e-02,
+        -1.0000e-02,  2.5727e+00,  2.3832e+00, -1.0000e-02,  4.6366e-01,
+         3.3492e+00, -1.0000e-02, -1.0000e-02, -1.0000e-02,  1.0126e+01,
+         2.1021e+00, -1.0000e-02, -1.0000e-02,  3.4676e-01, -1.0000e-02,
+         2.5239e+00,  3.5124e+00,  9.5933e-01,  3.4165e+00,  2.8684e+00,
+         1.9940e+00, -1.0000e-02,  1.3233e+00,  1.5960e-02,  2.5698e+00,
+        -1.0000e-02,  1.2270e+00], device='cuda:3'), UB: tensor([1.0000e-02, 0.0000e+00, 1.0000e-02, 1.5796e+00, 1.0000e-02, 1.0000e-02,
+        2.5927e+00, 2.4032e+00, 0.0000e+00, 4.8366e-01, 3.3692e+00, 1.0000e-02,
+        1.0000e-02, 0.0000e+00, 1.0146e+01, 2.1221e+00, 1.0000e-02, 1.0000e-02,
+        3.6676e-01, 0.0000e+00, 2.5339e+00, 3.5324e+00, 9.7933e-01, 3.4365e+00,
+        2.8884e+00, 2.0140e+00, 1.0000e-02, 1.3433e+00, 2.0960e-02, 2.5898e+00,
+        1.0000e-02, 1.2470e+00], device='cuda:3'), rule: tensor([0, 0, 1, 0, 0, 0, 0, 0, 0, 0], device='cuda:3', dtype=torch.uint8).
+[2023-07-12 21:21:17,046][INFO] Test set accuracy 0.7955882352941176.
+[2023-07-12 21:21:17,046][INFO] Train set accuracy 0.8332.
+[2023-07-12 21:21:17,046][INFO] 
+[6m 59s (419.957 seconds)] Starting epoch 20:
+[2023-07-12 21:21:34,020][INFO] [7m 16s (436.930 seconds)] At epoch 20: avg accuracy training loss 0.00204377606511116.
+[2023-07-12 21:21:39,400][INFO] [7m 22s (442.310 seconds)] After epoch 20:
+[2023-07-12 21:21:39,401][INFO] Loaded 10000 points for training.
+[2023-07-12 21:21:39,402][INFO] Loaded 7488 abstractions for training.
+[2023-07-12 21:21:39,493][INFO] min loss 0.0, max loss 0.0.
+[2023-07-12 21:21:39,493][INFO] All 7488 abstractions certified.
+[2023-07-12 21:21:39,503][INFO] Test set accuracy 0.8007352941176471.
+[2023-07-12 21:21:39,503][INFO] Train set accuracy 0.8283.
+[2023-07-12 21:21:39,503][INFO] 
+[7m 22s (442.413 seconds)] Starting epoch 21:
+[2023-07-12 21:21:56,410][INFO] [7m 39s (459.321 seconds)] At epoch 21: avg accuracy training loss 0.00021388001739978791.
+[2023-07-12 21:22:02,319][INFO] [7m 45s (465.229 seconds)] After epoch 21:
+[2023-07-12 21:22:02,320][INFO] Loaded 10000 points for training.
+[2023-07-12 21:22:02,320][INFO] Loaded 7758 abstractions for training.
+[2023-07-12 21:22:02,400][INFO] min loss 0.0, max loss 12.724196434020996.
+[2023-07-12 21:22:02,402][INFO] Max loss at LB: tensor([-0.0100,  3.1094,  5.1150, -0.0100,  2.0829,  3.8612,  1.8160, -0.0100,
+         8.0307, -0.0100,  9.6017,  0.6468, -0.0100, -0.0100, -0.0100, -0.0100,
+        -0.0100, -0.0100,  2.8572, -0.0100,  1.0497, -0.0100,  3.9137,  4.3015,
+         2.1629, -0.0100,  8.3608, -0.0100,  0.0000,  1.0411,  4.6669,  0.8405],
+       device='cuda:3'), UB: tensor([0.0100, 3.1294, 5.1250, 0.0100, 2.1029, 3.8812, 1.8360, 0.0100, 8.0507,
+        0.0100, 9.6217, 0.6668, 0.0100, 0.0100, 0.0100, 0.0100, 0.0100, 0.0000,
+        2.8672, 0.0100, 1.0697, 0.0100, 3.9337, 4.3215, 2.1829, 0.0100, 8.3808,
+        0.0100, 0.0100, 1.0611, 4.6869, 0.8605], device='cuda:3'), rule: tensor([0, 0, 0, 0, 0, 0, 0, 0, 1, 0], device='cuda:3', dtype=torch.uint8).
+[2023-07-12 21:22:02,410][INFO] Test set accuracy 0.8147058823529412.
+[2023-07-12 21:22:02,410][INFO] Train set accuracy 0.8475.
+[2023-07-12 21:22:02,410][INFO] 
+[7m 45s (465.321 seconds)] Starting epoch 22:
+[2023-07-12 21:22:19,067][INFO] [8m 1s (481.978 seconds)] At epoch 22: avg accuracy training loss 0.007449409896507859.
+[2023-07-12 21:22:24,661][INFO] [8m 7s (487.571 seconds)] After epoch 22:
+[2023-07-12 21:22:24,662][INFO] Loaded 10000 points for training.
+[2023-07-12 21:22:24,662][INFO] Loaded 7758 abstractions for training.
+[2023-07-12 21:22:24,756][INFO] min loss 0.0, max loss 0.0.
+[2023-07-12 21:22:24,757][INFO] All 7758 abstractions certified.
+[2023-07-12 21:22:24,765][INFO] Test set accuracy 0.8117647058823529.
+[2023-07-12 21:22:24,766][INFO] Train set accuracy 0.8472.
+[2023-07-12 21:22:24,766][INFO] 
+[8m 7s (487.676 seconds)] Starting epoch 23:
+[2023-07-12 21:22:41,137][INFO] [8m 24s (504.047 seconds)] At epoch 23: avg accuracy training loss 9.880042634904384e-05.
+[2023-07-12 21:22:47,895][INFO] [8m 30s (510.805 seconds)] After epoch 23:
+[2023-07-12 21:22:47,896][INFO] Loaded 10000 points for training.
+[2023-07-12 21:22:47,896][INFO] Loaded 8013 abstractions for training.
+[2023-07-12 21:22:47,981][INFO] min loss 0.0, max loss 5.347539901733398.
+[2023-07-12 21:22:47,985][INFO] Max loss at LB: tensor([-0.0100,  0.5081,  2.4885,  2.0845, -0.0100, -0.0100,  8.9244,  0.5278,
+         2.9085,  0.0000,  7.2527, -0.0100, -0.0100, -0.0100,  1.6097,  0.0000,
+         1.2048,  0.1524, -0.0100,  3.2486,  4.9064, -0.0100,  7.3899,  5.6511,
+        -0.0100, -0.0100,  4.4991, -0.0100, -0.0100, -0.0100,  2.3881, -0.0100],
+       device='cuda:3'), UB: tensor([0.0100, 0.5281, 2.5085, 2.1045, 0.0100, 0.0100, 8.9444, 0.5478, 2.9185,
+        0.0100, 7.2727, 0.0100, 0.0100, 0.0100, 1.6297, 0.0100, 1.2248, 0.1574,
+        0.0100, 3.2686, 4.9264, 0.0100, 7.3999, 5.6711, 0.0100, 0.0100, 4.5191,
+        0.0100, 0.0100, 0.0100, 2.3981, 0.0000], device='cuda:3'), rule: tensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 1], device='cuda:3', dtype=torch.uint8).
+[2023-07-12 21:22:47,993][INFO] Test set accuracy 0.8172794117647059.
+[2023-07-12 21:22:47,993][INFO] Train set accuracy 0.854.
+[2023-07-12 21:22:47,993][INFO] 
+[8m 30s (510.904 seconds)] Starting epoch 24:
+[2023-07-12 21:23:03,891][INFO] [8m 46s (526.801 seconds)] At epoch 24: avg accuracy training loss 0.0019874039478600027.
+[2023-07-12 21:23:10,202][INFO] [8m 53s (533.112 seconds)] After epoch 24:
+[2023-07-12 21:23:10,203][INFO] Loaded 10000 points for training.
+[2023-07-12 21:23:10,203][INFO] Loaded 8265 abstractions for training.
+[2023-07-12 21:23:10,301][INFO] min loss 0.0, max loss 6.295381546020508.
+[2023-07-12 21:23:10,303][INFO] Max loss at LB: tensor([-0.0100,  1.3582,  8.4588,  8.4092, -0.0100,  0.9582, -0.0100, -0.0100,
+         4.0860,  1.6824,  7.3615, -0.0100, -0.0100,  0.0000, -0.0100,  3.0351,
+         0.3309, -0.0100,  1.6128, -0.0100,  2.5972,  1.0392,  3.2157,  8.1086,
+         7.3759,  2.3227,  2.3988, -0.0100, -0.0100,  0.5734,  2.4860, -0.0100],
+       device='cuda:3'), UB: tensor([0.0100, 1.3682, 8.4688, 8.4292, 0.0100, 0.9782, 0.0100, 0.0100, 4.1060,
+        1.7024, 7.3815, 0.0100, 0.0100, 0.0100, 0.0100, 3.0551, 0.3409, 0.0100,
+        1.6328, 0.0000, 2.6172, 1.0592, 3.2357, 8.1286, 7.3959, 2.3327, 2.4088,
+        0.0100, 0.0100, 0.5934, 2.4960, 0.0100], device='cuda:3'), rule: tensor([0, 0, 0, 0, 0, 0, 0, 0, 1, 0], device='cuda:3', dtype=torch.uint8).
+[2023-07-12 21:23:10,311][INFO] Test set accuracy 0.7981617647058824.
+[2023-07-12 21:23:10,312][INFO] Train set accuracy 0.8387.
+[2023-07-12 21:23:10,312][INFO] 
+[8m 53s (533.222 seconds)] Starting epoch 25:
+[2023-07-12 21:23:27,382][INFO] [9m 10s (550.293 seconds)] At epoch 25: avg accuracy training loss 0.0026031620614230633.
+[2023-07-12 21:23:33,259][INFO] [9m 16s (556.169 seconds)] After epoch 25:
+[2023-07-12 21:23:33,261][INFO] Loaded 10000 points for training.
+[2023-07-12 21:23:33,262][INFO] Loaded 8265 abstractions for training.
+[2023-07-12 21:23:33,338][INFO] min loss 0.0, max loss 0.0.
+[2023-07-12 21:23:33,338][INFO] All 8265 abstractions certified.
+[2023-07-12 21:23:33,346][INFO] Test set accuracy 0.8044117647058824.
+[2023-07-12 21:23:33,346][INFO] Train set accuracy 0.8362.
+[2023-07-12 21:23:33,346][INFO] Accuracy at every epoch: [0.07352941176470588, 0.5735294117647058, 0.6095588235294118, 0.6150735294117647, 0.6352941176470588, 0.6349264705882353, 0.6441176470588236, 0.6408088235294118, 0.6477941176470589, 0.6455882352941177, 0.6654411764705882, 0.674264705882353, 0.6841911764705882, 0.6863970588235294, 0.7198529411764706, 0.7779411764705882, 0.7849264705882353, 0.7963235294117647, 0.79375, 0.7955882352941176, 0.8007352941176471, 0.8147058823529412, 0.8117647058823529, 0.8172794117647059, 0.7981617647058824, 0.8044117647058824]
+[2023-07-12 21:23:33,346][INFO] After 25 epochs / 9m 16s (556.257 seconds), eventually the trained network got certified? True, with 0.8044 accuracy on test set.
+[2023-07-12 21:23:33,353][INFO] === Avg <epochs, train_time, certified, accuracy> for pgd attack networks:
+[2023-07-12 21:23:33,354][INFO] tensor([ 25.0000, 556.2565,   1.0000,   0.8044])
+[2023-07-12 21:23:33,355][INFO] Total Cost Time: 21660.898362092674s.
+
+
+
+Traceback (most recent call last):
+  File "art/exp_mnist3.py", line 626, in <module>
+    test(lr=lr, weight_decay=weight_decay, k_coeff=k_coeff, repair_radius=0.01, support_loss=support_loss, accuracy_loss=accuracy_loss)
+  File "art/exp_mnist3.py", line 612, in test
+    exp_fn(parser)
+  File "art/exp_mnist3.py", line 529, in test_goal_safety
+    args = parser.parse_args()
+  File "/home/chizm/PatchART/art/exp.py", line 154, in parse_args
+    self.setup_rest(res)
+  File "art/exp_mnist3.py", line 90, in setup_rest
+    args.support_loss = {
+KeyError: 'MSE'
+nohup: ignoring input
+[2023-07-13 01:12:25,295][INFO] 
+===== lr0.005-weight_decay0.0001-kcoeff0.4-support_lossL2-accuracy_lossCE-rapair_radius0.01-2023-07-13-01-12-25 configuration =====
+  exp_fn: test_goal_safety
+  seed: None
+  dom: deeppoly
+  start_abs_cnt: 5000
+  max_abs_cnt: 10000
+  refine_top_k: 200
+  tiny_width: 0.001
+  lr: 0.005
+  batch_size: 100
+  min_epochs: 25
+  max_epochs: 35
+  use_scheduler: True
+  no_pts: False
+  no_abs: False
+  no_refine: False
+  quiet: False
+  debug: False
+  no_repair: False
+  reassure_support_and_patch_combine: True
+  repair_radius: 0.01
+  weight_decay: 0.0001
+  k_coeff: 0.4
+  accuracy_loss: <function MnistArgParser.setup_rest.<locals>.ce_loss at 0x7fab45546c10>
+  support_loss: MSELoss()
+  sample_amount: 5000
+  reset_params: False
+  max_verifier_sec: 300
+  verifier_timeout_as_safe: True
+  scheduler_fn: <function ExpArgParser.setup_rest.<locals>.<lambda> at 0x7fab45546ca0>
+===== end of lr0.005-weight_decay0.0001-kcoeff0.4-support_lossL2-accuracy_lossCE-rapair_radius0.01-2023-07-13-01-12-25 configuration =====
+
+[2023-07-13 01:12:25,296][INFO] ===== start repair ======
+[2023-07-13 01:12:25,296][INFO] For pgd attack net
+[2023-07-13 01:12:27,945][INFO] --Support network: --- SupportNet ---
+Name: support network
+Num layers: 5 (i.e. hidden + output, excluding input layer)
+Input size: 32
+Hidden sizes (len 4): [10, 10, 10, 10]
+Output size: 10
+Activation: deeppoly.ReLU()
+last function: deeppoly.Sigmoid()
+--- End of SupportNet ---
+[2023-07-13 01:12:27,945][INFO] --Patch network: --- PatchNet ---
+Name: patch network 9
+Num layers: 5 (i.e. hidden + output, excluding input layer)
+Input size: 32
+Hidden sizes (len 4): [10, 10, 10, 10]
+Output size: 10
+Activation: deeppoly.ReLU()
+--- End of PatchNet ---
+[2023-07-13 01:12:27,947][INFO] start pre-training support network:
+[2023-07-13 01:12:28,149][INFO] Epoch 1: support loss 0.12202594878199773
+[2023-07-13 01:12:28,410][INFO] Epoch 2: support loss 0.08880938026003349
+[2023-07-13 01:12:28,616][INFO] Epoch 3: support loss 0.08394491548339526
+[2023-07-13 01:12:28,897][INFO] Epoch 4: support loss 0.07189133772865319
+[2023-07-13 01:12:29,122][INFO] Epoch 5: support loss 0.06584609113633633
+[2023-07-13 01:12:29,369][INFO] Epoch 6: support loss 0.06350201759964992
+[2023-07-13 01:12:29,607][INFO] Epoch 7: support loss 0.058326906978319853
+[2023-07-13 01:12:29,824][INFO] Epoch 8: support loss 0.05465849111668575
+[2023-07-13 01:12:30,123][INFO] Epoch 9: support loss 0.05217179345587889
+[2023-07-13 01:12:30,389][INFO] Epoch 10: support loss 0.050743754380024396
+[2023-07-13 01:12:30,622][INFO] Epoch 11: support loss 0.049691468716049805
+[2023-07-13 01:12:30,834][INFO] Epoch 12: support loss 0.048944893890084364
+[2023-07-13 01:12:31,045][INFO] Epoch 13: support loss 0.04830857122746798
+[2023-07-13 01:12:31,265][INFO] Epoch 14: support loss 0.04769323957272065
+[2023-07-13 01:12:31,474][INFO] Epoch 15: support loss 0.04674623247522574
+[2023-07-13 01:12:31,685][INFO] Epoch 16: support loss 0.04629836732951494
+[2023-07-13 01:12:31,895][INFO] Epoch 17: support loss 0.045857162143175416
+[2023-07-13 01:12:32,105][INFO] Epoch 18: support loss 0.04570443827945452
+[2023-07-13 01:12:32,314][INFO] Epoch 19: support loss 0.045231338256062605
+[2023-07-13 01:12:32,521][INFO] Epoch 20: support loss 0.04485731261471907
+[2023-07-13 01:12:32,732][INFO] Epoch 21: support loss 0.044435286082518406
+[2023-07-13 01:12:32,946][INFO] Epoch 22: support loss 0.04475612370058512
+[2023-07-13 01:12:33,157][INFO] Epoch 23: support loss 0.04393295776576568
+[2023-07-13 01:12:33,368][INFO] Epoch 24: support loss 0.0437461152099646
+[2023-07-13 01:12:33,579][INFO] Epoch 25: support loss 0.04332840805634474
+[2023-07-13 01:12:33,786][INFO] Epoch 26: support loss 0.04290374363653171
+[2023-07-13 01:12:33,995][INFO] Epoch 27: support loss 0.042296658389461346
+[2023-07-13 01:12:34,206][INFO] Epoch 28: support loss 0.041709220418945335
+[2023-07-13 01:12:34,415][INFO] Epoch 29: support loss 0.041210865506376974
+[2023-07-13 01:12:34,628][INFO] Epoch 30: support loss 0.04056951138549126
+[2023-07-13 01:12:34,837][INFO] Epoch 31: support loss 0.040014002042321056
+[2023-07-13 01:12:35,050][INFO] Epoch 32: support loss 0.03955131289190971
+[2023-07-13 01:12:35,261][INFO] Epoch 33: support loss 0.03907366684423043
+[2023-07-13 01:12:35,476][INFO] Epoch 34: support loss 0.038674067705869675
+[2023-07-13 01:12:35,696][INFO] Epoch 35: support loss 0.03843815875454591
+[2023-07-13 01:12:35,897][INFO] Epoch 36: support loss 0.03863637758275637
+[2023-07-13 01:12:36,088][INFO] Epoch 37: support loss 0.03829867149201723
+[2023-07-13 01:12:36,320][INFO] Epoch 38: support loss 0.03820573106312599
+[2023-07-13 01:12:36,516][INFO] Epoch 39: support loss 0.0380394516321711
+[2023-07-13 01:12:36,707][INFO] Epoch 40: support loss 0.037868696838044204
+[2023-07-13 01:12:36,916][INFO] Epoch 41: support loss 0.03824498236943514
+[2023-07-13 01:12:37,135][INFO] Epoch 42: support loss 0.037560366452313386
+[2023-07-13 01:12:37,348][INFO] Epoch 43: support loss 0.037515230261935636
+[2023-07-13 01:12:37,567][INFO] Epoch 44: support loss 0.03756603089949259
+[2023-07-13 01:12:37,805][INFO] Epoch 45: support loss 0.03725212764663574
+[2023-07-13 01:12:38,021][INFO] Epoch 46: support loss 0.03735746426555591
+[2023-07-13 01:12:38,259][INFO] Epoch 47: support loss 0.03708080355173502
+[2023-07-13 01:12:38,449][INFO] Epoch 48: support loss 0.03701177666871212
+[2023-07-13 01:12:38,663][INFO] Epoch 49: support loss 0.03677158437382717
+[2023-07-13 01:12:38,858][INFO] Epoch 50: support loss 0.03663819662940044
+[2023-07-13 01:12:39,048][INFO] Epoch 51: support loss 0.036791474176331974
+[2023-07-13 01:12:39,261][INFO] Epoch 52: support loss 0.036874983650751605
+[2023-07-13 01:12:39,471][INFO] Epoch 53: support loss 0.03631744963618425
+[2023-07-13 01:12:39,681][INFO] Epoch 54: support loss 0.036234902146344
+[2023-07-13 01:12:39,901][INFO] Epoch 55: support loss 0.0363474346888371
+[2023-07-13 01:12:40,111][INFO] Epoch 56: support loss 0.03648624884394499
+[2023-07-13 01:12:40,319][INFO] Epoch 57: support loss 0.03642329798103907
+[2023-07-13 01:12:40,528][INFO] Epoch 58: support loss 0.036118999314613834
+[2023-07-13 01:12:40,743][INFO] Epoch 59: support loss 0.03597369202627586
+[2023-07-13 01:12:40,951][INFO] Epoch 60: support loss 0.036112296562164255
+[2023-07-13 01:12:41,159][INFO] Epoch 61: support loss 0.03628877457231283
+[2023-07-13 01:12:41,368][INFO] Epoch 62: support loss 0.03624043267411299
+[2023-07-13 01:12:41,574][INFO] Epoch 63: support loss 0.03577721503396065
+[2023-07-13 01:12:41,808][INFO] Epoch 64: support loss 0.035990253305779055
+[2023-07-13 01:12:42,065][INFO] Epoch 65: support loss 0.03584184562071012
+[2023-07-13 01:12:42,279][INFO] Epoch 66: support loss 0.03579452442817199
+[2023-07-13 01:12:42,488][INFO] Epoch 67: support loss 0.035982170046713106
+[2023-07-13 01:12:42,490][INFO] test support net accuracy: 0.74375
+Traceback (most recent call last):
+  File "art/exp_mnist3.py", line 628, in <module>
+    test(lr=lr, weight_decay=weight_decay, k_coeff=k_coeff, repair_radius=0.01, support_loss=support_loss, accuracy_loss=accuracy_loss)
+  File "art/exp_mnist3.py", line 612, in test
+    exp_fn(parser)
+  File "art/exp_mnist3.py", line 536, in test_goal_safety
+    _run_repair(args)
+  File "art/exp_mnist3.py", line 508, in _run_repair
+    outs = repair_mnist(args,weight_clamp=False)
+  File "art/exp_mnist3.py", line 316, in repair_mnist
+    all_props = FeatureAndProp(props=feature_prop_list)
+  File "/home/chizm/PatchART/art/prop.py", line 378, in __init__
+    self.lb, self.ub, self.labels = self.join_all(props)
+  File "/home/chizm/PatchART/art/prop.py", line 413, in join_all
+    lbs, ubs, labels = self._join(lbs, ubs, labels, new_lbs, new_ubs, new_labels)
+  File "/home/chizm/PatchART/art/prop.py", line 449, in _join
+    new_shared_lb, new_shared_ub = lbub_intersect(xlb, xub, ylb, yub)
+  File "/home/chizm/PatchART/art/prop.py", line 669, in lbub_intersect
+    res_lb, _ = torch.max(torch.stack((lb1, lb2), dim=-1), dim=-1)
+KeyboardInterrupt

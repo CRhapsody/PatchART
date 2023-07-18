@@ -619,9 +619,12 @@ if __name__ == '__main__':
     device = torch.device(f'cuda:3')
     for lr in [0.005, 0.01]:
         for weight_decay in [0.0001, 0.00005]:
-            for k_coeff in [0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75]:    
-                for support_loss in ['SmoothL1', 'MSE']:
+            # for k_coeff in [0.35, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75]:
+            for k_coeff in [0.4]:    
+                for support_loss in ['SmoothL1', 'L2']:
                     for accuracy_loss in ['CE']:
+                        # if lr == 0.005 and weight_decay == 0.0001 and k_coeff == 0.4 and support_loss == 'SmoothL1' and accuracy_loss == 'CE':
+                        #     continue
                         # for repair_radius in [0.1, 0.05, 0.03, 0.01]:
                         test(lr=lr, weight_decay=weight_decay, k_coeff=k_coeff, repair_radius=0.01, support_loss=support_loss, accuracy_loss=accuracy_loss)
     # test(lr=0.01, weight_decay=1e-4, k_coeff=0.5, repair_radius=0.1, support_loss='SmoothL1', accuracy_loss='L1')

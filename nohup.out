@@ -1,0 +1,152 @@
+[2023-07-12 15:19:38,544][INFO] 
+===== lr0.005-weight_decay0.0001-kcoeff0.4-support_lossSmoothL1-accuracy_lossCE-rapair_radius0.1-2023-07-12-15-19-38 configuration =====
+  exp_fn: test_goal_safety
+  seed: None
+  dom: deeppoly
+  start_abs_cnt: 5000
+  max_abs_cnt: 10000
+  refine_top_k: 200
+  tiny_width: 0.001
+  lr: 0.005
+  batch_size: 100
+  min_epochs: 25
+  max_epochs: 35
+  use_scheduler: True
+  no_pts: False
+  no_abs: False
+  no_refine: False
+  quiet: False
+  debug: False
+  no_repair: False
+  reassure_support_and_patch_combine: True
+  repair_radius: 0.1
+  weight_decay: 0.0001
+  k_coeff: 0.4
+  accuracy_loss: <function MnistArgParser.setup_rest.<locals>.ce_loss at 0x7f7967460c10>
+  support_loss: SmoothL1Loss()
+  sample_amount: 5000
+  reset_params: False
+  max_verifier_sec: 300
+  verifier_timeout_as_safe: True
+  scheduler_fn: <function ExpArgParser.setup_rest.<locals>.<lambda> at 0x7f7967460ca0>
+===== end of lr0.005-weight_decay0.0001-kcoeff0.4-support_lossSmoothL1-accuracy_lossCE-rapair_radius0.1-2023-07-12-15-19-38 configuration =====
+
+[2023-07-12 15:19:38,544][INFO] ===== start repair ======
+[2023-07-12 15:19:38,544][INFO] For pgd attack net
+[2023-07-12 15:19:40,901][INFO] --Support network: --- SupportNet ---
+Name: support network
+Num layers: 5 (i.e. hidden + output, excluding input layer)
+Input size: 32
+Hidden sizes (len 4): [10, 10, 10, 10]
+Output size: 10
+Activation: deeppoly.ReLU()
+last function: deeppoly.Sigmoid()
+--- End of SupportNet ---
+[2023-07-12 15:19:40,902][INFO] --Patch network: --- PatchNet ---
+Name: patch network 9
+Num layers: 5 (i.e. hidden + output, excluding input layer)
+Input size: 32
+Hidden sizes (len 4): [10, 10, 10, 10]
+Output size: 10
+Activation: deeppoly.ReLU()
+--- End of PatchNet ---
+[2023-07-12 15:19:40,902][INFO] start pre-training support network:
+[2023-07-12 15:19:41,112][INFO] Epoch 1: support loss 0.05608152717542954
+[2023-07-12 15:19:41,310][INFO] Epoch 2: support loss 0.03814538274533474
+[2023-07-12 15:19:41,500][INFO] Epoch 3: support loss 0.03127241540604677
+[2023-07-12 15:19:41,697][INFO] Epoch 4: support loss 0.030010824855894614
+[2023-07-12 15:19:41,915][INFO] Epoch 5: support loss 0.029310934961988375
+[2023-07-12 15:19:42,102][INFO] Epoch 6: support loss 0.02861699177764165
+[2023-07-12 15:19:42,288][INFO] Epoch 7: support loss 0.027711596936942674
+[2023-07-12 15:19:42,472][INFO] Epoch 8: support loss 0.026960883170175247
+[2023-07-12 15:19:42,652][INFO] Epoch 9: support loss 0.026122932322323322
+[2023-07-12 15:19:42,840][INFO] Epoch 10: support loss 0.025226315698371485
+[2023-07-12 15:19:43,026][INFO] Epoch 11: support loss 0.024828679501437224
+[2023-07-12 15:19:43,235][INFO] Epoch 12: support loss 0.024173810887031067
+[2023-07-12 15:19:43,427][INFO] Epoch 13: support loss 0.023590278644592334
+[2023-07-12 15:19:43,618][INFO] Epoch 14: support loss 0.02303724669111081
+[2023-07-12 15:19:43,834][INFO] Epoch 15: support loss 0.022677069410490684
+[2023-07-12 15:19:44,023][INFO] Epoch 16: support loss 0.022219662196361102
+[2023-07-12 15:19:44,216][INFO] Epoch 17: support loss 0.02190770177791516
+[2023-07-12 15:19:44,421][INFO] Epoch 18: support loss 0.02151130027591418
+[2023-07-12 15:19:44,615][INFO] Epoch 19: support loss 0.02128390905757745
+[2023-07-12 15:19:44,814][INFO] Epoch 20: support loss 0.02108580146271449
+[2023-07-12 15:19:45,008][INFO] Epoch 21: support loss 0.021166822252174217
+[2023-07-12 15:19:45,199][INFO] Epoch 22: support loss 0.02082513318134424
+[2023-07-12 15:19:45,376][INFO] Epoch 23: support loss 0.020648707396900043
+[2023-07-12 15:19:45,565][INFO] Epoch 24: support loss 0.020309817833969228
+[2023-07-12 15:19:45,751][INFO] Epoch 25: support loss 0.020133656163055163
+[2023-07-12 15:19:45,931][INFO] Epoch 26: support loss 0.020184933709410522
+[2023-07-12 15:19:46,120][INFO] Epoch 27: support loss 0.020211439173764143
+[2023-07-12 15:19:46,301][INFO] Epoch 28: support loss 0.020069425197270434
+[2023-07-12 15:19:46,495][INFO] Epoch 29: support loss 0.01981073794647669
+[2023-07-12 15:19:46,694][INFO] Epoch 30: support loss 0.019598280270703327
+[2023-07-12 15:19:46,904][INFO] Epoch 31: support loss 0.01937723873804013
+[2023-07-12 15:19:47,108][INFO] Epoch 32: support loss 0.019546981112888225
+[2023-07-12 15:19:47,297][INFO] Epoch 33: support loss 0.019469132240957174
+[2023-07-12 15:19:47,489][INFO] Epoch 34: support loss 0.019228418059169482
+[2023-07-12 15:19:47,697][INFO] Epoch 35: support loss 0.019410102496831082
+[2023-07-12 15:19:47,886][INFO] Epoch 36: support loss 0.019029748243972276
+[2023-07-12 15:19:48,063][INFO] Epoch 37: support loss 0.01914592320099473
+[2023-07-12 15:19:48,238][INFO] Epoch 38: support loss 0.019092429286012284
+[2023-07-12 15:19:48,415][INFO] Epoch 39: support loss 0.018862447976015318
+[2023-07-12 15:19:48,599][INFO] Epoch 40: support loss 0.019025129827264793
+[2023-07-12 15:19:48,775][INFO] Epoch 41: support loss 0.018923777501839094
+[2023-07-12 15:19:48,967][INFO] Epoch 42: support loss 0.018760569990636446
+[2023-07-12 15:19:49,148][INFO] Epoch 43: support loss 0.018860973692379702
+[2023-07-12 15:19:49,327][INFO] Epoch 44: support loss 0.018592019613163594
+[2023-07-12 15:19:49,513][INFO] Epoch 45: support loss 0.018585619039069384
+[2023-07-12 15:19:49,693][INFO] Epoch 46: support loss 0.01846989291982773
+[2023-07-12 15:19:49,895][INFO] Epoch 47: support loss 0.018295908000511237
+[2023-07-12 15:19:50,090][INFO] Epoch 48: support loss 0.018267356074200228
+[2023-07-12 15:19:50,280][INFO] Epoch 49: support loss 0.01826421643058077
+[2023-07-12 15:19:50,470][INFO] Epoch 50: support loss 0.01813889604109602
+[2023-07-12 15:19:50,649][INFO] Epoch 51: support loss 0.018256482369720172
+[2023-07-12 15:19:50,834][INFO] Epoch 52: support loss 0.018038029639193646
+[2023-07-12 15:19:51,036][INFO] Epoch 53: support loss 0.01795648457482457
+[2023-07-12 15:19:51,217][INFO] Epoch 54: support loss 0.01785019349354582
+[2023-07-12 15:19:51,410][INFO] Epoch 55: support loss 0.017879255880147982
+[2023-07-12 15:19:51,606][INFO] Epoch 56: support loss 0.01773539697751403
+[2023-07-12 15:19:51,788][INFO] Epoch 57: support loss 0.017742584602764018
+[2023-07-12 15:19:51,981][INFO] Epoch 58: support loss 0.017782380720839288
+[2023-07-12 15:19:52,164][INFO] Epoch 59: support loss 0.017954348168598536
+[2023-07-12 15:19:52,355][INFO] Epoch 60: support loss 0.01747828324397023
+[2023-07-12 15:19:52,540][INFO] Epoch 61: support loss 0.017526652604245987
+[2023-07-12 15:19:52,726][INFO] Epoch 62: support loss 0.017675520720867775
+[2023-07-12 15:19:52,921][INFO] Epoch 63: support loss 0.017499524801491927
+[2023-07-12 15:19:53,118][INFO] Epoch 64: support loss 0.017423751166997813
+[2023-07-12 15:19:53,324][INFO] Epoch 65: support loss 0.017283872784807894
+[2023-07-12 15:19:53,546][INFO] Epoch 66: support loss 0.017524094571574375
+[2023-07-12 15:19:53,727][INFO] Epoch 67: support loss 0.01723176734044384
+[2023-07-12 15:19:53,916][INFO] Epoch 68: support loss 0.017243866211710833
+[2023-07-12 15:19:54,104][INFO] Epoch 69: support loss 0.017258595030468244
+[2023-07-12 15:19:54,305][INFO] Epoch 70: support loss 0.016894945731529824
+[2023-07-12 15:19:54,504][INFO] Epoch 71: support loss 0.01686885094461151
+[2023-07-12 15:19:54,689][INFO] Epoch 72: support loss 0.01685615110760316
+[2023-07-12 15:19:54,873][INFO] Epoch 73: support loss 0.017133638453789245
+[2023-07-12 15:19:55,062][INFO] Epoch 74: support loss 0.01667885649471711
+[2023-07-12 15:19:55,254][INFO] Epoch 75: support loss 0.016809959680988237
+[2023-07-12 15:19:55,445][INFO] Epoch 76: support loss 0.01681911942955011
+[2023-07-12 15:19:55,636][INFO] Epoch 77: support loss 0.016697040794847105
+[2023-07-12 15:19:55,819][INFO] Epoch 78: support loss 0.01679227700552497
+[2023-07-12 15:19:55,823][INFO] test support net accuracy: 0.7591911764705882
+Traceback (most recent call last):
+  File "art/exp_mnist.py", line 626, in <module>
+    test(lr=lr, weight_decay=weight_decay, k_coeff=k_coeff, repair_radius=0.1, support_loss=support_loss, accuracy_loss=accuracy_loss)
+  File "art/exp_mnist.py", line 612, in test
+    exp_fn(parser)
+  File "art/exp_mnist.py", line 536, in test_goal_safety
+    _run_repair(args)
+  File "art/exp_mnist.py", line 508, in _run_repair
+    outs = repair_mnist(args,weight_clamp=False)
+  File "art/exp_mnist.py", line 316, in repair_mnist
+    all_props = FeatureAndProp(props=feature_prop_list)
+  File "/home/chizm/PatchART/art/prop.py", line 378, in __init__
+    self.lb, self.ub, self.labels = self.join_all(props)
+  File "/home/chizm/PatchART/art/prop.py", line 413, in join_all
+    lbs, ubs, labels = self._join(lbs, ubs, labels, new_lbs, new_ubs, new_labels)
+  File "/home/chizm/PatchART/art/prop.py", line 449, in _join
+    new_shared_lb, new_shared_ub = lbub_intersect(xlb, xub, ylb, yub)
+  File "/home/chizm/PatchART/art/prop.py", line 669, in lbub_intersect
+    res_lb, _ = torch.max(torch.stack((lb1, lb2), dim=-1), dim=-1)
+KeyboardInterrupt
