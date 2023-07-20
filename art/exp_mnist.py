@@ -117,9 +117,9 @@ class MnistPoints(exp.ConcIns):
         #     inputs = torch.cat((inputs[:10000], attack_inputs), dim=0)
         #     labels = torch.cat((labels[:10000], attack_labels), dim=0)
         # if train:
-        clean_data_fname = f'{suffix}_norm00.pt'
-        clean_combine = torch.load(Path(MNIST_DATA_DIR, clean_data_fname), device)
-        clean_inputs, clean_labels = clean_combine
+        # clean_data_fname = f'{suffix}_norm00.pt'
+        # clean_combine = torch.load(Path(MNIST_DATA_DIR, clean_data_fname), device)
+        # clean_inputs, clean_labels = clean_combine
         if train:
             # inputs = torch.cat((inputs[:10000], clean_inputs[:10000]), dim=0)
             # labels = torch.cat((labels[:10000], clean_labels[:10000]), dim=0)
@@ -169,7 +169,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     net.load_state_dict(torch.load(fpath, map_location=device))
 
     # acc = eval_test(net, testset)
-
+    acc = eval_test(net, trainset)
 
     # bound_mins = torch.zeros_like(trainset[0])
     # bound_maxs = torch.ones_like(trainset[0])
@@ -345,8 +345,15 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     # repair the classifer without feature extractor
     repair_net = Netsum(args.dom, target_net = model2, support_nets= support_net, patch_nets= patch_lists, device=device, A = args.k_coeff)
 
+    # delate the parameters of the support network and the target network from the parameters of the repair network
+    # for name, param in repair_net.named_parameters():
+    #     if 'support' in name or 'target' in name:
+
+
     # train the patch and original network
-    opti = Adam(repair_net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    opti = Adam(repair_net.parameters(), lr=args.lr*0.1, weight_decay=args.weight_decay)
+    # delate the parameters of the support network and the target network from the parameters of the repair network
+    opti.param_groups[0]['params'] = opti.param_groups[0]['params'][12:]
     scheduler = args.scheduler_fn(opti)  # could be None
 
     # freeze the parameters of the original network for extracting features
@@ -362,15 +369,17 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
     # set the
     feature_traindata.requires_grad = True
-    feature_trainset = MnistPoints(feature_traindata, trainset.labels)
+    feature_trainset = MnistPoints(feature_traindata[:1000], trainset.labels[:1000])
+
+    
 
     # freeze the parameters of the original network for extracting features
-    for name, param in repair_net.named_parameters():
-        # if 'conv1' or 'conv2' or 'fc1' in name:
-        if ('target_net.0.weight' in name) or ('target_net.0.bias' in name) or ('support' in name):
-            param.requires_grad = False
-        else:
-            param.requires_grad = True
+    # for name, param in repair_net.named_parameters():
+    #     # if 'conv1' or 'conv2' or 'fc1' in name:
+    #     if ('target_net.0.weight' in name) or ('target_net.0.bias' in name) or ('support' in name):
+    #         param.requires_grad = False
+    #     else:
+    #         param.requires_grad = True
 
     while True:
         # first, evaluate current model
@@ -391,7 +400,8 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                 logging.info(f'Max loss at LB: {curr_abs_lb[worst_idx]}, UB: {curr_abs_ub[worst_idx]}, rule: {curr_abs_bitmap[worst_idx]}.')
 
         # test the repaired model which combines the feature extractor, classifier and the patch network
-        accuracies.append(eval_test(finally_net, testset))
+        # accuracies.append(eval_test(finally_net, testset))
+        accuracies.append(eval_test(repair_net, feature_testset))
         # with torch.no_grad():
         evel_acc = eval_test(repair_net, feature_trainset)
         logging.info(f'Test set accuracy {accuracies[-1]}.')
@@ -440,7 +450,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
             if not args.no_pts:
                 batch_inputs, batch_labels = next(conc_loader)
                 batch_outputs = repair_net(batch_inputs)
-                batch_loss += 10*args.accuracy_loss(batch_outputs, batch_labels)
+                batch_loss += args.accuracy_loss(batch_outputs, batch_labels)
             if not args.no_abs:
                 batch_abs_lb, batch_abs_ub, batch_abs_bitmap = next(abs_loader)
                 batch_dists = run_abs(repair_net,batch_abs_lb, batch_abs_ub, batch_abs_bitmap)
@@ -616,16 +626,16 @@ def test(lr:float = 0.005, weight_decay:float = 0.0001, k_coeff:float = 0.5, rep
 
 
 if __name__ == '__main__':
-    device = torch.device(f'cuda:2')
-    for lr in [0.005, 0.01]:
-        for weight_decay in [0.0001, 0.00005]:
-            # for k_coeff in [0.35, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75]:
-            for k_coeff in [0.4]:    
-                for support_loss in ['SmoothL1', 'L2']:
-                    for accuracy_loss in ['CE']:
-                        # if lr == 0.005 and weight_decay == 0.0001 and k_coeff == 0.4 and support_loss == 'SmoothL1' and accuracy_loss == 'CE':
-                        #     continue
-                        # for repair_radius in [0.1, 0.05, 0.03, 0.01]:
-                        test(lr=lr, weight_decay=weight_decay, k_coeff=k_coeff, repair_radius=0.1, support_loss=support_loss, accuracy_loss=accuracy_loss)
-    # test(lr=0.01, weight_decay=1e-4, k_coeff=0.5, repair_radius=0.1, support_loss='SmoothL1', accuracy_loss='L1')
+    device = torch.device(f'cuda:0')
+    # for lr in [0.005, 0.01]:
+    #     for weight_decay in [0.0001, 0.00005]:
+    #         # for k_coeff in [0.35, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75]:
+    #         for k_coeff in [0.4]:    
+    #             for support_loss in ['SmoothL1', 'L2']:
+    #                 for accuracy_loss in ['CE']:
+    #                     # if lr == 0.005 and weight_decay == 0.0001 and k_coeff == 0.4 and support_loss == 'SmoothL1' and accuracy_loss == 'CE':
+    #                     #     continue
+    #                     # for repair_radius in [0.1, 0.05, 0.03, 0.01]:
+    #                     test(lr=lr, weight_decay=weight_decay, k_coeff=k_coeff, repair_radius=0.1, support_loss=support_loss, accuracy_loss=accuracy_loss)
+    test(lr=0.01, weight_decay=1e-4, k_coeff=0.5, repair_radius=0.1, support_loss='SmoothL1', accuracy_loss='CE')
 

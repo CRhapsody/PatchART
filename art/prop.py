@@ -40,6 +40,10 @@ class AbsProp(ABC):
     def safe_dist(self, outs: AbsEle, *args, **kwargs):
         """ Return the safety distance with the guarantee that dist == 0 => safe. """
         raise NotImplementedError()
+    
+    def safe_feature_dist(self, outs: AbsEle, *args, **kwargs) -> Tensor:
+        """ Return the safety distance with the guarantee that dist == 0 => safe for feature. """
+        raise NotImplementedError()
 
     def safe_sheep(self, outs: AbsEle, *args, **kwargs) -> Tensor:
         """ Return a "black sheep" state of safety property such that sheep is safe => all safe.
@@ -599,7 +603,7 @@ class FeatureAndProp(AbsProp):
             full_dists.scatter_(0, bits, piece_dists)
             res.append(full_dists)
 
-        res = torch.stack(res, dim=-1)  # Batch x nprops
+        res = torch.stack(res, dim=-1)  # Batch x labels
         return torch.sum(res, dim=-1)
         # return torch.sum(res) # sum over all the dists to get a scalar value
 
