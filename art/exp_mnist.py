@@ -385,7 +385,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         # first, evaluate current model
         logging.info(f'[{utils.time_since(start)}] After epoch {epoch}:')
         if not args.no_pts:
-            logging.info(f'Loaded {trainset.real_len()} points for training.')
+            logging.info(f'Loaded {feature_trainset.real_len()} points for training.')
 
         if not args.no_abs:
             logging.info(f'Loaded {len(curr_abs_lb)} abstractions for training.')
@@ -637,5 +637,5 @@ if __name__ == '__main__':
     #                     #     continue
     #                     # for repair_radius in [0.1, 0.05, 0.03, 0.01]:
     #                     test(lr=lr, weight_decay=weight_decay, k_coeff=k_coeff, repair_radius=0.1, support_loss=support_loss, accuracy_loss=accuracy_loss)
-    test(lr=0.01, weight_decay=1e-4, k_coeff=0.5, repair_radius=0.1, support_loss='SmoothL1', accuracy_loss='CE')
+    test(lr=0.01, weight_decay=1e-4, k_coeff=0.5, repair_radius=0.02, support_loss='SmoothL1', accuracy_loss='CE')
 

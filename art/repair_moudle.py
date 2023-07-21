@@ -222,7 +222,7 @@ class Netsum(nn.Module):
                 classes_score_entry = classes_score[:,i].unsqueeze(dim = 1).expand_as(pa)
                 out += pa * classes_score_entry
             else:
-                classes_score_entry = classes_score[:,:,i].expand_as(pa)
+                classes_score_entry = classes_score[:,:,i].unsqueeze(dim = 2).expand_as(pa)
                 out += pa * classes_score_entry
                 
         # out = self.sigmoid(out)
