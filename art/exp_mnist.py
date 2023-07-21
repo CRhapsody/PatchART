@@ -369,6 +369,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
     # set the
     feature_traindata.requires_grad = True
+    del(feature_trainset)
     feature_trainset = MnistPoints(feature_traindata[:1000], trainset.labels[:1000])
 
     
