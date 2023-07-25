@@ -316,36 +316,56 @@ class Ele(AbsEle):
             # ucnst = torch.where(ucnst > 0, torch.dot(self._ucnst, flt.max(dim = -1).value ), torch.dot(self._lcnst, flt.max(dim = -1).value ))
             return Ele(lcoef, lcnst, ucoef, ucnst, self.dlb, self.dub)
            
+
         elif isinstance(flt, Ele) and flt.size() == self.size() and torch.equal(self.dlb, flt.dlb) and torch.equal(self.dub, flt.dub):
             # for abstract domain multiplication, we use crown method in verify ,see https://arxiv.org/pdf/2002.06622.pdf
-            alpha_lower = flt.lb()
-            beta_lower = self.lb()    
-            gamma_lower = -1*self.lb() * self.ub()
-            assert gamma_lower.shape == self._lb.shape
+            # alpha_lower = flt.lb()
+            # beta_lower = self.lb()    
+            # gamma_lower = -1*self.lb() * self.ub()
+            # assert gamma_lower.shape == self._lb.shape
 
-            alpha_upper = flt.ub()
-            beta_upper = self.lb()
-            gamma_upper = -1*self.lb() * self.ub()
-            assert gamma_upper.shape == self._ub.shape
+            # alpha_upper = flt.ub()
+            # beta_upper = self.lb()
+            # gamma_upper = -1*self.lb() * self.ub()
+            # assert gamma_upper.shape == self._ub.shape
 
-            alpha_lower_coefs = alpha_lower.expand_as(self._lcoef)
-            alpha_upper_coefs = alpha_upper.expand_as(self._ucoef)
-            beta_lower_coefs = beta_lower.expand_as(self._lcoef)
-            beta_upper_coefs = beta_upper.expand_as(self._ucoef)
+            # alpha_lower_coefs = alpha_lower.unsqueeze(dim=1).expand_as(self._lcoef)
+            # alpha_upper_coefs = alpha_upper.unsqueeze(dim=1).expand_as(self._ucoef)
+            # beta_lower_coefs = beta_lower.unsqueeze(dim=1).expand_as(self._lcoef)
+            # beta_upper_coefs = beta_upper.unsqueeze(dim=1).expand_as(self._ucoef)
 
-            gamma_lower_cnsts = gamma_lower.expand_as(self._lcnst)
-            gamma_upper_cnsts = gamma_upper.expand_as(self._ucnst)
+            # gamma_lower_cnsts = gamma_lower.unsqueeze(dim=1).expand_as(self._lcnst)
+            # gamma_upper_cnsts = gamma_upper.unsqueeze(dim=1).expand_as(self._ucnst)
 
-            # a_lcoef = torch.where(self._lcoef > 0, self._lcoef * alpha_lower_coefs, self._ucoef * alpha_lower_coefs)
-            # b_lcoef = torch.where(beta_lower > 0, self._lcoef * beta_lower_coefs, self._ucoef * beta_lower_coefs)
+            # # a_lcoef = torch.where(self._lcoef > 0, self._lcoef * alpha_lower_coefs, self._ucoef * alpha_lower_coefs)
+            # # b_lcoef = torch.where(beta_lower > 0, self._lcoef * beta_lower_coefs, self._ucoef * beta_lower_coefs)
 
-            lcoef = self._lcoef * alpha_lower_coefs + flt._lcoef * beta_lower_coefs
-            ucoef = self._ucoef * alpha_upper_coefs + flt._ucoef * beta_upper_coefs
+            # lcoef = self._lcoef * alpha_lower_coefs + flt._lcoef * beta_lower_coefs
+            # ucoef = self._ucoef * alpha_upper_coefs + flt._ucoef * beta_upper_coefs
+
+            # lcnst = gamma_lower_cnsts
+            # ucnst = gamma_upper_cnsts
+
+            # return Ele(lcoef, lcnst, ucoef, ucnst, self.dlb, self.dub)
+
+
+            # Interval sbstraction
+            x_lb, x_ub = self.gamma()
+            y_lb, y_ub = flt.gamma()
+
+            x_ub = x_ub.unsqueeze(dim=1)
+            y_ub = y_ub.unsqueeze(dim=1)
+            x_lb = x_lb.unsqueeze(dim=1)
+            y_lb = y_lb.unsqueeze(dim=1)            
+
+            lcoef = torch.zeros_like(self._lcoef)
+            ucoef = torch.zeros_like(self._ucoef)
             
-            lcnst = self._lcnst * alpha_lower_coefs + flt._lcnst * beta_lower_coefs + gamma_lower_cnsts
-            ucnst = self._ucnst * alpha_upper_coefs + flt._ucnst * beta_upper_coefs + gamma_upper_cnsts
+            lcnst = torch.where(x_lb > 0, x_lb * y_lb, x_lb * y_ub)
+            ucnst = torch.where(x_ub > 0, x_ub * y_ub, x_ub * y_lb)
 
             return Ele(lcoef, lcnst, ucoef, ucnst, self.dlb, self.dub)
+
 
 
             
@@ -397,8 +417,8 @@ class Dist(AbsDist):
         for i in idxs:
             target_coef = e._lcoef[:, :, [i]]  # Batch x Dim0 x 1
             target_cnst = e._lcnst[:, :, [i]]  # Batch x 1 x 1
-            diff_coefs = 5*others_coef - target_coef  # will broadcast
-            diff_cnsts = 5*others_cnst - target_cnst
+            diff_coefs = others_coef - target_coef  # will broadcast
+            diff_cnsts = others_cnst - target_cnst
 
             diffs = e.ub_of(diff_coefs, diff_cnsts, e.dlb, e.dub)  # Batch x (Dim-|ids|)
             diffs = F.relu(diffs + 1e-5)
@@ -1187,6 +1207,98 @@ class reciprocal_conc(nn.Module):
     def forward(self, input: Tensor) -> Tensor:
         return torch.reciprocal(input)
     
+# class Reciprocal(reciprocal_conc):
+#     def __str__(self) -> str:
+#         return f'{Dom.name}.reciprocal' + super().__str__()
+    
+#     def export(self) -> reciprocal_conc:
+#         return reciprocal_conc()
+    
+#     def forward(self, *ts: Union[Tensor, Ele]) -> Union[Tensor, Ele, Tuple[Tensor, ...]]:
+#         '''
+#         The abstract element a = <a^{\leq}, a^{\geq}, lb, ub> is as follows:
+#         If lb = ub, then a^{\leq} = a^{\geq} = 1/ub,
+#         else, let lambda_lb = -1/(lb^2), lambda_ub = -1/(lb*ub),
+#         then a^{\leq} = lambda_lb * x  + 2/(lb + ub),
+#         a^{\geq} = lambda_ub * x + 1/lb + 1/ub.
+#         '''
+#         input_is_ele = True
+#         if len(ts) == 1:
+#             if isinstance(ts[0], Tensor):
+#                 return super().forward(ts[0])
+#             elif isinstance(ts[0], Ele):
+#                 e = ts[0]
+#             else:
+#                 raise ValueError(f'Not supported argument type {type(ts[0])}')
+#         else:
+#             input_is_ele = False
+#             e = Ele(*ts) # reconstruct abstract element
+        
+#         flat_size = e._lcoef.size()[1] # FlatDim0
+
+#         # was flattening the dimensions, actually no need to do that
+#         lcoef = e._lcoef  # Batch x FlatDim0 x Dims...
+#         lcnst = e._lcnst
+#         ucoef = e._ucoef
+#         ucnst = e._ucnst
+
+#         # utils.pp_cuda_mem('reciprocal: Before gamma()')
+#         lb, ub = e.gamma()  # Batch x Dims
+#         assert torch.all(lb > 0)
+
+#         coef_zeros = torch.zeros_like(lcoef)
+#         cnst_zeros = torch.zeros_like(lcnst)
+#         lbub_zeros = torch.zeros_like(lb)
+
+#         # utils.pp_cuda_mem('reciprocal: After gamma()')
+#         recip_lb, recip_ub = torch.reciprocal(lb), torch.reciprocal(ub)
+#         lbub_same = recip_lb <= recip_ub  # perhaps the extra > would cover a bit of numerical error as well?
+
+#         def full_bits(bits: Tensor, is_coef: bool) -> Tensor:
+#             sizes = list(bits.size())
+#             bits = bits.unsqueeze(dim=1)  # right after Batch x ...
+#             if is_coef:
+#                 sizes.insert(1, flat_size)  # Batch x FlatDim0 x ...
+#             else:
+#                 sizes.insert(1, 1)  # Batch x 1 x ...
+#             return bits.expand(*sizes)
+        
+#         # when L = U, just reset them to a constant value
+#         case_degen_lcoef = coef_zeros
+#         case_degen_lcnst = recip_lb.unsqueeze(dim=1)  # Batch x 1 x Dims
+#         case_degen_ucoef = case_degen_lcoef
+#         case_degen_ucnst = case_degen_lcnst
+#         full_lcoef = torch.where(full_bits(lbub_same, True), case_degen_lcoef, coef_zeros)
+#         full_lcnst = torch.where(full_bits(lbub_same, False), case_degen_lcnst, cnst_zeros)
+#         full_ucoef = torch.where(full_bits(lbub_same, True), case_degen_ucoef, coef_zeros)
+#         full_ucnst = torch.where(full_bits(lbub_same, False), case_degen_ucnst, cnst_zeros)
+
+#         denom = torch.where(lbub_same, torch.ones_like(lb), ub - lb)
+#         # Batch x Dims...
+#         # 若 lb = ub，则 denom = 1，k_ub = 0; 若 lb != ub，则为简单的slope
+#         k_ub = (recip_ub - recip_lb) / denom  # the slope for LB-UB
+#         k_lb = -4 * torch.reciprocal((lb + ub)**2)   # the slope for recipocal on x = (lb+ub)/2
+
+#         # Batch x Dims...
+#         b_lb = 2 * torch.reciprocal((lb + ub))  # the bias for LB', using x = (lb+ub)/2
+#         b_ub = recip_lb + recip_ub  # the bias for UB', using recip_lb + recip_ub
+
+#         # for LB'
+#         lbub_equal = ~lbub_same
+#         full_lcoef = torch.where(full_bits(lbub_equal, True), lcoef * k_lb.unsqueeze(dim=1), full_lcoef)
+#         full_lcnst = torch.where(full_bits(lbub_equal, False),
+#                                  lcnst * k_lb.unsqueeze(dim=1) + b_lb.unsqueeze(dim=1), full_lcnst)
+
+#         # for UB'
+#         lbub_equal = ~lbub_same
+#         full_ucoef = torch.where(full_bits(lbub_equal, True), ucoef * k_ub.unsqueeze(dim=1), full_ucoef)
+#         full_ucnst = torch.where(full_bits(lbub_equal, False),
+#                                  ucnst * k_ub.unsqueeze(dim=1) + b_ub.unsqueeze(dim=1), full_ucnst)
+
+#         # utils.pp_cuda_mem('reciprocal: After everything')
+#         new_e = Ele(full_lcoef, full_lcnst, full_ucoef, full_ucnst, e.dlb, e.dub)
+#         return new_e if input_is_ele else tuple(new_e)
+
 class Reciprocal(reciprocal_conc):
     def __str__(self) -> str:
         return f'{Dom.name}.reciprocal' + super().__str__()
@@ -1224,61 +1336,65 @@ class Reciprocal(reciprocal_conc):
 
         # utils.pp_cuda_mem('reciprocal: Before gamma()')
         lb, ub = e.gamma()  # Batch x Dims
-        assert torch.all(lb > 0), f'lb = {lb} >= 0'
+        assert torch.all(lb > 0)
 
-        coef_zeros = torch.zeros_like(lcoef)
-        cnst_zeros = torch.zeros_like(lcnst)
-        lbub_zeros = torch.zeros_like(lb)
+        lcoef_zeros = torch.zeros_like(lcoef)
+        ucoef_zeros = torch.zeros_like(ucoef)
+        
 
         # utils.pp_cuda_mem('reciprocal: After gamma()')
         recip_lb, recip_ub = torch.reciprocal(lb), torch.reciprocal(ub)
-        lbub_same = recip_lb <= recip_ub  # perhaps the extra > would cover a bit of numerical error as well?
+        full_lcnst = recip_ub.unsqueeze(dim=1)  # Batch x 1 x Dims
+        full_ucnst = recip_lb.unsqueeze(dim=1)  # Batch x 1 x Dims
+        full_lcoef = lcoef_zeros
+        full_ucoef = ucoef_zeros
+        # lbub_same = recip_lb <= recip_ub  # perhaps the extra > would cover a bit of numerical error as well?
 
-        def full_bits(bits: Tensor, is_coef: bool) -> Tensor:
-            sizes = list(bits.size())
-            bits = bits.unsqueeze(dim=1)  # right after Batch x ...
-            if is_coef:
-                sizes.insert(1, flat_size)  # Batch x FlatDim0 x ...
-            else:
-                sizes.insert(1, 1)  # Batch x 1 x ...
-            return bits.expand(*sizes)
+        # def full_bits(bits: Tensor, is_coef: bool) -> Tensor:
+        #     sizes = list(bits.size())
+        #     bits = bits.unsqueeze(dim=1)  # right after Batch x ...
+        #     if is_coef:
+        #         sizes.insert(1, flat_size)  # Batch x FlatDim0 x ...
+        #     else:
+        #         sizes.insert(1, 1)  # Batch x 1 x ...
+        #     return bits.expand(*sizes)
         
-        # when L = U, just reset them to a constant value
-        case_degen_lcoef = coef_zeros
-        case_degen_lcnst = recip_lb.unsqueeze(dim=1)  # Batch x 1 x Dims
-        case_degen_ucoef = case_degen_lcoef
-        case_degen_ucnst = case_degen_lcnst
-        full_lcoef = torch.where(full_bits(lbub_same, True), case_degen_lcoef, coef_zeros)
-        full_lcnst = torch.where(full_bits(lbub_same, False), case_degen_lcnst, cnst_zeros)
-        full_ucoef = torch.where(full_bits(lbub_same, True), case_degen_ucoef, coef_zeros)
-        full_ucnst = torch.where(full_bits(lbub_same, False), case_degen_ucnst, cnst_zeros)
+        # # when L = U, just reset them to a constant value
+        # case_degen_lcoef = coef_zeros
+        # case_degen_lcnst = recip_lb.unsqueeze(dim=1)  # Batch x 1 x Dims
+        # case_degen_ucoef = case_degen_lcoef
+        # case_degen_ucnst = case_degen_lcnst
+        # full_lcoef = torch.where(full_bits(lbub_same, True), case_degen_lcoef, coef_zeros)
+        # full_lcnst = torch.where(full_bits(lbub_same, False), case_degen_lcnst, cnst_zeros)
+        # full_ucoef = torch.where(full_bits(lbub_same, True), case_degen_ucoef, coef_zeros)
+        # full_ucnst = torch.where(full_bits(lbub_same, False), case_degen_ucnst, cnst_zeros)
 
-        denom = torch.where(lbub_same, torch.ones_like(lb), ub - lb)
-        # Batch x Dims...
-        # 若 lb = ub，则 denom = 1，k_ub = 0; 若 lb != ub，则为简单的slope
-        k_ub = (recip_ub - recip_lb) / denom  # the slope for LB-UB
-        k_lb = -4 * torch.reciprocal((lb + ub)**2)   # the slope for recipocal on x = (lb+ub)/2
+        # denom = torch.where(lbub_same, torch.ones_like(lb), ub - lb)
+        # # Batch x Dims...
+        # # 若 lb = ub，则 denom = 1，k_ub = 0; 若 lb != ub，则为简单的slope
+        # k_ub = (recip_ub - recip_lb) / denom  # the slope for LB-UB
+        # k_lb = -4 * torch.reciprocal((lb + ub)**2)   # the slope for recipocal on x = (lb+ub)/2
 
-        # Batch x Dims...
-        b_lb = 2 * torch.reciprocal((lb + ub))  # the bias for LB', using x = (lb+ub)/2
-        b_ub = recip_lb + recip_ub  # the bias for UB', using recip_lb + recip_ub
+        # # Batch x Dims...
+        # b_lb = 2 * torch.reciprocal((lb + ub))  # the bias for LB', using x = (lb+ub)/2
+        # b_ub = recip_lb + recip_ub  # the bias for UB', using recip_lb + recip_ub
 
-        # for LB'
-        lbub_equal = ~lbub_same
-        full_lcoef = torch.where(full_bits(lbub_equal, True), lcoef * k_lb.unsqueeze(dim=1), full_lcoef)
-        full_lcnst = torch.where(full_bits(lbub_equal, False),
-                                 lcnst * k_lb.unsqueeze(dim=1) + b_lb.unsqueeze(dim=1), full_lcnst)
+        # # for LB'
+        # lbub_equal = ~lbub_same
+        # full_lcoef = torch.where(full_bits(lbub_equal, True), lcoef * k_lb.unsqueeze(dim=1), full_lcoef)
+        # full_lcnst = torch.where(full_bits(lbub_equal, False),
+        #                          lcnst * k_lb.unsqueeze(dim=1) + b_lb.unsqueeze(dim=1), full_lcnst)
 
-        # for UB'
-        lbub_equal = ~lbub_same
-        full_ucoef = torch.where(full_bits(lbub_equal, True), ucoef * k_ub.unsqueeze(dim=1), full_ucoef)
-        full_ucnst = torch.where(full_bits(lbub_equal, False),
-                                 ucnst * k_ub.unsqueeze(dim=1) + b_ub.unsqueeze(dim=1), full_ucnst)
+        # # for UB'
+        # lbub_equal = ~lbub_same
+        # full_ucoef = torch.where(full_bits(lbub_equal, True), ucoef * k_ub.unsqueeze(dim=1), full_ucoef)
+        # full_ucnst = torch.where(full_bits(lbub_equal, False),
+        #                          ucnst * k_ub.unsqueeze(dim=1) + b_ub.unsqueeze(dim=1), full_ucnst)
 
         # utils.pp_cuda_mem('reciprocal: After everything')
         new_e = Ele(full_lcoef, full_lcnst, full_ucoef, full_ucnst, e.dlb, e.dub)
         return new_e if input_is_ele else tuple(new_e)
-        
+
 
 class Exp_conc(nn.Module):
 
@@ -1375,13 +1491,6 @@ class Exponent(Exp_conc):
         # utils.pp_cuda_mem('Tanh: After everything')
         new_e = Ele(full_lcoef, full_lcnst, full_ucoef, full_ucnst, e.dlb, e.dub)
         return new_e if input_is_ele else tuple(new_e)
-
-class Softmax(nn.Softmax):
-    def __str__(self):
-        return f'{Dom.name}.' + super().__str__()
-    
-    def export(self) -> nn.Softmax:
-        return nn.Softmax(dim=self.dim)
 
 class Tanh(nn.Tanh):
     def __str__(self):
@@ -1539,7 +1648,12 @@ class Softmax(nn.Softmax):
         # multiply the reciprocal with the numerator
         element_result = element_numerator * element_reciprocal
 
-        return element_result if input_is_ele else tuple(element_result)
+        element_result._lcnst = element_result._lcnst.clamp(min = 0, max=1)
+        element_result._ucnst = element_result._ucnst.clamp(min = 0, max=1)
+
+        result = Ele(element_result._lcoef, element_result._lcnst, element_result._ucoef, element_result._ucnst, e.dlb, e.dub)
+
+        return result if input_is_ele else tuple(result)
 
 
 

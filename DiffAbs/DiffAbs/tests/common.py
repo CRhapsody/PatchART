@@ -34,6 +34,40 @@ def linear_degen(dom: AbsDom, ntimes: int = 10):
         assert torch.equal(orig_outputs, outs.ub())
     return
 
+def test_multiply(dom: AbsDom, ntimes: int = 10):
+    """ Validate that my Linear implementation is correct given degenerated inputs. """
+    
+    for _ in range(ntimes):
+        orig_inputs1 = torch.tensor([
+            [random.random(), random.random()],
+            [random.random(), random.random()]
+        ], device=device)
+        orig_inputs2 = torch.tensor([
+            [random.random(), random.random()],
+            [random.random(), random.random()]
+        ], device=device)
+        lin1 = dom.Linear(in_features=2, out_features=2).to(device)
+        lin2 = dom.Linear(in_features=2, out_features=2).to(device)
+
+
+        abstract_inputs1 = dom.Ele.by_intvl(orig_inputs1, orig_inputs1)
+        abstract_inputs2 = dom.Ele.by_intvl(orig_inputs2, orig_inputs2)
+        abstract_lin_out1 = lin1(abstract_inputs1)
+        abstract_lin_out2 = lin2(abstract_inputs2)
+        abstract_lin_out1_mul_abstract_lin_out2 = abstract_lin_out1 * abstract_lin_out2
+
+        abstract_lin_out1_lb, abstract_lin_out1_ub =  abstract_lin_out1.gamma()
+        abstract_lin_out2_lb, abstract_lin_out2_ub =  abstract_lin_out2.gamma()
+
+        lb2 = torch.where(abstract_lin_out1_lb > 0, abstract_lin_out1_lb*abstract_lin_out2_lb, abstract_lin_out1_lb*abstract_lin_out2_ub)
+        ub2 = torch.where(abstract_lin_out1_ub > 0, abstract_lin_out1_ub*abstract_lin_out2_ub, abstract_lin_out1_ub*abstract_lin_out2_lb)
+
+        lb1,ub1 = abstract_lin_out1_mul_abstract_lin_out2.gamma()
+
+        # soundness
+        assert torch.all(lb1 >= lb2)
+        assert torch.all(ub1 <= ub2)
+    return
 
 def maintain_lbub(dom: AbsDom, ntimes: int = 10):
     """ Validate that the inner data structure is maintaining LB/UB correctly. """

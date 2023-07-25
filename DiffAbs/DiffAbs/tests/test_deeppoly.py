@@ -151,6 +151,10 @@ def test_overapprox():
     common.overapprox(dom, dom.Tanh)
     return
 
+def test_mutliply():
+    common.test_multiply(Dom())
+    return
+
 
 def test_optimizable():
     return common.optimizable(Dom())
@@ -172,5 +176,5 @@ def test_clamp():
 if __name__ == '__main__':
     # test_exponential_by_lbub()
     # test_reciprocal_by_lbub()
-    test_softmax_by_lbub()
+    test_mutliply()
     

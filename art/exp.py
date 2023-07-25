@@ -109,11 +109,11 @@ class ExpArgParser(argparse.ArgumentParser):
         # art hyper-parameters
         self.add_argument('--dom', type=str, choices=['deeppoly', 'interval'], default='deeppoly',
                           help='the abstract domain to use')
-        self.add_argument('--start_abs_cnt', type=int, default=5000,
+        self.add_argument('--start_abs_cnt', type=int, default=6000,
                           help='do some refinement before training to have more training data')
-        self.add_argument('--max_abs_cnt', type=int, default=20000,
+        self.add_argument('--max_abs_cnt', type=int, default=35000,
                           help='stop refinement after exceeding this many abstractions')
-        self.add_argument('--refine_top_k', type=int, default=500,
+        self.add_argument('--refine_top_k', type=int, default=800,
                           help='select top k abstractions to refine every time')
         self.add_argument('--tiny_width', type=float, default=1e-3,
                           help='refine a dimension only when its width still > this tiny_width')
@@ -125,7 +125,7 @@ class ExpArgParser(argparse.ArgumentParser):
                           help='mini batch size during each training epoch')
         self.add_argument('--min_epochs', type=int, default=25,
                           help='at least run this many epochs for sufficient training')
-        self.add_argument('--max_epochs', type=int, default=35,
+        self.add_argument('--max_epochs', type=int, default=45,
                           help='at most run this many epochs before too long')
 
         # training flags

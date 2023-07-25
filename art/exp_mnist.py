@@ -141,7 +141,8 @@ def eval_test(net: MnistNet, testset: MnistPoints, categories=None) -> float:
         outs = net(testset.inputs)
         predicted = outs.argmax(dim=1)
         correct = (predicted == testset.labels).sum().item()
-        ratio = correct / len(testset)
+        # ratio = correct / len(testset)
+        ratio = correct / len(testset.inputs)
 
         # per category
         if categories is not None:
@@ -230,7 +231,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         nbatches = len(train_loader)
         
         #early stop and get the best model
-        early_stopper = exp.EarlyStopper(patience=4, min_delta=0)
+        early_stopper = exp.EarlyStopper(patience=5, min_delta=0)
         # for epoch in np.arange(n_epochs):
         #     train_loss = train_one_epoch(model, train_loader)
         #     validation_loss = validate_one_epoch(model, validation_loader)
@@ -309,7 +310,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     # 1.construct a mnist prop file include Mnistprop Module, which inherits from Oneprop
     # 2.use the features to construct the Mnistprop
     # 3.use the Mnistprop to construct the Andprop(join) 
-    featurelist = [(data[0],data[1]) for data in zip(feature_traindata[:1000], trainset.labels[:1000])]
+    featurelist = [(data[0],data[1]) for data in zip(feature_traindata[:3125], trainset.labels[:3125])]
     feature_prop_list = MnistFeatureProp.all_props(args.dom, DataList=featurelist, input_dimension = input_size,radius= args.repair_radius)
 
     # get the all props after join all l_0 ball feature property
@@ -369,9 +370,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
     # set the
     feature_traindata.requires_grad = True
-    del(feature_trainset)
-    feature_trainset = MnistPoints(feature_traindata[:1000], trainset.labels[:1000])
-
+    feature_trainset = MnistPoints(feature_traindata[:3125], trainset.labels[:3125])
     
 
     # freeze the parameters of the original network for extracting features
@@ -532,9 +531,9 @@ def test_goal_safety(parser: MnistArgParser):
     defaults = {
         # 'start_abs_cnt': 5000,
         # 'max_abs_cnt': 
-        'batch_size': 100,  # to make it faster
+        'batch_size': 256,  # to make it faster
         'min_epochs': 25,
-        'max_epochs': 35
+        'max_epochs': 45
     }
     parser.set_defaults(**defaults)
     args = parser.parse_args()
