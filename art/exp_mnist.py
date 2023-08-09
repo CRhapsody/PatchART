@@ -58,6 +58,8 @@ class MnistArgParser(exp.ExpArgParser):
                           help='specifically for data points sampling from spec')
         self.add_argument('--reset_params', type=literal_eval, default=False,
                           help='start with random weights or provided trained weights when available')
+        self.add_argument('--datasize', type=int, default=1000, 
+                          help='dataset size for training')
 
         # querying a verifier
         self.add_argument('--max_verifier_sec', type=int, default=300,
@@ -104,30 +106,50 @@ class MnistPoints(exp.ConcIns):
         Loads to CPU/GPU automatically.
     """
     @classmethod
-    def load(cls, train: bool, device):
+    def load(cls, train: bool, device, trainnumber = None, testnumber = None,
+            is_test_accuracy = False, 
+            is_attack_testset_repaired = False, 
+            is_attack_repaired = False):
+        '''
+        trainnumber: 训练集数据量
+        testnumber: 测试集数据量
+        is_test_accuracy: if True, 检测一般测试集的准确率
+        is_attack_testset_repaired: if True, 检测一般被攻击测试集的准确率
+        is_attack_repaired: if True, 检测被攻击数据的修复率
+        三个参数只有一个为True
+        '''
         suffix = 'train' if train else 'test'
-        fname = f'{suffix}_attack_data_full.pt'  # note that it is using original data
-        # fname = f'{suffix}_norm00.pt'
-        combine = torch.load(Path(MNIST_DATA_DIR, fname), device)
-        inputs, labels = combine     
-        # if train:
-        # attack_data_fname = f'{suffix}_attack_data_part.pt'
-        #     attack_combine = torch.load(Path(MNIST_DATA_DIR, attack_data_fname), device)
-        #     attack_inputs, attack_labels = attack_combine
-        #     inputs = torch.cat((inputs[:10000], attack_inputs), dim=0)
-        #     labels = torch.cat((labels[:10000], attack_labels), dim=0)
-        # if train:
-        # clean_data_fname = f'{suffix}_norm00.pt'
-        # clean_combine = torch.load(Path(MNIST_DATA_DIR, clean_data_fname), device)
-        # clean_inputs, clean_labels = clean_combine
         if train:
-            # inputs = torch.cat((inputs[:10000], clean_inputs[:10000]), dim=0)
-            # labels = torch.cat((labels[:10000], clean_labels[:10000]), dim=0)
-            inputs = inputs[:10000]
-            labels = labels[:10000]
-        # else:
-            # inputs = torch.cat((inputs[:2500]), dim=0)
-            # labels = torch.cat((labels[:2500]), dim=0)
+            fname = f'{suffix}_attack_data_full.pt'  # note that it is using original data
+            # fname = f'{suffix}_norm00.pt'
+            combine = torch.load(Path(MNIST_DATA_DIR, fname), device)
+            inputs, labels = combine 
+            inputs = inputs[:trainnumber]
+            labels = labels[:trainnumber]
+        else:
+            if is_test_accuracy:
+                fname = f'{suffix}_norm00.pt'
+                combine = torch.load(Path(MNIST_DATA_DIR, fname), device)
+                inputs, labels = combine
+                inputs = inputs[:testnumber]
+                labels = labels[:testnumber]
+            
+            elif is_attack_testset_repaired:
+                fname = f'{suffix}_attack_data_full.pt'
+                combine = torch.load(Path(MNIST_DATA_DIR, fname), device)
+                inputs, labels = combine
+                inputs = inputs[:testnumber]
+                labels = labels[:testnumber]
+            elif is_attack_repaired:
+                fname = f'train_attack_data_full.pt'
+                combine = torch.load(Path(MNIST_DATA_DIR, fname), device)
+                inputs, labels = combine
+                inputs = inputs[:testnumber]
+                labels = labels[:testnumber]
+
+            # clean_inputs, clean_labels = clean_combine
+            # inputs = torch.cat((inputs[:testnumber], clean_inputs[:testnumber] ), dim=0)
+            # labels = torch.cat((labels[:testnumber], clean_labels[:testnumber] ),  dim=0)
         
         assert len(inputs) == len(labels)
         return cls(inputs, labels)
@@ -162,8 +184,9 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     fpath = Path(MNIST_NET_DIR, fname)
 
 
-    trainset = MnistPoints.load(train=True, device=device)
-    testset = MnistPoints.load(train=False, device=device)
+    trainset = MnistPoints.load(train=True, device=device, trainnumber=50)
+    testset = MnistPoints.load(train=False, device=device, testnumber=2000,is_test_accuracy=True)
+    attack_testset = MnistPoints.load(train=False, device=device, testnumber=2000,is_attack_testset_repaired=True)
 
     net = MnistNet(dom=args.dom)
     net.to(device)
@@ -181,8 +204,12 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     model1, model2 = net.split()
     with torch.no_grad():
         feature_traindata = model1(trainset.inputs)
-
     feature_trainset = MnistPoints(feature_traindata, trainset.labels)
+    with torch.no_grad():
+        feature_testdata = model1(testset.inputs)
+        feature_attack_testdata = model1(attack_testset.inputs)
+    feature_testset = MnistPoints(feature_testdata, testset.labels)
+    feature_attack_testset = MnistPoints(feature_attack_testdata, attack_testset.labels)
 
     # repair part
     # the number of repair patch network,which is equal to the number of properties
@@ -205,6 +232,13 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     logging.info(f'--Support network: {support_net}')
     logging.info(f'--Patch network: {patch_net}')
 
+    
+
+    def test_model(net = None, feature_testset = None):
+        acc = eval_test(net, feature_testset)
+
+        logging.info(f'test support net accuracy: {acc}')
+        return acc
         # train the support network
     # def train_model(model, safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra):
     def train_model(support_net):
@@ -214,53 +248,26 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
         # certain epoch to train support network
         initial_training_support_epoch = 200
-
-        criterion = args.support_loss  # 分类任务的损失函数
-
-        # binary_criterion = args.support_loss  # 正反例识别任务的损失函数
-
-        # input_region_dataloader = process_data(safe_lb, safe_ub, safe_extra, wl_lb, wl_ub, wl_extra)
-
-        # construct the abstract dataset for support network training
-        # absset = exp.AbsIns(in_lb, in_ub, in_bitmap)
-        # abs_loader = data.DataLoader(absset, batch_size=len(in_lb), shuffle=True)
-        # nbatches = len(abs_loader)  # doesn't matter rewriting len(conc_loader), they are the same
-        # abs_loader = iter(abs_loader)[0]
         logging.info('start pre-training support network:')
-        train_loader = data.DataLoader(feature_trainset, batch_size=128, shuffle=True,drop_last=True)
+        train_loader = data.DataLoader(feature_trainset, batch_size=50, shuffle=True,drop_last=True)
         nbatches = len(train_loader)
         
         #early stop and get the best model
-        early_stopper = exp.EarlyStopper(patience=5, min_delta=0)
-        # for epoch in np.arange(n_epochs):
-        #     train_loss = train_one_epoch(model, train_loader)
-        #     validation_loss = validate_one_epoch(model, validation_loader)
-        #     if early_stopper.early_stop(validation_loss):             
-        #         break
+        early_stopper = exp.EarlyStopper(patience=5, min_delta=0.01)
         epoch = 0
         with torch.enable_grad():
             while True:
                 epoch += 1
                 total_loss = 0.
-                # for j in range(len(nbatches)):
-                # loss = 0
-                
-                # opti_support.zero_grad()
-                # abs_ins = args.dom.Ele.by_intvl(in_lb, in_ub)
-                # abs_outs = support_net(abs_ins)
-                # loss = all_props.safe_feature_dist(abs_outs, in_bitmap)
                 train_data_iter = iter(train_loader)
                 # for j in range(nbatches):
                 for batch in train_data_iter:              
                     opti_support.zero_grad()
-                    # scheduler_support.zero_grad()
                     batch_inputs, batch_labels = batch
                     batch_labels = torch.nn.functional.one_hot(batch_labels, num_classes=10)
                     batch_loss = 0.
-                    # batch_inputs, batch_labels = next(conc_data_iter)
                     batch_outputs = support_net(batch_inputs)
                     batch_loss = args.support_loss(batch_outputs, batch_labels.float())
-                    # loss = torch.sum(batch_loss,dim = 1)
                     total_loss += batch_loss.item()
                     batch_loss.backward()
                     opti_support.step()
@@ -269,37 +276,23 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                 if epoch % 1 == 0:
                     logging.info(f'Epoch {epoch}: support loss {avg_loss}')
                 if scheduler_support is not None:
-                    scheduler_support.step(total_loss)
-                
+                    scheduler_support.step(total_loss)   
                 if early_stopper.early_stop(support_net,avg_loss):
-                    support_net = early_stopper.get_best_model(support_net,device=device)             
+                    support_net = early_stopper.get_best_model(model=support_net,device=device)
+                    # acc = test_model(net = support_net,feature_testset=feature_testset)
+                    # if acc < 0.75:
+                    #     continue
+                    # else:         
                     break
-                # if epoch == 20 and avg_loss < 0.11:
-                #     logging.info('support net training failed, should reset the model parameters')
-                #     support_net = SupportNet(input_size=input_size, dom=args.dom, hidden_sizes=hidden_size, output_size=n_repair, name = f'support network')
-                #     support_net.to(device)
-                #     early_stopper = exp.EarlyStopper(patience=3, min_delta=0.0003)
                 if epoch > (initial_training_support_epoch + 100):
                     break
         return epoch, avg_loss
-                
-                
 
     with torch.no_grad():
-        feature_testdata = model1(testset.inputs)
-    feature_testset = MnistPoints(feature_testdata, testset.labels)
-
-    def test_model(support_net):
-        acc = eval_test(support_net, feature_testset)
-
-        logging.info(f'test support net accuracy: {acc}')
-        return acc
-
-    with torch.no_grad():
-        train_model(support_net)
+        train_model(support_net = support_net)
     
     with torch.no_grad():
-        test_model(support_net)
+        test_model(net = support_net,feature_testset=feature_testset)
 
     # ABstraction part
     # set the box bound of the features, which the length of the box is 2*radius
@@ -310,7 +303,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     # 1.construct a mnist prop file include Mnistprop Module, which inherits from Oneprop
     # 2.use the features to construct the Mnistprop
     # 3.use the Mnistprop to construct the Andprop(join) 
-    featurelist = [(data[0],data[1]) for data in zip(feature_traindata[:3125], trainset.labels[:3125])]
+    featurelist = [(data[0],data[1]) for data in zip(feature_traindata[:2000], trainset.labels[:2000])]
     feature_prop_list = MnistFeatureProp.all_props(args.dom, DataList=featurelist, input_dimension = input_size,radius= args.repair_radius)
 
     # get the all props after join all l_0 ball feature property
@@ -370,16 +363,8 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
     # set the
     feature_traindata.requires_grad = True
-    feature_trainset = MnistPoints(feature_traindata[:3125], trainset.labels[:3125])
+    feature_trainset = MnistPoints(feature_traindata, trainset.labels)
     
-
-    # freeze the parameters of the original network for extracting features
-    # for name, param in repair_net.named_parameters():
-    #     # if 'conv1' or 'conv2' or 'fc1' in name:
-    #     if ('target_net.0.weight' in name) or ('target_net.0.bias' in name) or ('support' in name):
-    #         param.requires_grad = False
-    #     else:
-    #         param.requires_grad = True
 
     while True:
         # first, evaluate current model
@@ -402,9 +387,11 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         # test the repaired model which combines the feature extractor, classifier and the patch network
         # accuracies.append(eval_test(finally_net, testset))
         accuracies.append(eval_test(repair_net, feature_testset))
+        attack_test_acc = eval_test(repair_net, feature_attack_testset)
         # with torch.no_grad():
         evel_acc = eval_test(repair_net, feature_trainset)
         logging.info(f'Test set accuracy {accuracies[-1]}.')
+        logging.info(f'attack test set accuracy {attack_test_acc}.')
         logging.info(f'Train set accuracy {evel_acc}.')
 
         # check termination
@@ -434,7 +421,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
             absset.claimed_len = max_claimed_len
 
         if not args.no_pts:
-            conc_loader = data.DataLoader(feature_trainset, batch_size=args.batch_size, shuffle=True)
+            conc_loader = data.DataLoader(feature_trainset, batch_size=50, shuffle=True)
             nbatches = len(conc_loader)
             conc_loader = iter(conc_loader)
         if not args.no_abs:
@@ -483,10 +470,12 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                                                                 stop_on_k_new=args.refine_top_k,for_feature=True)
         pass
     train_time = timer() - start
+    torch.save(finally_net.state_dict(), str(REPAIR_MODEL_DIR / f'trainset{args.datasize}-lr{args.lr}-weight_decay{args.weight_decay}-kcoeff{args.k_coeff}-support_loss{args.support_loss}-accuracy_loss{args.accuracy_loss}-rapair_radius{args.repair_radius}-.pt'))
     logging.info(f'Accuracy at every epoch: {accuracies}')
     logging.info(f'After {epoch} epochs / {utils.pp_time(train_time)}, ' +
                  f'eventually the trained network got certified? {certified}, ' +
-                 f'with {accuracies[-1]:.4f} accuracy on test set.')
+                 f'with {accuracies[-1]:.4f} accuracy on test set,' +
+                 f'with {attack_test_acc:.4f} accuracy on attack test set.')
     # torch.save(repair_net.state_dict(), str(REPAIR_MODEL_DIR / '2_9.pt'))
     # net.save_nnet(f'./ART_{nid.x.numpy().tolist()}_{nid.y.numpy().tolist()}_repair2p_noclamp_epoch_{epoch}.nnet',
     #             mins = bound_mins, maxs = bound_maxs) 
@@ -581,7 +570,7 @@ def test_goal_safety(parser: MnistArgParser):
 
 
 
-def test(lr:float = 0.005, weight_decay:float = 0.0001, k_coeff:float = 0.5, repair_radius:float = 0.1, support_loss:str = 'L1', accuracy_loss:str = 'L1'):
+def test(lr:float = 0.005, weight_decay:float = 0.0001, k_coeff:float = 0.5, repair_radius:float = 0.1, support_loss:str = 'L1', accuracy_loss:str = 'L1',datasize = 1000):
 
     # test_defaults = {
     #     'exp_fn': 'test_goal_safety',
@@ -610,6 +599,7 @@ def test(lr:float = 0.005, weight_decay:float = 0.0001, k_coeff:float = 0.5, rep
         'k_coeff': k_coeff,
         'support_loss': support_loss,
         'accuracy_loss': accuracy_loss,
+        'datasize': datasize,
 
         
     }
@@ -637,5 +627,5 @@ if __name__ == '__main__':
     #                     #     continue
     #                     # for repair_radius in [0.1, 0.05, 0.03, 0.01]:
     #                     test(lr=lr, weight_decay=weight_decay, k_coeff=k_coeff, repair_radius=0.1, support_loss=support_loss, accuracy_loss=accuracy_loss)
-    test(lr=0.01, weight_decay=1e-4, k_coeff=0.5, repair_radius=0.02, support_loss='SmoothL1', accuracy_loss='CE')
+    test(lr=0.01, weight_decay=1e-4, k_coeff=0.5, repair_radius=0.02, support_loss='SmoothL1', accuracy_loss='CE',datasize = 1000)
 

@@ -170,45 +170,47 @@ class Netsum(nn.Module):
 
 
 
-    # def forward(self, x):
-    #     out = self.target_net(x)
-    #     # classes_score, violate_score = self.support_net(x) # batchsize * repair_num * []
-    #     classes_score = self.support_net(x) # batchsize * repair_num_propertys
+    def forward(self, x):
+        out = self.target_net(x)
+        # classes_score, violate_score = self.support_net(x) # batchsize * repair_num * []
+        classes_score = self.support_net(x) # batchsize * repair_num_propertys
 
-    #     # we should make sure that the violate_score is not trainable, otherwise the net will not linear
-    #     # violate_score.requires_grad_(False)
+        # we should make sure that the violate_score is not trainable, otherwise the net will not linear
+        # violate_score.requires_grad_(False)
 
-    #     # compute the K in reassure
-    #     # norms = torch.norm(classes_score, p=float('inf'), dim=1)
-    #     # norms.requires_grad_(False)
+        # compute the K in reassure
+        # norms = torch.norm(classes_score, p=float('inf'), dim=1)
+        # norms.requires_grad_(False)
 
-    #     for i,patch in enumerate(self.patch_nets):
-    #         # violate_score[...,0] is the score of safe, violate_score[...,1] is the score of violate
-    #         # we repair the property according to the violate score
-    #         pa = patch(x)
-    #         if isinstance(pa, Tensor):
-    #             K = pa.norm(p = float('inf'),dim = -1).view(-1,1)
-    #             K = K.detach()
-    #             bar = (K * classes_score[:,i].view(-1,1))
-    #             # -K, -K
-    #             out += self.acti(pa + bar - self.A*K)\
-    #                 + -1*self.acti(-1*pa + bar -self.A*K )
-    #         else:
-    #             K = pa.ub().norm(p = float('inf'),dim = -1).view(-1,1)
+        # for i,patch in enumerate(self.patch_nets):
+        #     # violate_score[...,0] is the score of safe, violate_score[...,1] is the score of violate
+        #     # we repair the property according to the violate score
+        #     pa = patch(x)
+        #     if isinstance(pa, Tensor):
+        #         K = pa.norm(p = float('inf'),dim = -1).view(-1,1)
+        #         K = K.detach()
+        #         bar = (K * classes_score[:,i].view(-1,1))
+        #         # -K, -K
+        #         out += self.acti(pa + bar - self.A*K)\
+        #             + -1*self.acti(-1*pa + bar -self.A*K )
+        #     else:
+        #         K = pa.ub().norm(p = float('inf'),dim = -1).view(-1,1)
 
-    #             # avoid multiply grad
-    #             # K.requires_grad_(False)
-    #             K = K.detach()
+        #         # avoid multiply grad
+        #         # K.requires_grad_(False)
+        #         K = K.detach()
 
-    #             bar = (K * classes_score[:,:,i])
-    #             bar = bar.unsqueeze(dim = 2).expand_as(pa)
-    #             # using the upper bound of the patch net to instead of the inf norm of patch net
-    #             # + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)), + (-1*K.unsqueeze(-1).expand_as(pa._lcnst))
-    #             out += self.acti(pa + bar + (-self.A*K.unsqueeze(-1).expand_as(pa._lcnst)) )\
-    #                 + -1*self.acti(-1*pa + bar + (-self.A*K.unsqueeze(-1).expand_as(pa._lcnst)))
+        #         bar = (K * classes_score[:,:,i])
+        #         bar = bar.unsqueeze(dim = 2).expand_as(pa)
+        #         # using the upper bound of the patch net to instead of the inf norm of patch net
+        #         # + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)), + (-1*K.unsqueeze(-1).expand_as(pa._lcnst))
+        #         out += self.acti(pa + bar + (-self.A*K.unsqueeze(-1).expand_as(pa._lcnst)) )\
+        #             + -1*self.acti(-1*pa + bar + (-self.A*K.unsqueeze(-1).expand_as(pa._lcnst)))
                 
-    #     # out = self.sigmoid(out)
-    #     return out
+        # out = self.sigmoid(out)
+        # return out
+
+    # Directly multiply
     def forward(self, x):
         out = self.target_net(x)
         # classes_score, violate_score = self.support_net(x) # batchsize * repair_num * []
