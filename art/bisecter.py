@@ -54,7 +54,7 @@ class Bisecter(object):
         return
 
     def _grad_dists_of_batch(self, new_lb: Tensor, new_ub: Tensor, new_extra: Optional[Tensor],
-                             forward_fn: nn.Module,for_feature = False) -> Tuple[Tensor, Tensor]:
+                             forward_fn: nn.Module,for_patch = False) -> Tuple[Tensor, Tensor]:
         """ Get the gradient value for each abstraction as heuristic, as long as safe distances. """
         with torch.enable_grad(): #设置可以求梯度
             new_lb = new_lb.detach().requires_grad_()
@@ -65,11 +65,12 @@ class Bisecter(object):
                 new_ub.grad.zero_()
 
             ins = self.d.Ele.by_intvl(new_lb, new_ub)
-            outs = forward_fn(ins)
-            if for_feature:
-                new_safe_dist = self.prop.safe_feature_dist(outs) if new_extra is None else self.prop.safe_feature_dist(outs, new_extra)
+            if for_patch:
+                outs = forward_fn(ins, new_extra)
             else:
-                new_safe_dist = self.prop.safe_dist(outs) if new_extra is None else self.prop.safe_dist(outs, new_extra)
+                outs = forward_fn(ins)
+
+            new_safe_dist = self.prop.safe_dist(outs) if new_extra is None else self.prop.safe_dist(outs, new_extra)
             grad_dist = new_safe_dist
 
             ''' Sum safe/viol_dists to get one single value for backprop. Otherwise it needs to pass in 'grad_outputs'
@@ -89,7 +90,7 @@ class Bisecter(object):
         return new_grad, new_safe_dist
 
     def _grad_dists_of(self, new_lb: Tensor, new_ub: Tensor, new_extra: Optional[Tensor], forward_fn: nn.Module,
-                       batch_size: int, for_feature = False) -> Tuple[Tensor, Tensor]:
+                       batch_size: int, for_patch = False) -> Tuple[Tensor, Tensor]:
         """ Dispatch the computation to be batch-by-batch.
         :param batch_size: compute the gradients batch-by-batch, so as to avoid huge memory consumption at once.
         """
@@ -103,10 +104,8 @@ class Bisecter(object):
                 batch_extra = None
             else:
                 batch_lb, batch_ub, batch_extra = batch
-            if for_feature:
-                new_grad, new_safe_dist = self._grad_dists_of_batch(batch_lb, batch_ub, batch_extra, forward_fn, for_feature = True)
-            else:
-                new_grad, new_safe_dist = self._grad_dists_of_batch(batch_lb, batch_ub, batch_extra, forward_fn)
+
+            new_grad, new_safe_dist = self._grad_dists_of_batch(batch_lb, batch_ub, batch_extra, forward_fn,for_patch=for_patch)
             split_grads.append(new_grad)
             split_safe_dists.append(new_safe_dist)
 
@@ -296,7 +295,7 @@ class Bisecter(object):
               stop_on_k_new: int = None,
               stop_on_k_ops: int = None,
               tiny_width: float = None,
-              collapse_res: bool = True, for_support = False, for_feature = False) -> Union[Tuple[Tensor, Tensor], Tuple[Tensor, Tensor, Tensor]]:
+              collapse_res: bool = True, for_support = False, for_patch = False) -> Union[Tuple[Tensor, Tensor], Tuple[Tensor, Tensor, Tensor]]:
         """ Different from verify(), split() does breadth-first traversal. Its objective is to have roughly even
             abstractions with small safety losses for the optimization later.
 
@@ -354,10 +353,9 @@ class Bisecter(object):
                     ''' It's important to have no_grad() here, otherwise the GPU memory will keep growing. With
                         no_grad(), the GPU memory usage is stable. enable_grad() is called inside for grad computation.
                     '''
-                    if for_feature:
-                        new_grad, new_safe_dist = self._grad_dists_of(new_lb, new_ub, new_extra, forward_fn, batch_size,for_feature=True)
-                    else:
-                        new_grad, new_safe_dist = self._grad_dists_of(new_lb, new_ub, new_extra, forward_fn, batch_size)
+
+                new_grad, new_safe_dist = self._grad_dists_of(new_lb, new_ub, new_extra, forward_fn, batch_size,for_patch=for_patch)
+
 
                 logging.debug(f'At iter {iter}, another {len(new_lb)} boxes are processed.')
 
@@ -459,6 +457,8 @@ class Bisecter(object):
                     return wl_lb, wl_ub
                 else:
                     return wl_lb, wl_ub, wl_extra
+
+
 
     def try_certify(self, lb: Tensor, ub: Tensor, extra: Optional[Tensor], forward_fn: nn.Module, batch_size: int,
               timeout_sec: int) -> bool:

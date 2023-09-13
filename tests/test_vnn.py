@@ -4,7 +4,7 @@ from typing import List
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from art.acas import AcasNetID
+from acas.acas_utils import AcasNetID
 from art.vnn import VNN20Info
 
 

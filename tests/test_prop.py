@@ -10,7 +10,7 @@ from diffabs import DeeppolyDom
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from art.prop import lbub_exclude, AndProp
-from art.acas import AcasNetID
+from acas.acas_utils import AcasNetID
 from art.utils import total_area
 
 

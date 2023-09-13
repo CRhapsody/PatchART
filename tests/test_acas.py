@@ -11,7 +11,7 @@ from diffabs import AbsDom, DeeppolyDom, IntervalDom
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from art.acas import AcasProp, AcasNet
+from acas.acas_utils import AcasProp, AcasNet
 
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')

@@ -8,7 +8,7 @@ from diffabs import DeeppolyDom
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from art import acas
+from acas import acas
 from art.bisecter import Bisecter
 
 

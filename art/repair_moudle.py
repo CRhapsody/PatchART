@@ -7,8 +7,8 @@ import torch
 from torch import Tensor, nn
 from diffabs import AbsDom, AbsEle
 
-from acas import AcasNet
-from mnist import MnistNet
+from acas.acas_utils import AcasNet
+from mnist.mnist import MnistNet
 
 class SupportNet(nn.Module):
     '''
@@ -143,13 +143,13 @@ class Netsum(nn.Module):
     This class is to add the patch net to target net:
     
     '''
-    def __init__(self, dom: AbsDom, target_net: AcasNet, support_nets: nn.Module, patch_nets: List[nn.Module], A, device = None ):
+    def __init__(self, dom: AbsDom, target_net: AcasNet, patch_nets: List[nn.Module], device = None ):
         '''
         :params 
         '''
         super().__init__()
         self.target_net = target_net
-        self.support_net = support_nets
+        # self.support_net = support_nets
         
         # for support, patch in zip(support_nets, patch_nets):
         #     assert(support.name == patch.name), 'support and patch net is one-to-one'
@@ -163,72 +163,32 @@ class Netsum(nn.Module):
             for i,patch in enumerate(self.patch_nets):
                 self.add_module(f'patch{i}',patch)
                 patch.to(device)
-        self.A = A
         
         # self.sigmoid = dom.Sigmoid()
         # self.connect_layers = []
 
-
-
-    def forward(self, x):
+    def forward(self, x, in_bitmap):
         out = self.target_net(x)
         # classes_score, violate_score = self.support_net(x) # batchsize * repair_num * []
-        classes_score = self.support_net(x) # batchsize * repair_num_propertys
-
-        # we should make sure that the violate_score is not trainable, otherwise the net will not linear
-        # violate_score.requires_grad_(False)
-
-        # compute the K in reassure
-        # norms = torch.norm(classes_score, p=float('inf'), dim=1)
-        # norms.requires_grad_(False)
-
-        # for i,patch in enumerate(self.patch_nets):
-        #     # violate_score[...,0] is the score of safe, violate_score[...,1] is the score of violate
-        #     # we repair the property according to the violate score
-        #     pa = patch(x)
-        #     if isinstance(pa, Tensor):
-        #         K = pa.norm(p = float('inf'),dim = -1).view(-1,1)
-        #         K = K.detach()
-        #         bar = (K * classes_score[:,i].view(-1,1))
-        #         # -K, -K
-        #         out += self.acti(pa + bar - self.A*K)\
-        #             + -1*self.acti(-1*pa + bar -self.A*K )
-        #     else:
-        #         K = pa.ub().norm(p = float('inf'),dim = -1).view(-1,1)
-
-        #         # avoid multiply grad
-        #         # K.requires_grad_(False)
-        #         K = K.detach()
-
-        #         bar = (K * classes_score[:,:,i])
-        #         bar = bar.unsqueeze(dim = 2).expand_as(pa)
-        #         # using the upper bound of the patch net to instead of the inf norm of patch net
-        #         # + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)), + (-1*K.unsqueeze(-1).expand_as(pa._lcnst))
-        #         out += self.acti(pa + bar + (-self.A*K.unsqueeze(-1).expand_as(pa._lcnst)) )\
-        #             + -1*self.acti(-1*pa + bar + (-self.A*K.unsqueeze(-1).expand_as(pa._lcnst)))
-                
-        # out = self.sigmoid(out)
-        # return out
-
-    # Directly multiply
-    def forward(self, x):
-        out = self.target_net(x)
-        # classes_score, violate_score = self.support_net(x) # batchsize * repair_num * []
-        classes_score = self.support_net(x) # batchsize * repair_num_propertys
-
+        # n_prop = in_bitmap.shape[-1]
         for i,patch in enumerate(self.patch_nets):
-            # violate_score[...,0] is the score of safe, violate_score[...,1] is the score of violate
-            # we repair the property according to the violate score
-            pa = patch(x)
-            if isinstance(pa, Tensor):
-                classes_score_entry = classes_score[:,i].unsqueeze(dim = 1).expand_as(pa)
-                out += pa * classes_score_entry
-            else:
-                classes_score_entry = classes_score[:,:,i].unsqueeze(dim = 2).expand_as(pa)
-                out += pa * classes_score_entry
-                
-        # out = self.sigmoid(out)
+            bits = in_bitmap[..., i]
+            if not bits.any():
+            # no one here needs to obey this property
+                continue
+
+            ''' The default nonzero(as_tuple=True) returns a tuple, make scatter_() unhappy.
+                Here we just extract the real data from it to make it the same as old nonzero().squeeze(dim=-1).
+            '''
+            bits = bits.nonzero(as_tuple=True)[0]
+            if isinstance(out, Tensor):
+                out[bits] += patch(x[bits])
+            elif isinstance(out, AbsEle):
+                replace_item = out[bits] + patch(x[bits]) # may not only one prop
+                out.replace(in_bitmap[..., i], replace_item)
         return out
+        
+        
 
     
     def __str__(self):
@@ -250,13 +210,13 @@ class NetFeatureSum(nn.Module):
     This class is to add the patch net to target net:
     
     '''
-    def __init__(self, dom: AbsDom, target_net: MnistNet, support_nets: nn.Module, patch_nets: List[nn.Module], A,  device = None,):
+    def __init__(self, dom: AbsDom, target_net: MnistNet, patch_nets: List[nn.Module], device = None,):
         '''
         :params 
         '''
         super().__init__()
         self.target_net = target_net
-        self.support_net = support_nets
+        # self.support_net = support_nets
         
         # for support, patch in zip(support_nets, patch_nets):
         #     assert(support.name == patch.name), 'support and patch net is one-to-one'
@@ -273,7 +233,7 @@ class NetFeatureSum(nn.Module):
         # self.sigmoid = dom.Sigmoid()
         
         # self.connect_layers = []
-        self.A = A
+        # self.A = A
 
 
     def forward(self, x):
@@ -442,3 +402,97 @@ class ConnectionNetSum(nn.Module):
             '--- End of IntersectionNetSum ---'
         ]
         return '\n'.join(ss)
+    
+
+
+# class Netsum(nn.Module):
+#     '''
+#     This class is to add the patch net to target net:
+    
+#     '''
+#     def __init__(self, dom: AbsDom, target_net: AcasNet, support_nets: nn.Module, patch_nets: List[nn.Module], A, device = None ):
+#         '''
+#         :params 
+#         '''
+#         super().__init__()
+#         self.target_net = target_net
+#         self.support_net = support_nets
+        
+#         # for support, patch in zip(support_nets, patch_nets):
+#         #     assert(support.name == patch.name), 'support and patch net is one-to-one'
+
+#         # self.support_nets = support_nets
+#         self.patch_nets = patch_nets
+#         self.acti = dom.ReLU()
+#         self.len_patch_lists = len(self.patch_nets)
+
+#         if device is not None:
+#             for i,patch in enumerate(self.patch_nets):
+#                 self.add_module(f'patch{i}',patch)
+#                 patch.to(device)
+#         self.A = A
+        
+#         # self.sigmoid = dom.Sigmoid()
+#         # self.connect_layers = []
+
+
+
+#     def forward(self, x):
+#         out = self.target_net(x)
+#         # classes_score, violate_score = self.support_net(x) # batchsize * repair_num * []
+#         # classes_score = self.support_net(x) # batchsize * repair_num_propertys
+
+#         # we should make sure that the violate_score is not trainable, otherwise the net will not linear
+#         # violate_score.requires_grad_(False)
+
+#         # compute the K in reassure
+#         # norms = torch.norm(classes_score, p=float('inf'), dim=1)
+#         # norms.requires_grad_(False)
+
+#         # for i,patch in enumerate(self.patch_nets):
+#         #     # violate_score[...,0] is the score of safe, violate_score[...,1] is the score of violate
+#         #     # we repair the property according to the violate score
+#         #     pa = patch(x)
+#         #     if isinstance(pa, Tensor):
+#         #         K = pa.norm(p = float('inf'),dim = -1).view(-1,1)
+#         #         K = K.detach()
+#         #         bar = (K * classes_score[:,i].view(-1,1))
+#         #         # -K, -K
+#         #         out += self.acti(pa + bar - self.A*K)\
+#         #             + -1*self.acti(-1*pa + bar -self.A*K )
+#         #     else:
+#         #         K = pa.ub().norm(p = float('inf'),dim = -1).view(-1,1)
+
+#         #         # avoid multiply grad
+#         #         # K.requires_grad_(False)
+#         #         K = K.detach()
+
+#         #         bar = (K * classes_score[:,:,i])
+#         #         bar = bar.unsqueeze(dim = 2).expand_as(pa)
+#         #         # using the upper bound of the patch net to instead of the inf norm of patch net
+#         #         # + (-1*K.unsqueeze(-1).expand_as(pa._lcnst)), + (-1*K.unsqueeze(-1).expand_as(pa._lcnst))
+#         #         out += self.acti(pa + bar + (-self.A*K.unsqueeze(-1).expand_as(pa._lcnst)) )\
+#         #             + -1*self.acti(-1*pa + bar + (-self.A*K.unsqueeze(-1).expand_as(pa._lcnst)))
+                
+#         # out = self.sigmoid(out)
+#         # return out
+
+#     # Directly multiply
+#     def forward(self, x):
+#         out = self.target_net(x)
+#         # classes_score, violate_score = self.support_net(x) # batchsize * repair_num * []
+#         classes_score = self.support_net(x) # batchsize * repair_num_propertys
+
+#         for i,patch in enumerate(self.patch_nets):
+#             # violate_score[...,0] is the score of safe, violate_score[...,1] is the score of violate
+#             # we repair the property according to the violate score
+#             pa = patch(x)
+#             if isinstance(pa, Tensor):
+#                 classes_score_entry = classes_score[:,i].unsqueeze(dim = 1).expand_as(pa)
+#                 out += pa * classes_score_entry
+#             else:
+#                 classes_score_entry = classes_score[:,:,i].unsqueeze(dim = 2).expand_as(pa)
+#                 out += pa * classes_score_entry
+                
+#         # out = self.sigmoid(out)
+#         return out

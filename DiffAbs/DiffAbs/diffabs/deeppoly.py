@@ -159,6 +159,15 @@ class Ele(AbsEle):
             # cache, assuming no changes to those coefficients
             self._ub = self.ub_of(self._ucoef, self._ucnst, self.dlb, self.dub)
             return self._ub
+    def replace(self, bits, e: Ele) -> Ele:
+        '''
+        replace the coef,cnst,dlb,dub of self with e's, according to bits
+        '''
+        newl_coef = torch.where(bits > 0, self._lcoef+e._lcoef, self._lcoef)
+        newl_cnst = torch.where(bits > 0, self._lcnst+e._lcnst, self._lcnst)
+        newu_coef = torch.where(bits > 0, self._ucoef+e._ucoef, self._ucoef)
+        newu_cnst = torch.where(bits > 0, self._ucnst+e._ucnst, self._ucnst)
+        return Ele(newl_coef, newl_cnst, newu_coef, newu_cnst, self.dlb, self.dub)
     
     def expand_as(self, e: Ele) -> Ele:
         '''

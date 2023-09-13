@@ -12,7 +12,7 @@ from diffabs import DeeppolyDom, IntervalDom
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from art.acas import AcasNet, AcasProp
+from acas.acas_utils import AcasNet, AcasProp
 from art.external_verifier import _CEX, Reluplex, ReluVal
 
 

@@ -119,7 +119,7 @@ class ExpArgParser(argparse.ArgumentParser):
                           help='refine a dimension only when its width still > this tiny_width')
 
         # training hyper-parameters
-        self.add_argument('--lr', type=float, default=1e-2,
+        self.add_argument('--lr', type=float, default=1e-3,
                           help='initial learning rate during training')
         self.add_argument('--batch_size', type=int, default=32,
                           help='mini batch size during each training epoch')
@@ -167,7 +167,7 @@ class ExpArgParser(argparse.ArgumentParser):
             logger.setLevel(logging.INFO)
 
         timestamp = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
-        args.stamp = f'lr{args.lr}-weight_decay{args.weight_decay}-kcoeff{args.k_coeff}-support_loss{args.support_loss}-accuracy_loss{args.accuracy_loss}-rapair_radius{args.repair_radius}-{timestamp}'
+        args.stamp = f'lr{args.lr}-accuracy_loss{args.accuracy_loss}-{timestamp}'
         logger.handlers = []  # reset, otherwise it may duplicate many times when calling setup_logger() multiple times
         if self.log_dir is not None:
             log_path = Path(self.log_dir, f'{args.stamp}.log')
