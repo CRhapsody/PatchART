@@ -152,7 +152,8 @@ class AcasNetID(object):
         # ids = [AcasNetID(torch.tensor(2), torch.tensor(1)),AcasNetID(torch.tensor(2), torch.tensor(3)),
         # AcasNetID(torch.tensor(2), torch.tensor(4)),AcasNetID(torch.tensor(2), torch.tensor(6)),
         # AcasNetID(torch.tensor(2), torch.tensor(8))]
-        ids = [AcasNetID(torch.tensor(1),torch.tensor(1)),AcasNetID(torch.tensor(1),torch.tensor(9)),AcasNetID(torch.tensor(2),torch.tensor(9)),AcasNetID(torch.tensor(3),torch.tensor(3)),AcasNetID(torch.tensor(4),torch.tensor(5))]
+        # ids = [AcasNetID(torch.tensor(1),torch.tensor(1)),AcasNetID(torch.tensor(1),torch.tensor(9)),AcasNetID(torch.tensor(2),torch.tensor(9)),AcasNetID(torch.tensor(3),torch.tensor(3)),AcasNetID(torch.tensor(4),torch.tensor(5))]
+        ids = AcasNetID.all_exp_ids()
         return ids
     
     def goal_adv_ids(cls, dom: AbsDom) -> List[AcasNetID]:
@@ -290,8 +291,8 @@ class AcasProp(OneProp):
         p.set_input_bound(AcasIn.RHO, new_low=55947.691)
         p.set_input_bound(AcasIn.V_OWN, new_low=1145)
         p.set_input_bound(AcasIn.V_INT, new_high=60)
-        p.set_all_applicable_as(False)
-        # # acas xu nnet 3,x allow p1
+        p.set_all_applicable_as(True)
+        # acas xu nnet 3,x allow p1
         # for y in range(1, AcasNetID.YS + 1):
         #     p.set_applicable(3, y, False)
         return p
@@ -327,9 +328,9 @@ class AcasProp(OneProp):
         p.set_input_bound(AcasIn.PSI, new_low=3.10)
         p.set_input_bound(AcasIn.V_OWN, new_low=980)
         p.set_input_bound(AcasIn.V_INT, new_low=960)
-        p.set_all_applicable_as(False)
-        # for y in [7, 8, 9]:
-        #     p.set_applicable(1, y, False)
+        p.set_all_applicable_as(True)
+        for y in [7, 8, 9]:
+            p.set_applicable(1, y, False)
         # for y in [1,3,4,6,8]:
         #     p.set_applicable(2, y, False)
         return p
@@ -343,10 +344,10 @@ class AcasProp(OneProp):
         p.set_input_bound(AcasIn.PSI, new_low=-0.01, new_high=0.01)  # was [0, 0], for precise size, use [±0.01]
         p.set_input_bound(AcasIn.V_OWN, new_low=1000)
         p.set_input_bound(AcasIn.V_INT, new_low=700, new_high=800)
-        p.set_all_applicable_as(False)
+        p.set_all_applicable_as(True)
         
-        # for y in [7, 8, 9]:
-        #     p.set_applicable(1, y, False)
+        for y in [7, 8, 9]:
+            p.set_applicable(1, y, False)
         # for y in [1,3,4,6,8]:
         #     p.set_applicable(2, y, False)
         return p

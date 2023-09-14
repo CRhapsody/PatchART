@@ -145,7 +145,7 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace)-> Tuple[int, float, bool, 
         return all_props.safe_dist(batch_abs_outs, batch_abs_bitmap)
     
     # judge the batch_inputs is in which region of property
-    def get_bitmap(in_lb: Tensor, in_ub: Tensor, batch_inputs: Tensor):
+    def get_bitmap(in_lb: Tensor, in_ub: Tensor, in_bitmap: Tensor, batch_inputs: Tensor):
         '''
         in_lb: n_prop * input
         in_ub: n_prop * input
@@ -156,8 +156,10 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace)-> Tuple[int, float, bool, 
         is_in = (batch_inputs_clone >= in_lb) & (batch_inputs_clone <= in_ub)
         is_in = is_in.all(dim=-1) # every input is in the region of property, batch * n_prop
         # convert to bitmap
-        bitmap = torch.zeros_like(is_in, dtype=torch.int)
-        bitmap[is_in] = 1
+        bitmap = torch.zeros((batch_inputs.shape[0], in_bitmap.shape[1]), device = device)
+        # use scatter to set the value of bitmap from the row of in_bitmap
+        tmp = in_bitmap.clone().expand_as(is_in)
+        tmp[~is_in] = 0
         return bitmap
         
         
@@ -239,7 +241,7 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace)-> Tuple[int, float, bool, 
                 logging.info(f'Max loss at LB: {curr_abs_lb[worst_idx]}, UB: {curr_abs_ub[worst_idx]}, rule: {curr_abs_bitmap[worst_idx]}.')
 
         # TODO
-        test_bitmap = get_bitmap(in_lb, in_ub, testset.inputs)
+        test_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, testset.inputs)
         accuracies.append(eval_test(repair_net, testset, bitmap = test_bitmap))
         logging.info(f'Test set accuracy {accuracies[-1]}.')
 
@@ -326,8 +328,8 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace)-> Tuple[int, float, bool, 
     # net.save_nnet(f'./ART_{nid.x.numpy().tolist()}_{nid.y.numpy().tolist()}_repair2p_noclamp_epoch_{epoch}.nnet',
     #             mins = bound_mins, maxs = bound_maxs) 
     
+    del repair_net
     return epoch, train_time, certified, accuracies[-1]
-    pass
 
 def train_acas(nid: acas.AcasNetID, args: Namespace, weight_clamp = False) -> Tuple[int, float, bool, float]:
     """ The almost completed skeleton of training ACAS networks using ART.
@@ -576,7 +578,7 @@ def test_goal_safety(parser: AcasArgParser):
     defaults = {
         # 'start_abs_cnt': 5000,
         'batch_size': 100,  # to make it faster
-        'min_epochs': 25,
+        'min_epochs': 5,
         'max_epochs': 35
     }
     parser.set_defaults(**defaults)
@@ -584,6 +586,7 @@ def test_goal_safety(parser: AcasArgParser):
 
     logging.info(utils.fmt_args(args))
     nids = acas.AcasNetID.goal_safety_ids(args.dom)
+    # for nid_i in nids:
     if args.no_repair:
         _run(nids, args)
     else:
