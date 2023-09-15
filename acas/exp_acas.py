@@ -157,9 +157,25 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace)-> Tuple[int, float, bool, 
         is_in = is_in.all(dim=-1) # every input is in the region of property, batch * n_prop
         # convert to bitmap
         bitmap = torch.zeros((batch_inputs.shape[0], in_bitmap.shape[1]), device = device)
-        # use scatter to set the value of bitmap from the row of in_bitmap
-        tmp = in_bitmap.clone().expand_as(is_in)
-        tmp[~is_in] = 0
+        # is in is a batch * in_bitmap.shape[0] tensor, in_bitmap.shape[1] is the number of properties
+        # the every row of is_in is the bitmap of the input which row of in_bitmap is allowed
+        for i in range(is_in.shape[0]):
+            for j in range(is_in.shape[1]):
+                if is_in[i][j]:
+                    bitmap[i] = in_bitmap[j]
+                    break
+                else:
+                    continue
+        # how to use the vectoirzation to speed up the following code
+        # tmp0 = in_bitmap.unsqueeze(0).expand(batch_inputs.shape[0], in_bitmap.shape[0], in_bitmap.shape[1]).to(device)
+        # tmp0 = torch.zeros((batch_inputs.shape[0], in_bitmap.shape[0], in_bitmap.shape[1]), device = device)
+        # tmp1 = is_in.unsqueeze(-1).expand(batch_inputs.shape[0], in_bitmap.shape[0], in_bitmap.shape[1]).to(device)
+        # bitmap = torch.where(tmp1, tmp0, 1)
+        # # tmp0[tmp1.nonzero(as_tuple=True)] = 1
+        # # bitmap = tmp0.all(dim=-1)
+        # a = bitmap.all(dim=-1)
+
+
         return bitmap
         
         
@@ -286,7 +302,7 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace)-> Tuple[int, float, bool, 
             batch_loss = 0.
             if not args.no_pts:
                 batch_inputs, batch_labels = next(conc_loader)
-                batch_conc_bitmap = get_bitmap(in_lb, in_ub, batch_inputs)
+                batch_conc_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, batch_inputs)
                 batch_outputs = repair_net(batch_inputs, batch_conc_bitmap)
                 batch_outputs.squeeze_(1)
                 batch_loss += args.accuracy_loss(batch_outputs, batch_labels)
