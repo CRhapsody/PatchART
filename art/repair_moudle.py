@@ -5,10 +5,10 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import torch
 from torch import Tensor, nn
-from diffabs import AbsDom, AbsEle
+from DiffAbs.DiffAbs import AbsDom, AbsEle
 
 from acas.acas_utils import AcasNet
-from mnist.mnist import MnistNet
+from mnist.mnist_utils import MnistNet
 
 class SupportNet(nn.Module):
     '''

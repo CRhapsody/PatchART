@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 import torch
 from torch import Tensor, cuda
 
-from diffabs.utils import valid_lb_ub
+from DiffAbs.DiffAbs.utils import valid_lb_ub
 
 
 def sample_points(lb: Tensor, ub: Tensor, K: int) -> Tensor:

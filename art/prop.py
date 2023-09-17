@@ -7,8 +7,8 @@ from typing import Tuple, List, Optional, Iterable
 import torch
 from torch import Tensor
 
-from diffabs import AbsDom, AbsEle, ConcDist, deeppoly
-from diffabs.utils import valid_lb_ub
+from DiffAbs.DiffAbs import AbsDom, AbsEle, ConcDist, deeppoly
+from DiffAbs.DiffAbs.utils import valid_lb_ub
 
 
 

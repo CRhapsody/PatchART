@@ -10,8 +10,8 @@ import torch
 from torch import Tensor, nn, autograd
 from torch.utils.data import DataLoader
 
-from diffabs import AbsDom, AbsData
-from diffabs.utils import valid_lb_ub
+from DiffAbs.DiffAbs import AbsDom, AbsData
+from DiffAbs.DiffAbs.utils import valid_lb_ub
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 

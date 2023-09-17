@@ -256,7 +256,7 @@ def repair_acas(nid: acas.AcasNetID, args: Namespace)-> Tuple[int, float, bool, 
                 _, worst_idx = full_dists.max(dim=0)
                 logging.info(f'Max loss at LB: {curr_abs_lb[worst_idx]}, UB: {curr_abs_ub[worst_idx]}, rule: {curr_abs_bitmap[worst_idx]}.')
 
-        # TODO
+        #
         test_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, testset.inputs)
         accuracies.append(eval_test(repair_net, testset, bitmap = test_bitmap))
         logging.info(f'Test set accuracy {accuracies[-1]}.')
@@ -631,7 +631,7 @@ def test_goal_accuracy(parser: AcasArgParser):
     """ Q2: Show that the safe-by-construction overhead on accuracy is mild. """
     defaults = {
         # 'start_abs_cnt': 5000,
-        'batch_size': 100,  # to make it faster
+        'batch_size': 32,  # to make it faster
         'min_epochs': 25,
         'max_epochs': 35
     }

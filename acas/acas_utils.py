@@ -12,7 +12,7 @@ from typing import List, Optional, Tuple, Iterable, Sequence, Union
 import torch
 from torch import Tensor, nn
 
-from diffabs import AbsDom, AbsEle
+from DiffAbs.DiffAbs import AbsDom, AbsEle
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 

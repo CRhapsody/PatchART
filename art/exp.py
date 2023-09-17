@@ -15,8 +15,8 @@ from torch import Tensor
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils import data
 
-from diffabs import DeeppolyDom, IntervalDom
-from diffabs.utils import valid_lb_ub
+from DiffAbs.DiffAbs import DeeppolyDom, IntervalDom
+from DiffAbs.DiffAbs.utils import valid_lb_ub
 
 
 class PseudoLenDataset(data.Dataset, ABC):

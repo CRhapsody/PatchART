@@ -8,7 +8,7 @@ from typing import List
 
 import torch
 
-from diffabs import AbsDom, DeeppolyDom
+from DiffAbs.DiffAbs import AbsDom, DeeppolyDom
 
 from art.prop import AndProp
 
