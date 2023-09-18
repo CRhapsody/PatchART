@@ -19,6 +19,9 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from art.prop import OneProp, AndProp
 from art.utils import sample_points
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cpu")
+
 class PhotoProp(OneProp):
     '''
     Define a mnist property from input
@@ -31,8 +34,8 @@ class PhotoProp(OneProp):
         self.input_dimension = input_shape
         # the input bounds of the input is 3 dimension, (channel, height, width)
         # initialize the input bounds as empty
-        self.lower_bounds = torch.zeros(*input_shape)
-        self.upper_bounds = torch.ones(*input_shape)
+        self.lower_bounds = torch.zeros(*input_shape).to(device)
+        self.upper_bounds = torch.ones(*input_shape).to(device)
         self.reset_input_bound()
         
         # for i, j,k in product(range(input_dimension[0]), range(input_dimension[1]), range(input_dimension[2])):
@@ -52,8 +55,12 @@ class PhotoProp(OneProp):
         return lb, ub
 
     def set_input_bound(self, new_low: Tensor = None, new_high: Tensor = None):
-        self.lower_bounds = torch.where(new_low is not None, torch.max(self.lower_bounds, new_low), self.lower_bounds)
-        self.upper_bounds = torch.where(new_high is not None, torch.min(self.upper_bounds, new_high), self.upper_bounds)
+        if new_low is not None:
+            new_low = new_low.to(device)
+            self.lower_bounds = torch.max(self.lower_bounds, new_low).to(device)
+        if new_high is not None:
+            new_high = new_high.to(device)
+            self.upper_bounds = torch.min(self.upper_bounds, new_high)
         assert(torch.all(self.lower_bounds <= self.upper_bounds))
 
         self.reset_input_bound()
@@ -221,23 +228,35 @@ class Mnist_patch_model(nn.Module):
     def __init__(self,dom: AbsDom, name: str):
         super(Mnist_patch_model,self).__init__()
         self.dom = dom
-        self.extractor = nn.Sequential(
-            dom.Conv2d(in_channels=1,out_channels=16,kernel_size=5,stride=1,padding=2),
-            dom.ReLU(),
-            dom.MaxPool2d(kernel_size=2)
-        )
+        self.name = name
+        # self.extractor = nn.Sequential(
+        #     dom.Conv2d(in_channels=1,out_channels=16,kernel_size=5,stride=1,padding=2),
+        #     dom.ReLU(),
+        #     dom.MaxPool2d(kernel_size=2)
+        # )
+        self.flatten = dom.Flatten()
         # self.layer2 = nn.Sequential(
         #     nn.Conv2d(in_channels=16,out_channels=32,kernel_size=5,stride=1,padding=2),
         #     nn.ReLU(),
         #     nn.MaxPool2d(kernel_size=2)
         # )
+        self.extractor = nn.Sequential(
+            dom.Linear(in_features=1*28*28,out_features=256),
+            dom.ReLU(),
+            dom.Linear(in_features=256,out_features=64),
+            dom.ReLU(),
+        )
         self.classifier = nn.Sequential(
-            dom.Linear(in_features=16*14*14,out_features=10)
+            # dom.Linear(in_features=16*14*14,out_features=10)
+            dom.Linear(in_features=64,out_features=10)
         )
         
     def forward(self,x):
+        # x = self.extractor(x)
+        # x = x.view(16*14*14,-1)
+        # out = self.classifier(x)
+        x = self.flatten(x)
         x = self.extractor(x)
-        x = x.view(16*14*14,-1)
         out = self.classifier(x)
         return out
     
@@ -262,23 +281,23 @@ class MnistNet(nn.Module):
     def __init__(self, dom: AbsDom) -> None:
         super().__init__()
         self.dom = dom
-        self.conv1 = dom.Conv2d(1, 32, kernel_size=5)
-        self.conv2 = dom.Conv2d(32, 64, kernel_size=5)
-        self.maxpool = dom.MaxPool2d(2)
-        self.relu = dom.ReLU()
-        self.fc1 = dom.Linear(1024, 32)
-        self.fc2 = dom.Linear(32, 10)
-        # TODO: flatten
+        self.conv1 = dom.Conv2d(1, 16, kernel_size=4, stride=2, padding=1)
+        # self.conv2 = dom.Conv2d(32, 64, kernel_size=5)
+        # self.maxpool = dom.MaxPool2d(2)
         self.flatten = dom.Flatten()
+        self.relu = dom.ReLU()
+        self.fc1 = dom.Linear(16*14*14, 100)
+        self.fc2 = dom.Linear(100, 10)
+        
         # self.sigmoid = dom.Sigmoid()
 
     def forward(self, x: Union[Tensor, AbsEle]) -> Union[Tensor, AbsEle]:
         x = self.conv1(x)
-        x = self.maxpool(x)
+        # x = self.maxpool(x)
         x = self.relu(x)
-        x = self.conv2(x)
-        x = self.maxpool(x)
-        x = self.relu(x)
+        # x = self.conv2(x)
+        # x = self.maxpool(x)
+        # x = self.relu(x)
         # x = torch.flatten(x, 1)
         # x = x.view(x.size[0], 1024)
         x = self.flatten(x)
@@ -287,23 +306,23 @@ class MnistNet(nn.Module):
         x = self.fc2(x)
         return x
     
-    def split(self):
-        return nn.Sequential(
-            self.conv1,
-            self.maxpool,
-            self.relu,
-            self.conv2,
-            self.maxpool,
-            self.relu,
-            # torch.flatten(x, 1),
-            self.flatten,
-            self.fc1,
-            self.relu
-        ), nn.Sequential(
+    # def split(self):
+    #     return nn.Sequential(
+    #         self.conv1,
+    #         self.maxpool,
+    #         self.relu,
+    #         self.conv2,
+    #         self.maxpool,
+    #         self.relu,
+    #         # torch.flatten(x, 1),
+    #         self.flatten,
+    #         self.fc1,
+    #         self.relu
+    #     ), nn.Sequential(
             
-            self.fc2,
-            # self.sigmoid()
-        )
+    #         self.fc2,
+    #         # self.sigmoid()
+    #     )
 
 
     

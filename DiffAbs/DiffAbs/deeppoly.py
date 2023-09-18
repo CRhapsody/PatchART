@@ -195,14 +195,16 @@ class Ele(AbsEle):
         for size in shape[start_dim:end_dim]:
             flatten_size *= size
         flatten_size *= shape[end_dim]
-        shape = shape[:start_dim] + [flatten_size] + shape[end_dim+1:]
+        # shape = shape[:start_dim] + [flatten_size] + shape[end_dim+1:]
+        shape = shape[:start_dim] + [flatten_size]
 
-        cnsts_shape = shape.insert(1,1)
+        coef_shape = tuple(shape)
+        newl_coefs = self._lcoef.view(*coef_shape)
+        newu_coefs = self._ucoef.view(*coef_shape)
 
-        shape = tuple(shape)
-        newl_coefs = self._lcoef.view(*shape)
-        newl_cnsts = self._lcnst.view(*shape)
-        newu_coefs = self._ucoef.view(*cnsts_shape)
+        shape[1]= 1
+        cnsts_shape = tuple(shape)
+        newl_cnsts = self._lcnst.view(*cnsts_shape)        
         newu_cnsts = self._ucnst.view(*cnsts_shape)
         return Ele(newl_coefs, newl_cnsts, newu_coefs, newu_cnsts, self.dlb, self.dub) 
 
@@ -1908,7 +1910,9 @@ class MaxPool2d(nn.MaxPool2d):
         ''' The following code is faster that _mem_efficient_pool() (2.22s vs 3.06s)
             but allocates/caches more memory (max 196.3MB vs max 50.1MB).
         '''
-        out = self._pool(e, img_b, flat_size, img_c, cnt_h, cnt_w, fil_h, fil_w, stride_h, stride_w,
+        # out = self._pool(e, img_b, flat_size, img_c, cnt_h, cnt_w, fil_h, fil_w, stride_h, stride_w,
+        #                  full_lb_coefs, full_lb_cnsts, full_ub_coefs, full_ub_cnsts)
+        out = self._mem_efficient_pool(e, img_b, flat_size, img_c, cnt_h, cnt_w, fil_h, fil_w, stride_h, stride_w,
                          full_lb_coefs, full_lb_cnsts, full_ub_coefs, full_ub_cnsts)
         return out if input_is_ele else tuple(out)
 

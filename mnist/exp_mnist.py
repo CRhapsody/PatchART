@@ -21,7 +21,7 @@ from mnist.mnist_utils import MnistNet, MnistProp, Mnist_patch_model
 # from mnist.u import MnistNet, MnistFeatureProp
 
 MNIST_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'MNIST' / 'processed'
-MNIST_NET_DIR = Path(__file__).resolve().parent.parent / 'pgd' / 'model'
+MNIST_NET_DIR = Path(__file__).resolve().parent.parent / 'model' /'mnist'
 RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'debug'
 RES_DIR.mkdir(parents=True, exist_ok=True)
 REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'patch_format'
@@ -39,6 +39,8 @@ class MnistArgParser(exp.ExpArgParser):
                         help='not repair use incremental')
         self.add_argument('--repair_number', type=int, default=50,
                           help='the number of repair datas')
+        self.add_argument('--repair_batchsize', type=int, default=1,
+                            help='the batchsize of repair datas')
         
         # the combinational form of support and patch net
         self.add_argument('--reassure_support_and_patch_combine',type=bool, default=False,
@@ -182,7 +184,7 @@ def eval_test(net: MnistNet, testset: MnistPoints, categories=None) -> float:
 
 
 def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool, float]:
-    fname = 'pdg_net.pth'
+    fname = 'mnist.pth'
     fpath = Path(MNIST_NET_DIR, fname)
 
     # train number是修复多少个点
@@ -200,7 +202,8 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
     # repair part
     # the number of repair patch network,which is equal to the number of properties
-    n_repair = MnistProp.LABEL_NUMBER
+    # n_repair = MnistProp.LABEL_NUMBER
+    n_repair = repairset.inputs.shape[0]
     input_shape = trainset.inputs.shape[1:]
     patch_lists = []
     
@@ -384,7 +387,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
             nbatches = len(conc_loader)
             conc_loader = iter(conc_loader)
         if not args.no_abs:
-            abs_loader = data.DataLoader(absset, batch_size=args.batch_size, shuffle=True)
+            abs_loader = data.DataLoader(absset, batch_size=args.repair_batch_size, shuffle=True)
             nbatches = len(abs_loader)  # doesn't matter rewriting len(conc_loader), they are the same
             abs_loader = iter(abs_loader)
 
@@ -485,13 +488,18 @@ def test(lr:float = 0.005, repair_radius:float = 0.1, repair_number = 50,
          accuracy_loss:str = 'CE'):
     test_defaults = {
         'exp_fn': 'test_goal_repair',
+        'refine_top_k': 1,
+        'repair_batch_size': 1,
+        'start_abs_cnt': 500,
+        'max_abs_cnt': 1000,
         'no_repair': False,
         'repair_number': repair_number,
         'train_datasize':train_datasize,
         'test_datasize':test_datasize,
         'repair_radius': repair_radius,
         'lr': lr,
-        'accuracy_loss': accuracy_loss
+        'accuracy_loss': accuracy_loss,
+        'tiny_width': repair_radius*0.0001,
 
         
     }

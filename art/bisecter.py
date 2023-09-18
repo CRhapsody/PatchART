@@ -280,7 +280,9 @@ class Bisecter(object):
         width = new_ub - new_lb
         tiny_bits = (width <= tiny_width).all(dim=1)  # pick those whose dimensions are all tiny
         rem_bits = ~ tiny_bits
-
+        if new_lb.dim() == 4:
+            tiny_bound_bits = tiny_bits.unsqueeze(1)
+            rem_bound_bits = rem_bits.unsqueeze(1)
         new_tiny_lb, rem_lb = new_lb[tiny_bits], new_lb[rem_bits]
         new_tiny_ub, rem_ub = new_ub[tiny_bits], new_ub[rem_bits]
         new_tiny_extra = None if new_extra is None else new_extra[tiny_bits]

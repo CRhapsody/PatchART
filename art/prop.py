@@ -11,7 +11,8 @@ from DiffAbs.DiffAbs import AbsDom, AbsEle, ConcDist, deeppoly
 from DiffAbs.DiffAbs.utils import valid_lb_ub
 
 
-
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cpu')
 
 class AbsProp(ABC):
     """ All encoded properties should provide safe distance function and violation distance function.
@@ -146,14 +147,14 @@ class AndProp(AbsProp):
 
         # initialize for 1st prop
         orig_label = torch.eye(nprops).byte()  # showing each input region which properties they should obey
-        lbs, ubs = props[0].lbub() # both are 1 * input_dim
+        lbs, ubs = props[0].lbub(device=device) # both are 1 * input_dim
         labels = orig_label[[0]].expand(len(lbs), nprops) # for 1st prob, labels is 1 * nprob matrix [[1,0,0,...]] 
 
         for i, prop in enumerate(props):
             if i == 0:
                 continue
 
-            new_lbs, new_ubs = prop.lbub()
+            new_lbs, new_ubs = prop.lbub(device=device)
             assert valid_lb_ub(new_lbs, new_ubs)
             new_labels = orig_label[[i]].expand(len(new_lbs), nprops)
 
@@ -230,6 +231,12 @@ class AndProp(AbsProp):
         shared_lbs = torch.stack(shared_lbs, dim=0) if len(shared_lbs) > 0 else Tensor()
         shared_ubs = torch.stack(shared_ubs, dim=0) if len(shared_ubs) > 0 else Tensor()
         shared_labels = torch.stack(shared_labels, dim=0) if len(shared_labels) > 0 else Tensor().byte()
+
+        shared_lbs = shared_lbs.to(device)
+        shared_ubs = shared_ubs.to(device)
+        shared_labels = shared_labels.to(device)
+        x_labels = x_labels.to(device)
+        y_labels = y_labels.to(device)
 
         all_lbs = torch.cat((shared_lbs, x_lbs, y_lbs), dim=0)
         all_ubs = torch.cat((shared_ubs, x_ubs, y_ubs), dim=0)
