@@ -153,7 +153,7 @@ class AcasNetID(object):
         # AcasNetID(torch.tensor(2), torch.tensor(4)),AcasNetID(torch.tensor(2), torch.tensor(6)),
         # AcasNetID(torch.tensor(2), torch.tensor(8))]
         # ids = [AcasNetID(torch.tensor(1),torch.tensor(1)),AcasNetID(torch.tensor(1),torch.tensor(9)),AcasNetID(torch.tensor(2),torch.tensor(9)),AcasNetID(torch.tensor(3),torch.tensor(3)),AcasNetID(torch.tensor(4),torch.tensor(5))]
-        ids = AcasNetID.all_exp_ids()
+        ids = AcasNetID.all_exp_ids()[1:]
         return ids
     
     def goal_adv_ids(cls, dom: AbsDom) -> List[AcasNetID]:
