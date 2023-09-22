@@ -246,6 +246,6 @@ def pgd_attack():
 
 if __name__ == "__main__":
     pass
-    # model = train()
+    model = train()
     # test()
-    pgd_attack()
+    # pgd_attack()

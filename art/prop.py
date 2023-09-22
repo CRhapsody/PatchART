@@ -148,7 +148,7 @@ class AndProp(AbsProp):
         # initialize for 1st prop
         orig_label = torch.eye(nprops).byte()  # showing each input region which properties they should obey
         lbs, ubs = props[0].lbub(device=device) # both are 1 * input_dim
-        labels = orig_label[[0]].expand(len(lbs), nprops) # for 1st prob, labels is 1 * nprob matrix [[1,0,0,...]] 
+        labels = orig_label[[0]].expand(len(lbs), nprops).to(device) # for 1st prob, labels is 1 * nprob matrix [[1,0,0,...]] 
 
         for i, prop in enumerate(props):
             if i == 0:
@@ -156,7 +156,7 @@ class AndProp(AbsProp):
 
             new_lbs, new_ubs = prop.lbub(device=device)
             assert valid_lb_ub(new_lbs, new_ubs)
-            new_labels = orig_label[[i]].expand(len(new_lbs), nprops)
+            new_labels = orig_label[[i]].expand(len(new_lbs), nprops).to(device)
 
             lbs, ubs, labels = self._join(lbs, ubs, labels, new_lbs, new_ubs, new_labels)
         return lbs, ubs, labels
@@ -212,7 +212,9 @@ class AndProp(AbsProp):
 
                 # replace x by split non-intersected boxes in the X list
                 rest_x_lbs, rest_x_ubs = lbub_exclude(xlb, xub, new_shared_lb, new_shared_ub)
-                rest_x_labels = xlabel.unsqueeze(dim=0).expand(len(rest_x_lbs), *xlabel.size())
+                # rest_x_lbs = rest_x_lbs.to(device)
+                # rest_x_ubs = rest_x_ubs.to(device)
+                rest_x_labels = xlabel.unsqueeze(dim=0).expand(len(rest_x_lbs), *xlabel.size()).to(device)
                 x_lbs = torch.cat((x_lbs[:i], rest_x_lbs, x_lbs[i+1:]), dim=0)
                 x_ubs = torch.cat((x_ubs[:i], rest_x_ubs, x_ubs[i+1:]), dim=0)
                 x_labels = torch.cat((x_labels[:i], rest_x_labels, x_labels[i+1:]), dim=0)
@@ -726,4 +728,4 @@ def lbub_exclude(lb1: Tensor, ub1: Tensor, lb2: Tensor, ub2: Tensor, accu_lb=Ten
         lb1[i] = lb2[i]
         ub1[i] = ub2[i]
         return lbub_exclude(lb1, ub1, lb2, ub2, accu_lb, accu_ub)
-    return accu_lb, accu_ub
+    return accu_lb.to(device), accu_ub.to(device)
