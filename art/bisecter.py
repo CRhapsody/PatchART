@@ -272,6 +272,29 @@ class Bisecter(object):
             new_lb, new_ub, new_extra = by_smear(batch_lb, batch_ub, batch_extra, batch_grad)
         return None
 
+    # @staticmethod
+    # def _transfer_tiny(new_lb: Tensor, new_ub: Tensor, new_extra: Optional[Tensor],
+    #                    new_safe_dist: Tensor, new_grad: Tensor,
+    #                    tiny_width: float) -> Tuple[Tuple[Tensor, Tensor, Optional[Tensor]],
+    #                                                Tuple[Tensor, Tensor, Optional[Tensor], Tensor, Tensor]]:
+    #     width = new_ub - new_lb
+    #     tiny_bits = (width <= tiny_width).all(dim=1)  # pick those whose dimensions are all tiny
+    #     tiny_extra_bits = tiny_bits
+    #     rem_bits = ~ tiny_bits
+    #     if new_lb.dim() == 4:
+    #         tiny_extra_bits = tiny_bits.all(dim=0)
+    #         tiny_bits.unsqueeze_(1)
+    #         tiny_bound_bits = tiny_bits.unsqueeze(1)
+    #         rem_bound_bits = rem_bits.unsqueeze(1)
+    #     new_tiny_lb, rem_lb = new_lb[tiny_bits], new_lb[rem_bits]
+    #     new_tiny_ub, rem_ub = new_ub[tiny_bits], new_ub[rem_bits]
+    #     new_tiny_extra = None if new_extra is None else new_extra[tiny_bits]
+    #     rem_extra = None if new_extra is None else new_extra[rem_bits]
+    #     rem_safe_dist, rem_grad = new_safe_dist[rem_bits], new_grad[rem_bits]
+
+    #     return (new_tiny_lb, new_tiny_ub, new_tiny_extra),\
+    #            (rem_lb, rem_ub, rem_extra, rem_safe_dist, rem_grad)
+    
     @staticmethod
     def _transfer_tiny(new_lb: Tensor, new_ub: Tensor, new_extra: Optional[Tensor],
                        new_safe_dist: Tensor, new_grad: Tensor,
@@ -279,15 +302,27 @@ class Bisecter(object):
                                                    Tuple[Tensor, Tensor, Optional[Tensor], Tensor, Tensor]]:
         width = new_ub - new_lb
         tiny_bits = (width <= tiny_width).all(dim=1)  # pick those whose dimensions are all tiny
+        tiny_extra_bits = tiny_bits
         rem_bits = ~ tiny_bits
+        rem_grad_bits = rem_bits
         if new_lb.dim() == 4:
-            tiny_bound_bits = tiny_bits.unsqueeze(1)
-            rem_bound_bits = rem_bits.unsqueeze(1)
+            tiny_extra_bits = tiny_bits.all(dim=-1).all(dim=-1).expand_as(new_extra)
+            rem_extra_bits = ~ tiny_extra_bits
+            tiny_bits.unsqueeze_(1)
+            rem_bits = ~ tiny_bits
+            rem_grad_bits = rem_bits.squeeze(1).all(dim=-1).all(dim=-1)
+
         new_tiny_lb, rem_lb = new_lb[tiny_bits], new_lb[rem_bits]
         new_tiny_ub, rem_ub = new_ub[tiny_bits], new_ub[rem_bits]
-        new_tiny_extra = None if new_extra is None else new_extra[tiny_bits]
-        rem_extra = None if new_extra is None else new_extra[rem_bits]
-        rem_safe_dist, rem_grad = new_safe_dist[rem_bits], new_grad[rem_bits]
+        new_tiny_extra = None if new_extra is None else new_extra[tiny_extra_bits]
+        rem_extra = None if new_extra is None else new_extra[rem_extra_bits]
+        rem_safe_dist, rem_grad = new_safe_dist[rem_grad_bits], new_grad[rem_grad_bits]
+        if rem_lb.dim() != new_lb.dim():
+            rem_lb = rem_lb.reshape(-1, new_lb.shape[-3], new_lb.shape[-2], new_lb.shape[-1])
+            rem_ub =  rem_ub.reshape(-1, new_ub.shape[-3], new_ub.shape[-2], new_ub.shape[-1])
+            new_tiny_lb = new_tiny_lb.reshape(-1, new_lb.shape[-3], new_lb.shape[-2], new_lb.shape[-1])
+            new_tiny_lb = new_tiny_ub.reshape(-1, new_ub.shape[-3], new_ub.shape[-2], new_ub.shape[-1])
+
 
         return (new_tiny_lb, new_tiny_ub, new_tiny_extra),\
                (rem_lb, rem_ub, rem_extra, rem_safe_dist, rem_grad)
@@ -500,6 +535,26 @@ def bisect_by(lb: Tensor, ub: Tensor, idxs: Tensor,
     return newlb, newub, newextra
 
 
+# def by_smear(new_rem_lb: Tensor, new_rem_ub: Tensor, new_rem_extra: Optional[Tensor], new_rem_grad: Tensor,
+#              tiny_width: float = None) -> Tuple[Tensor, Tensor, Optional[Tensor]]:
+#     """ Experiment shows that smear = grad * dim_width as in ReluVal is the best heuristic tried so far. It's better
+#         than either one alone, and better than other indirect loss e.g., introduced over-approximated area. Also tried
+#         K-smear-followed-by-1-width, or grad-then-width, both become worse. Moreover, normalization on grad/width also
+#         makes it worse.
+#     """
+#     with torch.no_grad():
+#         width = new_rem_ub - new_rem_lb
+#         assert new_rem_lb.dim() == 2, 'Otherwise, I need to reduce the >2 dims to compute dim width?'
+#         smears = new_rem_grad * width  # tried normalization, didn't do any better..
+
+#         if tiny_width is not None:
+#             # consider only those dimensions that are not tiny
+#             not_tiny_bits = width > tiny_width
+#             smears = smears * not_tiny_bits.float()
+
+#         _, split_idxs = smears.max(dim=-1)
+#         return bisect_by(new_rem_lb, new_rem_ub, split_idxs, new_rem_extra)
+
 def by_smear(new_rem_lb: Tensor, new_rem_ub: Tensor, new_rem_extra: Optional[Tensor], new_rem_grad: Tensor,
              tiny_width: float = None) -> Tuple[Tensor, Tensor, Optional[Tensor]]:
     """ Experiment shows that smear = grad * dim_width as in ReluVal is the best heuristic tried so far. It's better
@@ -509,15 +564,26 @@ def by_smear(new_rem_lb: Tensor, new_rem_ub: Tensor, new_rem_extra: Optional[Ten
     """
     with torch.no_grad():
         width = new_rem_ub - new_rem_lb
-        assert new_rem_lb.dim() == 2, 'Otherwise, I need to reduce the >2 dims to compute dim width?'
+        # assert new_rem_lb.dim() == 2, 'Otherwise, I need to reduce the >2 dims to compute dim width?'
+        
         smears = new_rem_grad * width  # tried normalization, didn't do any better..
 
         if tiny_width is not None:
             # consider only those dimensions that are not tiny
             not_tiny_bits = width > tiny_width
             smears = smears * not_tiny_bits.float()
-
-        _, split_idxs = smears.max(dim=-1)
+        if new_rem_lb.dim() == 2:
+            _, split_idxs = smears.max(dim=-1)
+        elif new_rem_lb.dim() == 4:
+            # smear_test_value1 , i1 = smears.max(dim=-1)
+            # smear_test_value2 , i2 = smear_test_value1.max(dim=-1)
+            smears_re = smears.reshape(-1, smears.shape[-3], smears.shape[-2]*smears.shape[-1])
+            _, split_idxs = smears_re.max(dim=-1)
+            # revert to the index of origin smear
+            split_idxs = split_idxs// smears.shape[-2], split_idxs%smears.shape[-2]
+            # convert two tensors to one tensor
+            split_idxs = torch.stack([split_idxs[0][:,0], split_idxs[1][:,0]], dim=1) # batch_size x 2
+            
         return bisect_by(new_rem_lb, new_rem_ub, split_idxs, new_rem_extra)
 
 

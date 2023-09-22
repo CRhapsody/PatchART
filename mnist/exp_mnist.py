@@ -487,8 +487,9 @@ def test(lr:float = 0.005, repair_radius:float = 0.1, repair_number = 50,
          train_datasize = 5000, test_datasize = 2000, 
          accuracy_loss:str = 'CE'):
     test_defaults = {
+        'debug': True,
         'exp_fn': 'test_goal_repair',
-        'refine_top_k': 1,
+        'refine_top_k': 10,
         'repair_batch_size': 1,
         'start_abs_cnt': 500,
         'max_abs_cnt': 1000,
