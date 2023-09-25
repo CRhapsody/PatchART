@@ -17,7 +17,8 @@ import sys
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from DiffAbs.DiffAbs.abs import AbsDom, AbsEle, AbsDist, AbsBlackSheep, forward_linear
 from DiffAbs.DiffAbs.utils import valid_lb_ub, divide_pos_neg
-
+from art.utils import pp_cuda_mem
+import logging
 
 class Dom(AbsDom):
     name = Path(__file__).with_suffix('').name  # use file name (without extension) as domain name
@@ -750,6 +751,7 @@ class Conv2d(nn.Conv2d):
         :param ts: either Tensor, Ele, or Ele tensors
         :rtype: corresponding to inputs, Tensor for Tensor, Ele for Ele, Ele tensors for Ele tensors
         """
+
         input_is_ele = True
         if len(ts) == 1:
             if isinstance(ts[0], Tensor):
@@ -759,12 +761,14 @@ class Conv2d(nn.Conv2d):
             else:
                 raise ValueError(f'Not supported argument type {type(ts[0])}.')
         else:
+            
             input_is_ele = False
             e = Ele(*ts)  # reconstruct abstract element
 
         ''' See 'https://github.com/vdumoulin/conv_arithmetic' for animated illustrations.
             It's not hard to support them, but we just don't need that right now.
         '''
+        # logging.debug(pp_cuda_mem('Conv: before conv'))
         if self.dilation != (1, 1):
             raise NotImplementedError(f'Unsupported dilation {self.dilation}')
         if self.groups != 1:
@@ -800,14 +804,14 @@ class Conv2d(nn.Conv2d):
                 orig = torch.cat((zs, orig, zs), dim=-2)
             return orig
 
-        # utils.pp_cuda_mem('Conv: Before padding')
+        # logging.debug(pp_cuda_mem('Conv: before padding'))
 
         full_lb_coefs = _pad(e._lcoef)
         full_lb_cnsts = _pad(e._lcnst)
         full_ub_coefs = _pad(e._ucoef)
         full_ub_cnsts = _pad(e._ucnst)
 
-        # utils.pp_cuda_mem('Conv: After padding')
+        # logging.debug(pp_cuda_mem('Conv: After padding'))
         ''' The following code is faster that _mem_efficient_conv() (4.15s vs 5.74s)
             but allocates/caches more memory (max 10.2GB vs max 4.4GB).
         '''
@@ -853,7 +857,7 @@ class Conv2d(nn.Conv2d):
         filtered_ub_coefs = torch.stack(filtered_ub_coefs, dim=2)
         filtered_ub_cnsts = torch.stack(filtered_ub_cnsts, dim=2)
 
-        # utils.pp_cuda_mem('Conv: After conv enumeration')
+        # logging.debug(pp_cuda_mem('Conv: After conv enumeration') + '\n')
 
         ''' I also tried to use torch.unfold() to do the job, but it seems there's no memory gain and it's actually
             slower than doing unfold by myself...
@@ -890,7 +894,8 @@ class Conv2d(nn.Conv2d):
         newe_ucoefs = newe._ucoef.permute(*reorders)
         newe_ucnsts = newe._ucnst.permute(*reorders)
 
-        # utils.pp_cuda_mem('Conv: After permutation')
+        # logging.debug(pp_cuda_mem('Conv: After permutation'))
+        # logging.debug(pp_cuda_mem('Conv: After conv'))
         return Ele(newe_lcoefs, newe_lcnsts, newe_ucoefs, newe_ucnsts, newe.dlb, newe.dub)
 
     def _mem_efficient_conv(self, e, img_b, flat_size, cnt_h, cnt_w, fil_h, fil_w, stride_h, stride_w,
@@ -943,7 +948,9 @@ class Conv2d(nn.Conv2d):
         full_ucnsts = stack_all(full_ucnsts)
 
         # utils.pp_cuda_mem('Conv: After final stacking')
+        # logging.debug(pp_cuda_mem('Conv: After conv'))
         return Ele(full_lcoefs, full_lcnsts, full_ucoefs, full_ucnsts, e.dlb, e.dub)
+
     pass
 
 
@@ -1128,7 +1135,7 @@ class ReLU(nn.ReLU):
         else:
             input_is_ele = False
             e = Ele(*ts)  # reconstruct abstract element
-
+        # logging.debug(pp_cuda_mem('ReLU: Before relu'))
         size = e._lcoef.size()
         flat_size = size[1]  # FlatDim0
 
@@ -1138,14 +1145,14 @@ class ReLU(nn.ReLU):
         ucoef = e._ucoef
         ucnst = e._ucnst
 
-        # utils.pp_cuda_mem('ReLU: Before gamma()')
+        # logging.debug(pp_cuda_mem('ReLU: Before gamma()'))
 
         lb, ub = e.gamma()  # Batch x Dims...
         coef_zeros = torch.zeros_like(lcoef)
         cnst_zeros = torch.zeros_like(lcnst)
         lbub_zeros = torch.zeros_like(lb)
 
-        # utils.pp_cuda_mem('ReLU: After gamma()')
+        # logging.debug(pp_cuda_mem('ReLU: After gamma()'))
 
         ''' 4 distinct cases
             (a) All cleared to zero
@@ -1215,7 +1222,7 @@ class ReLU(nn.ReLU):
         new_lcnst = torch.where(full_bits(all_pres | kone, False), lcnst, cnst_zeros)
 
         # utils.pp_cuda_mem('ReLU: After everything')
-
+        # logging.debug(pp_cuda_mem('ReLU: After relu'))
         new_e = Ele(new_lcoef, new_lcnst, new_ucoef, new_ucnst, e.dlb, e.dub)
         return new_e if input_is_ele else tuple(new_e)
     pass
@@ -1872,7 +1879,7 @@ class MaxPool2d(nn.MaxPool2d):
         else:
             input_is_ele = False
             e = Ele(*ts)  # reconstruct abstract element
-
+        # logging.debug(pp_cuda_mem('MaxPool2d: Before everything'))
         ''' See 'https://github.com/vdumoulin/conv_arithmetic' for animated illustrations.
             It's not hard to support them, but we just don't need that right now.
         '''
@@ -1980,7 +1987,7 @@ class MaxPool2d(nn.MaxPool2d):
         newu_cnsts = torch.gather(filtered_e._ucnst, -1, ub_idxs).squeeze(dim=-1)
 
         # utils.pp_cuda_mem('Pool: After fast index-based reconstruction')
-
+        # logging.debug(pp_cuda_mem('MaxPool2d: After everything'))
         return Ele(newl_coefs, newl_cnsts, newu_coefs, newu_cnsts, e.dlb, e.dub)
 
     def _mem_efficient_pool(self, e, img_b, flat_size, img_c, cnt_h, cnt_w, fil_h, fil_w, stride_h, stride_w,
@@ -2041,5 +2048,6 @@ class MaxPool2d(nn.MaxPool2d):
         full_ucnsts = stack_all(full_ucnsts)
 
         # utils.pp_cuda_mem('Pool: After mem friendly final stacking')
+        # logging.debug(pp_cuda_mem('MaxPool2d: After everything'))
         return Ele(full_lcoefs, full_lcnsts, full_ucoefs, full_ucnsts, e.dlb, e.dub)
     pass

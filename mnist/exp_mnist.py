@@ -22,6 +22,7 @@ from mnist.mnist_utils import MnistNet, MnistProp, Mnist_patch_model
 
 MNIST_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'MNIST' / 'processed'
 MNIST_NET_DIR = Path(__file__).resolve().parent.parent / 'model' /'mnist'
+# MNIST_NET_DIR = Path(__file__).resolve().parent.parent / 'pgd' /'model' 
 RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'debug'
 RES_DIR.mkdir(parents=True, exist_ok=True)
 REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'patch_format'
@@ -159,7 +160,29 @@ class MnistPoints(exp.ConcIns):
         return cls(inputs, labels)
     pass
 
-def eval_test(net: MnistNet, testset: MnistPoints, categories=None) -> float:
+def eval_test(net: MnistNet, testset: MnistPoints, bitmap: Tensor, categories=None) -> float:
+    """ Evaluate accuracy on test set.
+    :param categories: e.g., acas.AcasOut
+    """
+    with torch.no_grad():
+        outs = net(testset.inputs, bitmap)
+        predicted = outs.argmax(dim=1)
+        correct = (predicted == testset.labels).sum().item()
+        # ratio = correct / len(testset)
+        ratio = correct / len(testset.inputs)
+
+        # per category
+        if categories is not None:
+            for cat in categories:
+                idxs = testset.labels == cat
+                cat_predicted = predicted[idxs]
+                cat_labels = testset.labels[idxs]
+                cat_correct = (cat_predicted == cat_labels).sum().item()
+                cat_ratio = math.nan if len(cat_labels) == 0 else cat_correct / len(cat_labels)
+                logging.debug(f'--For category {cat}, out of {len(cat_labels)} items, ratio {cat_ratio}')
+    return ratio
+
+def eval_test_init(net: MnistNet, testset: MnistPoints, categories=None) -> float:
     """ Evaluate accuracy on test set.
     :param categories: e.g., acas.AcasOut
     """
@@ -182,7 +205,6 @@ def eval_test(net: MnistNet, testset: MnistPoints, categories=None) -> float:
     return ratio
 
 
-
 def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool, float]:
     fname = 'mnist.pth'
     fpath = Path(MNIST_NET_DIR, fname)
@@ -197,51 +219,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     net.to(device)
     net.load_state_dict(torch.load(fpath, map_location=device))
 
-    # acc = eval_test(net, testset)
-    acc = eval_test(net, repairset)
-
-    # repair part
-    # the number of repair patch network,which is equal to the number of properties
-    # n_repair = MnistProp.LABEL_NUMBER
-    n_repair = repairset.inputs.shape[0]
-    input_shape = trainset.inputs.shape[1:]
-    patch_lists = []
-    
-    for i in range(n_repair):
-        patch_net = Mnist_patch_model(dom=args.dom,
-            name = f'patch network {i}')
-        patch_net.to(device)
-        patch_lists.append(patch_net)
-    logging.info(f'--Patch network: {patch_net}')
-
-
-    # ABstraction part
-    # set the box bound of the features, which the length of the box is 2*radius
-    # bound_mins = feature - radius
-    # bound_maxs = feature + radius
-
-    # the steps are as follows:
-    # 1.construct a mnist prop file include Mnistprop Module, which inherits from Oneprop
-    # 2.use the features to construct the Mnistprop
-    # 3.use the Mnistprop to construct the Andprop(join) 
-    repairlist = [(data[0],data[1]) for data in zip(repairset.inputs, repairset.labels)]
-    repair_prop_list = MnistProp.all_props(args.dom, DataList=repairlist, input_shape= input_shape,radius= args.repair_radius)
-
-    # get the all props after join all l_0 ball feature property
-    # TODO squeeze the property list, which is the same as the number of label
-    all_props = AndProp(props=repair_prop_list)
-    v = Bisecter(args.dom, all_props)
-
-    in_lb, in_ub = all_props.lbub(device)
-    in_bitmap = all_props.bitmap(device)
-
-    def run_abs(net, batch_abs_lb: Tensor, batch_abs_ub: Tensor, batch_abs_bitmap: Tensor) -> Tensor:
-        """ Return the safety distances over abstract domain. """
-        batch_abs_ins = args.dom.Ele.by_intvl(batch_abs_lb, batch_abs_ub)
-        batch_abs_outs = net(batch_abs_ins)
-        return all_props.safe_dist(batch_abs_outs, batch_abs_bitmap)
-
-        # judge the batch_inputs is in which region of property
+    # judge the batch_inputs is in which region of property
     def get_bitmap(in_lb: Tensor, in_ub: Tensor, in_bitmap: Tensor, batch_inputs: Tensor):
         '''
         in_lb: n_prop * input
@@ -249,9 +227,16 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         batch_inputs: batch * input
         '''
         batch_inputs_clone = batch_inputs.clone().unsqueeze_(1)
-        batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1])
+        # distingush the photo and the property
+        if len(in_lb.shape) == 2:
+            batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1])
+        elif len(in_lb.shape) == 4:
+            batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
         is_in = (batch_inputs_clone >= in_lb) & (batch_inputs_clone <= in_ub)
-        is_in = is_in.all(dim=-1) # every input is in the region of property, batch * n_prop
+        if len(in_lb.shape) == 2:
+            is_in = is_in.all(dim=-1) # every input is in the region of property, batch * n_prop
+        elif len(in_lb.shape) == 4:
+            is_in = is_in.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
         # convert to bitmap
         bitmap = torch.zeros((batch_inputs.shape[0], in_bitmap.shape[1]), device = device)
         # is in is a batch * in_bitmap.shape[0] tensor, in_bitmap.shape[1] is the number of properties
@@ -275,6 +260,59 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
         return bitmap
 
+    # ABstraction part
+    # set the box bound of the features, which the length of the box is 2*radius
+    # bound_mins = feature - radius
+    # bound_maxs = feature + radius
+
+    # the steps are as follows:
+    # 1.construct a mnist prop file include Mnistprop Module, which inherits from Oneprop
+    # 2.use the features to construct the Mnistprop
+    # 3.use the Mnistprop to construct the Andprop(join) 
+    n_repair = repairset.inputs.shape[0]
+    input_shape = trainset.inputs.shape[1:]
+    repairlist = [(data[0],data[1]) for data in zip(repairset.inputs, repairset.labels)]
+    repair_prop_list = MnistProp.all_props(args.dom, DataList=repairlist, input_shape= input_shape,radius= args.repair_radius)
+
+    # get the all props after join all l_0 ball feature property
+    # TODO squeeze the property list, which is the same as the number of label
+    all_props = AndProp(props=repair_prop_list)
+    v = Bisecter(args.dom, all_props)
+
+
+    def run_abs(net, batch_abs_lb: Tensor, batch_abs_ub: Tensor, batch_abs_bitmap: Tensor) -> Tensor:
+        """ Return the safety distances over abstract domain. """
+        batch_abs_ins = args.dom.Ele.by_intvl(batch_abs_lb, batch_abs_ub)
+        batch_abs_outs = net(batch_abs_ins, batch_abs_bitmap)
+        return all_props.safe_dist(batch_abs_outs, batch_abs_bitmap)
+    
+
+
+    in_lb, in_ub = all_props.lbub(device)
+    in_bitmap = all_props.bitmap(device)
+    # in_lb = net.normalize_inputs(in_lb, bound_mins, bound_maxs)
+    # in_ub = net.normalize_inputs(in_ub, bound_mins, bound_maxs)
+
+    test_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, testset.inputs)
+    repairset_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, repairset.inputs)
+    trainset_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, trainset.inputs)
+    attack_testset_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, attack_testset.inputs)
+    # test init accuracy
+    logging.info(f'--Test repair set accuracy {eval_test_init(net, repairset)}')
+    # acc = eval_test(net, repairset, bitmap= test_bitmap)
+    # repair part
+    # the number of repair patch network,which is equal to the number of properties
+    # n_repair = MnistProp.LABEL_NUMBER
+
+    patch_lists = []
+
+    for i in range(n_repair):
+        patch_net = Mnist_patch_model(dom=args.dom,
+            name = f'patch network {i}')
+        patch_net.to(device)
+        patch_lists.append(patch_net)
+    logging.info(f'--Patch network: {patch_net}')
+
     # the number of repair patch network,which is equal to the number of properties 
     repair_net =  Netsum(args.dom, target_net = net, patch_nets= patch_lists, device=device)
 
@@ -295,8 +333,8 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     # train the patch and original network
     opti = Adam(repair_net.parameters(), lr=args.lr*0.1, weight_decay=args.weight_decay)
     # delate the parameters of the support network and the target network from the parameters of the repair network
-    # TODO 这里的参数是不是有问题
-    opti.param_groups[0]['params'] = opti.param_groups[0]['params'][12:]
+    # TODO accoridng to the net model
+    opti.param_groups[0]['params'] = opti.param_groups[0]['params'][6:]
     scheduler = args.scheduler_fn(opti)  # could be None
 
     # freeze the parameters of the original network for extracting features
@@ -335,24 +373,20 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                 logging.info(f'All {len(curr_abs_lb)} abstractions certified.')
             else:
                 _, worst_idx = full_dists.max(dim=0)
-                logging.info(f'Max loss at LB: {curr_abs_lb[worst_idx]}, UB: {curr_abs_ub[worst_idx]}, rule: {curr_abs_bitmap[worst_idx]}.')
+                # logging.info(f'Max loss at LB: {curr_abs_lb[worst_idx]}, UB: {curr_abs_ub[worst_idx]}, rule: {curr_abs_bitmap[worst_idx]}.')
 
         # test the repaired model which combines the feature extractor, classifier and the patch network
         # accuracies.append(eval_test(finally_net, testset))
-        test_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, testset.inputs)
         accuracies.append(eval_test(repair_net, testset, bitmap = test_bitmap))
-
-        repairset_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, repairset.inputs)
+        
         repair_acc.append(eval_test(repair_net, repairset, bitmap = repairset_bitmap))
 
-        trainset_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, trainset.inputs)
         train_acc.append(eval_test(repair_net, trainset, bitmap = trainset_bitmap))
 
-        attack_testset_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, attack_testset.inputs)
         attack_test_acc.append(eval_test(repair_net, attack_testset, bitmap = attack_testset_bitmap))
 
         logging.info(f'Test set accuracy {accuracies[-1]}.')
-        logging.info(f'repair set accuracy {accuracies[-1]}.')
+        logging.info(f'repair set accuracy {repair_acc[-1]}.')
         logging.info(f'train set accuracy {train_acc[-1]}.')
         logging.info(f'attacked test set accuracy {attack_test_acc[-1]}.')
 
@@ -398,7 +432,9 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
             batch_loss = 0.
             if not args.no_pts:
                 batch_inputs, batch_labels = next(conc_loader)
-                batch_outputs = repair_net(batch_inputs)
+                batch_conc_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, batch_inputs)
+                batch_outputs = repair_net(batch_inputs, batch_conc_bitmap)
+                # batch_outputs.squeeze_(1)
                 batch_loss += args.accuracy_loss(batch_outputs, batch_labels)
             if not args.no_abs:
                 batch_abs_lb, batch_abs_ub, batch_abs_bitmap = next(abs_loader)
@@ -432,7 +468,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                                                                 stop_on_k_new=args.refine_top_k,for_feature=True)
         pass
     train_time = timer() - start
-    torch.save(repair_net.state_dict(), str(REPAIR_MODEL_DIR / f'trainset{args.datasize}-rapair_radius{args.repair_radius}-.pt'))
+    torch.save(repair_net.state_dict(), str(REPAIR_MODEL_DIR / f'Mnist-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-.pt'))
     logging.info(f'Accuracy at every epoch: {accuracies}')
     logging.info(f'After {epoch} epochs / {utils.pp_time(train_time)}, ' +
                  f'eventually the trained network got certified? {certified}, ' +
@@ -468,7 +504,7 @@ def test_goal_repair(parser: MnistArgParser):
     defaults = {
         # 'start_abs_cnt': 5000,
         # 'max_abs_cnt': 
-        'batch_size': 128,  # to make it faster
+        'batch_size': 64,  # to make it faster
         'min_epochs': 25,
         'max_epochs': 45
     }
@@ -483,14 +519,15 @@ def test_goal_repair(parser: MnistArgParser):
         _run_repair(args)
     return
 
-def test(lr:float = 0.005, repair_radius:float = 0.1, repair_number = 50,
+def test(lr:float = 0.005, repair_radius:float = 0.1, repair_number = 50, refine_top_k = 300,
          train_datasize = 5000, test_datasize = 2000, 
          accuracy_loss:str = 'CE'):
     test_defaults = {
-        'debug': True,
+        'no_refine': True,
+        'debug': False,
         'exp_fn': 'test_goal_repair',
-        'refine_top_k': 10,
-        'repair_batch_size': 1,
+        'refine_top_k': refine_top_k,
+        'repair_batch_size': repair_number,
         'start_abs_cnt': 500,
         'max_abs_cnt': 1000,
         'no_repair': False,
@@ -517,7 +554,7 @@ def test(lr:float = 0.005, repair_radius:float = 0.1, repair_number = 50,
 
 
 if __name__ == '__main__':
-    device = torch.device(f'cuda:0')
+    device = torch.device(f'cuda:1')
     # for lr in [0.005, 0.01]:
     #     for weight_decay in [0.0001, 0.00005]:
     #         # for k_coeff in [0.35, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75]:
@@ -528,7 +565,7 @@ if __name__ == '__main__':
     #                     #     continue
     #                     # for repair_radius in [0.1, 0.05, 0.03, 0.01]:
     #                     test(lr=lr, weight_decay=weight_decay, k_coeff=k_coeff, repair_radius=0.1, support_loss=support_loss, accuracy_loss=accuracy_loss)
-    test(lr=0.01, repair_radius=0.1, repair_number = 50,
+    test(lr=0.01, repair_radius=0.1, repair_number = 100, refine_top_k= 100, 
          train_datasize = 5000, test_datasize = 2000, 
          accuracy_loss='CE')
 

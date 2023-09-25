@@ -128,6 +128,7 @@ def time_since(since, existing=None):
 
 
 def pp_cuda_mem(stamp: str = '') -> str:
+    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
     def sizeof_fmt(num, suffix='B'):
         for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
             if abs(num) < 1024.0:
@@ -140,9 +141,9 @@ def pp_cuda_mem(stamp: str = '') -> str:
 
     return '\n'.join([
         f'----- {stamp} -----',
-        f'Allocated: {sizeof_fmt(cuda.memory_allocated())}',
-        f'Max Allocated: {sizeof_fmt(cuda.max_memory_allocated())}',
-        f'Cached: {sizeof_fmt(cuda.memory_cached())}',
-        f'Max Cached: {sizeof_fmt(cuda.max_memory_cached())}',
+        f'Allocated: {sizeof_fmt(cuda.memory_allocated(device=device))}',
+        f'Max Allocated: {sizeof_fmt(cuda.max_memory_allocated(device=device))}',
+        f'Cached: {sizeof_fmt(cuda.memory_cached(device=device))}',
+        f'Max Cached: {sizeof_fmt(cuda.max_memory_cached(device=device))}',
         f'----- End of {stamp} -----'
     ])
