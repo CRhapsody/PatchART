@@ -311,6 +311,9 @@ class Bisecter(object):
             tiny_bits.unsqueeze_(1)
             rem_bits = ~ tiny_bits
             rem_grad_bits = rem_bits.squeeze(1).all(dim=-1).all(dim=-1)
+        
+        if new_lb.dim() == 2:
+            rem_extra_bits = rem_bits
 
         new_tiny_lb, rem_lb = new_lb[tiny_bits], new_lb[rem_bits]
         new_tiny_ub, rem_ub = new_ub[tiny_bits], new_ub[rem_bits]
@@ -494,6 +497,9 @@ class Bisecter(object):
                     return wl_lb, wl_ub
                 else:
                     return wl_lb, wl_ub, wl_extra
+    
+    def relu_split():
+        pass
 
 
 
