@@ -768,7 +768,7 @@ class Conv2d(nn.Conv2d):
         ''' See 'https://github.com/vdumoulin/conv_arithmetic' for animated illustrations.
             It's not hard to support them, but we just don't need that right now.
         '''
-        # logging.debug(pp_cuda_mem('Conv: before conv'))
+        logging.debug(pp_cuda_mem('Conv: before conv'))
         if self.dilation != (1, 1):
             raise NotImplementedError(f'Unsupported dilation {self.dilation}')
         if self.groups != 1:
@@ -804,14 +804,14 @@ class Conv2d(nn.Conv2d):
                 orig = torch.cat((zs, orig, zs), dim=-2)
             return orig
 
-        # logging.debug(pp_cuda_mem('Conv: before padding'))
+        logging.debug(pp_cuda_mem('Conv: before padding'))
 
         full_lb_coefs = _pad(e._lcoef)
         full_lb_cnsts = _pad(e._lcnst)
         full_ub_coefs = _pad(e._ucoef)
         full_ub_cnsts = _pad(e._ucnst)
 
-        # logging.debug(pp_cuda_mem('Conv: After padding'))
+        logging.debug(pp_cuda_mem('Conv: After padding'))
         ''' The following code is faster that _mem_efficient_conv() (4.15s vs 5.74s)
             but allocates/caches more memory (max 10.2GB vs max 4.4GB).
         '''
@@ -895,7 +895,7 @@ class Conv2d(nn.Conv2d):
         newe_ucnsts = newe._ucnst.permute(*reorders)
 
         # logging.debug(pp_cuda_mem('Conv: After permutation'))
-        # logging.debug(pp_cuda_mem('Conv: After conv'))
+        logging.debug(pp_cuda_mem('Conv: After conv'))
         return Ele(newe_lcoefs, newe_lcnsts, newe_ucoefs, newe_ucnsts, newe.dlb, newe.dub)
 
     def _mem_efficient_conv(self, e, img_b, flat_size, cnt_h, cnt_w, fil_h, fil_w, stride_h, stride_w,
@@ -948,7 +948,7 @@ class Conv2d(nn.Conv2d):
         full_ucnsts = stack_all(full_ucnsts)
 
         # utils.pp_cuda_mem('Conv: After final stacking')
-        # logging.debug(pp_cuda_mem('Conv: After conv'))
+        logging.debug(pp_cuda_mem('Conv: After conv'))
         return Ele(full_lcoefs, full_lcnsts, full_ucoefs, full_ucnsts, e.dlb, e.dub)
 
     pass
@@ -1135,7 +1135,7 @@ class ReLU(nn.ReLU):
         else:
             input_is_ele = False
             e = Ele(*ts)  # reconstruct abstract element
-        # logging.debug(pp_cuda_mem('ReLU: Before relu'))
+        logging.debug(pp_cuda_mem('ReLU: Before relu'))
         size = e._lcoef.size()
         flat_size = size[1]  # FlatDim0
 
@@ -1222,7 +1222,7 @@ class ReLU(nn.ReLU):
         new_lcnst = torch.where(full_bits(all_pres | kone, False), lcnst, cnst_zeros)
 
         # utils.pp_cuda_mem('ReLU: After everything')
-        # logging.debug(pp_cuda_mem('ReLU: After relu'))
+        logging.debug(pp_cuda_mem('ReLU: After relu'))
         new_e = Ele(new_lcoef, new_lcnst, new_ucoef, new_ucnst, e.dlb, e.dub)
         return new_e if input_is_ele else tuple(new_e)
     pass
@@ -1879,7 +1879,7 @@ class MaxPool2d(nn.MaxPool2d):
         else:
             input_is_ele = False
             e = Ele(*ts)  # reconstruct abstract element
-        # logging.debug(pp_cuda_mem('MaxPool2d: Before everything'))
+        logging.debug(pp_cuda_mem('MaxPool2d: Before everything'))
         ''' See 'https://github.com/vdumoulin/conv_arithmetic' for animated illustrations.
             It's not hard to support them, but we just don't need that right now.
         '''
@@ -1987,7 +1987,7 @@ class MaxPool2d(nn.MaxPool2d):
         newu_cnsts = torch.gather(filtered_e._ucnst, -1, ub_idxs).squeeze(dim=-1)
 
         # utils.pp_cuda_mem('Pool: After fast index-based reconstruction')
-        # logging.debug(pp_cuda_mem('MaxPool2d: After everything'))
+        logging.debug(pp_cuda_mem('MaxPool2d: After everything'))
         return Ele(newl_coefs, newl_cnsts, newu_coefs, newu_cnsts, e.dlb, e.dub)
 
     def _mem_efficient_pool(self, e, img_b, flat_size, img_c, cnt_h, cnt_w, fil_h, fil_w, stride_h, stride_w,
@@ -2048,6 +2048,6 @@ class MaxPool2d(nn.MaxPool2d):
         full_ucnsts = stack_all(full_ucnsts)
 
         # utils.pp_cuda_mem('Pool: After mem friendly final stacking')
-        # logging.debug(pp_cuda_mem('MaxPool2d: After everything'))
+        logging.debug(pp_cuda_mem('MaxPool2d: After everything'))
         return Ele(full_lcoefs, full_lcnsts, full_ucoefs, full_ucnsts, e.dlb, e.dub)
     pass

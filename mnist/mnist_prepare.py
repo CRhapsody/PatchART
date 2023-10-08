@@ -244,8 +244,52 @@ def pgd_attack():
     torch.save((test_attack_data[:2500],test_attack_labels[:2500]),'./data/MNIST/processed/test_attack_data_part_2500.pt')
     torch.save(test_attacked[:2500],'./data/MNIST/processed/test_attack_data_part_label_2500.pt')
 
+
+def stack():
+
+    # 定义一个深层卷积神经网络
+    class DeepCNN(nn.Module):
+        def __init__(self):
+            super(DeepCNN, self).__init__()
+            self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding=1)
+            self.conv2 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+            self.conv3 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
+            self.fc1 = nn.Linear(256 * 64 * 64, 512)
+            self.fc2 = nn.Linear(512, 10)
+
+        def forward(self, x):
+            x = torch.relu(self.conv1(x))
+            x = torch.relu(self.conv2(x))
+            x = torch.relu(self.conv3(x))
+            x = x.view(-1, 256 * 64 * 64)
+            x = torch.relu(self.fc1(x))
+            x = self.fc2(x)
+            return x
+
+    
+    model = DeepCNN()
+
+    
+    input_data = torch.randn(320, 3, 128, 128).to('cuda')  # 8张128x128大小的彩色图片
+
+    
+    model.to('cuda')
+
+    
+    while(1):
+        output = model(input_data)
+
+        
+        # print(output)
+
+        
+        # print(torch.cuda.max_memory_allocated() / 1e9, "GB")
+
+
+
 if __name__ == "__main__":
     pass
-    model = train()
+    # model = train()
     # test()
     # pgd_attack()
+    stack()

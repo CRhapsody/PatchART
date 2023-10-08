@@ -523,8 +523,8 @@ def test(lr:float = 0.005, repair_radius:float = 0.1, repair_number = 50, refine
          train_datasize = 5000, test_datasize = 2000, 
          accuracy_loss:str = 'CE'):
     test_defaults = {
-        'no_refine': True,
-        'debug': False,
+        'no_refine': False,
+        'debug': True,
         'exp_fn': 'test_goal_repair',
         'refine_top_k': refine_top_k,
         'repair_batch_size': repair_number,
@@ -565,7 +565,7 @@ if __name__ == '__main__':
     #                     #     continue
     #                     # for repair_radius in [0.1, 0.05, 0.03, 0.01]:
     #                     test(lr=lr, weight_decay=weight_decay, k_coeff=k_coeff, repair_radius=0.1, support_loss=support_loss, accuracy_loss=accuracy_loss)
-    test(lr=0.01, repair_radius=0.1, repair_number = 100, refine_top_k= 100, 
+    test(lr=0.01, repair_radius=0.1, repair_number = 50, refine_top_k= 50, 
          train_datasize = 5000, test_datasize = 2000, 
          accuracy_loss='CE')
 
