@@ -61,7 +61,7 @@ class MnistArgParser(exp.ExpArgParser):
                           help='specifically for data points sampling from spec')
         self.add_argument('--reset_params', type=literal_eval, default=False,
                           help='start with random weights or provided trained weights when available')
-        self.add_argument('--train_datasize', type=int, default=5000, 
+        self.add_argument('--train_datasize', type=int, default=10000, 
                           help='dataset size for training')
         self.add_argument('--test_datasize', type=int, default=2000,
                           help='dataset size for test')
@@ -111,23 +111,27 @@ class MnistPoints(exp.ConcIns):
         Loads to CPU/GPU automatically.
     """
     @classmethod
-    def load(cls, train: bool, device, trainnumber = None, testnumber = None,
+    def load(cls, train: bool, device, trainnumber = None, testnumber = None, radius = 0,
             is_test_accuracy = False, 
             is_attack_testset_repaired = False, 
             is_attack_repaired = False):
         '''
         trainnumber: 训练集数据量
         testnumber: 测试集数据量
+        radius: 修复数据的半径
         is_test_accuracy: if True, 检测一般测试集的准确率
         is_attack_testset_repaired: if True, 检测一般被攻击测试集的准确率
         is_attack_repaired: if True, 检测被攻击数据的修复率
         三个参数只有一个为True
         '''
+        #_attack_data_full
         suffix = 'train' if train else 'test'
         if train:
-            fname = f'{suffix}_attack_data_full.pt'  # note that it is using original data
+            fname = f'train_norm00.pt'  # note that it is using original data
             # fname = f'{suffix}_norm00.pt'
-            combine = torch.load(Path(MNIST_DATA_DIR, fname), device)
+            mnist_train_norm00_dir = "/pub/data/chizm/"
+            combine = torch.load(mnist_train_norm00_dir+fname, device)
+            # combine = torch.load(Path(MNIST_DATA_DIR, fname), device)
             inputs, labels = combine 
             inputs = inputs[:trainnumber]
             labels = labels[:trainnumber]
@@ -140,13 +144,13 @@ class MnistPoints(exp.ConcIns):
                 labels = labels[:testnumber]
             
             elif is_attack_testset_repaired:
-                fname = f'test_attack_data_full.pt'
+                fname = f'test_attack_data_full_{radius}.pt'
                 combine = torch.load(Path(MNIST_DATA_DIR, fname), device)
                 inputs, labels = combine
                 inputs = inputs[:testnumber]
                 labels = labels[:testnumber]
             elif is_attack_repaired:
-                fname = f'train_attack_data_full.pt'
+                fname = f'train_attack_data_full_{radius}.pt'
                 combine = torch.load(Path(MNIST_DATA_DIR, fname), device)
                 inputs, labels = combine
                 inputs = inputs[:testnumber]
@@ -210,10 +214,12 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     fpath = Path(MNIST_NET_DIR, fname)
 
     # train number是修复多少个点
-    repairset = MnistPoints.load(train=True, device=device, trainnumber=args.repair_number)
+    originalset = torch.load(Path(MNIST_DATA_DIR, f'origin_data_{args.repair_radius}.pt'), device)
+    originalset = MnistPoints(inputs=originalset[0], labels=originalset[1])
+    repairset = MnistPoints.load(train=False, device=device, trainnumber=args.repair_number, radius=args.repair_radius,is_attack_repaired=True)
     trainset = MnistPoints.load(train=True, device=device, trainnumber=args.train_datasize)
     testset = MnistPoints.load(train=False, device=device, testnumber=args.test_datasize,is_test_accuracy=True)
-    attack_testset = MnistPoints.load(train=False, device=device, testnumber=args.test_datasize,is_attack_testset_repaired=True)
+    attack_testset = MnistPoints.load(train=False, device=device, testnumber=args.test_datasize, radius=args.repair_radius,is_attack_testset_repaired=True)
 
     net = MnistNet(dom=args.dom)
     net.to(device)
@@ -226,39 +232,41 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         in_ub: n_prop * input
         batch_inputs: batch * input
         '''
-        batch_inputs_clone = batch_inputs.clone().unsqueeze_(1)
-        # distingush the photo and the property
-        if len(in_lb.shape) == 2:
-            batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1])
-        elif len(in_lb.shape) == 4:
-            batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
-        is_in = (batch_inputs_clone >= in_lb) & (batch_inputs_clone <= in_ub)
-        if len(in_lb.shape) == 2:
-            is_in = is_in.all(dim=-1) # every input is in the region of property, batch * n_prop
-        elif len(in_lb.shape) == 4:
-            is_in = is_in.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
-        # convert to bitmap
-        bitmap = torch.zeros((batch_inputs.shape[0], in_bitmap.shape[1]), device = device)
-        # is in is a batch * in_bitmap.shape[0] tensor, in_bitmap.shape[1] is the number of properties
-        # the every row of is_in is the bitmap of the input which row of in_bitmap is allowed
-        for i in range(is_in.shape[0]):
-            for j in range(is_in.shape[1]):
-                if is_in[i][j]:
-                    bitmap[i] = in_bitmap[j]
-                    break
-                else:
-                    continue
-        # how to use the vectoirzation to speed up the following code
-        # tmp0 = in_bitmap.unsqueeze(0).expand(batch_inputs.shape[0], in_bitmap.shape[0], in_bitmap.shape[1]).to(device)
-        # tmp0 = torch.zeros((batch_inputs.shape[0], in_bitmap.shape[0], in_bitmap.shape[1]), device = device)
-        # tmp1 = is_in.unsqueeze(-1).expand(batch_inputs.shape[0], in_bitmap.shape[0], in_bitmap.shape[1]).to(device)
-        # bitmap = torch.where(tmp1, tmp0, 1)
-        # # tmp0[tmp1.nonzero(as_tuple=True)] = 1
-        # # bitmap = tmp0.all(dim=-1)
-        # a = bitmap.all(dim=-1)
+        with torch.no_grad():
+        
+            batch_inputs_clone = batch_inputs.clone().unsqueeze_(1)
+            # distingush the photo and the property
+            if len(in_lb.shape) == 2:
+                batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1])
+            elif len(in_lb.shape) == 4:
+                batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
+            is_in = (batch_inputs_clone >= in_lb) & (batch_inputs_clone <= in_ub)
+            if len(in_lb.shape) == 2:
+                is_in = is_in.all(dim=-1) # every input is in the region of property, batch * n_prop
+            elif len(in_lb.shape) == 4:
+                is_in = is_in.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
+            # convert to bitmap
+            bitmap = torch.zeros((batch_inputs.shape[0], in_bitmap.shape[1]), device = device)
+            # is in is a batch * in_bitmap.shape[0] tensor, in_bitmap.shape[1] is the number of properties
+            # the every row of is_in is the bitmap of the input which row of in_bitmap is allowed
+            for i in range(is_in.shape[0]):
+                for j in range(is_in.shape[1]):
+                    if is_in[i][j]:
+                        bitmap[i] = in_bitmap[j]
+                        break
+                    else:
+                        continue
+            # how to use the vectoirzation to speed up the following code
+            # tmp0 = in_bitmap.unsqueeze(0).expand(batch_inputs.shape[0], in_bitmap.shape[0], in_bitmap.shape[1]).to(device)
+            # tmp0 = torch.zeros((batch_inputs.shape[0], in_bitmap.shape[0], in_bitmap.shape[1]), device = device)
+            # tmp1 = is_in.unsqueeze(-1).expand(batch_inputs.shape[0], in_bitmap.shape[0], in_bitmap.shape[1]).to(device)
+            # bitmap = torch.where(tmp1, tmp0, 1)
+            # # tmp0[tmp1.nonzero(as_tuple=True)] = 1
+            # # bitmap = tmp0.all(dim=-1)
+            # a = bitmap.all(dim=-1)
 
 
-        return bitmap
+            return bitmap
 
     # ABstraction part
     # set the box bound of the features, which the length of the box is 2*radius
@@ -271,9 +279,10 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     # 3.use the Mnistprop to construct the Andprop(join) 
     n_repair = repairset.inputs.shape[0]
     input_shape = trainset.inputs.shape[1:]
-    repairlist = [(data[0],data[1]) for data in zip(repairset.inputs, repairset.labels)]
+    # repairlist = [(data[0],data[1]) for data in zip(repairset.inputs, repairset.labels)]
+    # repair_prop_list = MnistProp.all_props(args.dom, DataList=repairlist, input_shape= input_shape,radius= args.repair_radius)
+    repairlist = [(data[0],data[1]) for data in zip(originalset.inputs, originalset.labels)]
     repair_prop_list = MnistProp.all_props(args.dom, DataList=repairlist, input_shape= input_shape,radius= args.repair_radius)
-
     # get the all props after join all l_0 ball feature property
     # TODO squeeze the property list, which is the same as the number of label
     all_props = AndProp(props=repair_prop_list)
@@ -292,11 +301,11 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     in_bitmap = all_props.bitmap(device)
     # in_lb = net.normalize_inputs(in_lb, bound_mins, bound_maxs)
     # in_ub = net.normalize_inputs(in_ub, bound_mins, bound_maxs)
-
     test_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, testset.inputs)
     repairset_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, repairset.inputs)
     trainset_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, trainset.inputs)
     attack_testset_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, attack_testset.inputs)
+
     # test init accuracy
     logging.info(f'--Test repair set accuracy {eval_test_init(net, repairset)}')
     # acc = eval_test(net, repairset, bitmap= test_bitmap)
@@ -332,17 +341,16 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
     # train the patch and original network
     opti = Adam(repair_net.parameters(), lr=args.lr*0.1, weight_decay=args.weight_decay)
-    # delate the parameters of the support network and the target network from the parameters of the repair network
-    # TODO accoridng to the net model
+    # accoridng to the net model
     opti.param_groups[0]['params'] = opti.param_groups[0]['params'][6:]
     scheduler = args.scheduler_fn(opti)  # could be None
 
-    # freeze the parameters of the original network for extracting features
-    # for name, param in repair_net.named_parameters():
-    #     if 'conv1' or 'conv2' or 'fc1' in name:
-    #         param.requires_grad = False
-    #         opti.param_groups[0]['params'].append(param)
-    #         opti.param_groups[0]['lr'] = 0
+    # TODO get the network output
+    def get_orinet_out(net, batch_abs_lb: Tensor, batch_abs_ub: Tensor, batch_abs_bitmap: Tensor) -> Tensor:
+        """ Return the safety distances over abstract domain. """
+        batch_abs_ins = args.dom.Ele.by_intvl(batch_abs_lb, batch_abs_ub)
+        batch_abs_outs = net(batch_abs_ins)
+        return batch_abs_outs
 
     accuracies = []  # epoch 0: ratio
     repair_acc = []
@@ -377,6 +385,7 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
         # test the repaired model which combines the feature extractor, classifier and the patch network
         # accuracies.append(eval_test(finally_net, testset))
+        
         accuracies.append(eval_test(repair_net, testset, bitmap = test_bitmap))
         
         repair_acc.append(eval_test(repair_net, repairset, bitmap = repairset_bitmap))
@@ -504,9 +513,9 @@ def test_goal_repair(parser: MnistArgParser):
     defaults = {
         # 'start_abs_cnt': 5000,
         # 'max_abs_cnt': 
-        'batch_size': 64,  # to make it faster
-        'min_epochs': 25,
-        'max_epochs': 45
+        'batch_size': 50,  # to make it faster
+        'min_epochs': 15,
+        'max_epochs': 25
     }
     parser.set_defaults(**defaults)
     args = parser.parse_args()
@@ -519,12 +528,12 @@ def test_goal_repair(parser: MnistArgParser):
         _run_repair(args)
     return
 
-def test(lr:float = 0.005, repair_radius:float = 0.1, repair_number = 50, refine_top_k = 300,
-         train_datasize = 5000, test_datasize = 2000, 
+def test(lr:float = 0.005, repair_radius:float = 0.1, repair_number = 200, refine_top_k = 300,
+         train_datasize = 200, test_datasize = 2000, 
          accuracy_loss:str = 'CE'):
     test_defaults = {
-        'no_refine': False,
-        'debug': True,
+        'no_refine': True,
+        'debug': False,
         'exp_fn': 'test_goal_repair',
         'refine_top_k': refine_top_k,
         'repair_batch_size': repair_number,
@@ -533,7 +542,7 @@ def test(lr:float = 0.005, repair_radius:float = 0.1, repair_number = 50, refine
         'no_repair': False,
         'repair_number': repair_number,
         'train_datasize':train_datasize,
-        'test_datasize':test_datasize,
+        'test_datasize': int(test_datasize * train_datasize/200),
         'repair_radius': repair_radius,
         'lr': lr,
         'accuracy_loss': accuracy_loss,
@@ -554,7 +563,7 @@ def test(lr:float = 0.005, repair_radius:float = 0.1, repair_number = 50, refine
 
 
 if __name__ == '__main__':
-    device = torch.device(f'cuda:1')
+    device = torch.device(f'cuda:7')
     # for lr in [0.005, 0.01]:
     #     for weight_decay in [0.0001, 0.00005]:
     #         # for k_coeff in [0.35, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75]:
@@ -565,8 +574,8 @@ if __name__ == '__main__':
     #                     #     continue
     #                     # for repair_radius in [0.1, 0.05, 0.03, 0.01]:
     #                     test(lr=lr, weight_decay=weight_decay, k_coeff=k_coeff, repair_radius=0.1, support_loss=support_loss, accuracy_loss=accuracy_loss)
-    test(lr=0.01, repair_radius=0.1, repair_number = 50, refine_top_k= 50, 
-         train_datasize = 5000, test_datasize = 2000, 
+    test(lr=0.01, repair_radius=0.3, repair_number = 50, refine_top_k= 50, 
+         train_datasize = 10000, test_datasize = 2000, 
          accuracy_loss='CE')
 
     # # get the features of the dataset using mnist_net.split

@@ -649,7 +649,7 @@ def test_goal_accuracy(parser: AcasArgParser):
 
 
 if __name__ == '__main__':
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    device = torch.device('cuda:7') if torch.cuda.is_available() else torch.device('cpu')
 
     test_defaults = {
         'exp_fn': 'test_goal_safety',

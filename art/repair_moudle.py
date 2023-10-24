@@ -204,6 +204,25 @@ class Netsum(nn.Module):
         ]
         return '\n'.join(ss)
 
+class NetOnlySumPatch(Netsum):
+    def forward(self, x, in_bitmap, out):
+        for i,patch in enumerate(self.patch_nets):
+            bits = in_bitmap[..., i]
+            if not bits.any():
+            # no one here needs to obey this property
+                continue
+
+            ''' The default nonzero(as_tuple=True) returns a tuple, make scatter_() unhappy.
+                Here we just extract the real data from it to make it the same as old nonzero().squeeze(dim=-1).
+            '''
+            bits = bits.nonzero(as_tuple=True)[0]
+            if isinstance(x, Tensor):
+                out[bits] += patch(x[bits])
+            elif isinstance(x, AbsEle):
+                replace_item = out[bits] + patch(x[bits]) # may not only one prop
+                out.replace(in_bitmap[..., i], replace_item)
+        return out
+        pass
 
 class NetFeatureSum(nn.Module):
     '''
