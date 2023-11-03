@@ -10,8 +10,8 @@ from torch import Tensor
 from DiffAbs.DiffAbs import AbsDom, AbsEle, ConcDist, deeppoly
 from DiffAbs.DiffAbs.utils import valid_lb_ub
 
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda:2' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # device = torch.device('cpu')
 
 class AbsProp(ABC):
@@ -678,16 +678,19 @@ def lbub_intersect(lb1: Tensor, ub1: Tensor, lb2: Tensor, ub2: Tensor) -> Tuple[
     :return: not batched tensors
     """
     assert lb1.size() == lb2.size() and ub1.size() == ub2.size()
-
-    res_lb, _ = torch.max(torch.stack((lb1, lb2), dim=-1), dim=-1)
-    res_ub, _ = torch.min(torch.stack((ub1, ub2), dim=-1), dim=-1)
+    if len(lb1.shape) == 3:
+        res_lb = torch.max(lb1, lb2)
+        res_ub = torch.min(ub1, ub2)
+    else:
+        res_lb, _ = torch.max(torch.stack((lb1, lb2), dim=-1), dim=-1)
+        res_ub, _ = torch.min(torch.stack((ub1, ub2), dim=-1), dim=-1)
 
     if not valid_lb_ub(res_lb, res_ub):
         raise ValueError('Intersection failed.')
     return res_lb, res_ub
 
 
-def lbub_exclude(lb1: Tensor, ub1: Tensor, lb2: Tensor, ub2: Tensor, accu_lb=Tensor(), accu_ub=Tensor(),
+def lbub_exclude(lb1: Tensor, ub1: Tensor, lb2: Tensor, ub2: Tensor, accu_lb=Tensor().to(device=device), accu_ub=Tensor().to(device=device),
                  eps: float = 1e-6) -> Tuple[Tensor, Tensor]:
     """ Return set excluded [lb1, ub1] (-) [lb2, ub2].
         Assuming [lb2, ub2] is in [lb1, ub1].
@@ -704,12 +707,16 @@ def lbub_exclude(lb1: Tensor, ub1: Tensor, lb2: Tensor, ub2: Tensor, accu_lb=Ten
         left_aligned = (lb1[i] - lb2[i]).abs() < eps
         right_aligned = (ub2[i] - ub1[i]).abs() < eps
 
+        if len(lb1.shape) == 3:
+            left_aligned = left_aligned.all()
+            right_aligned = right_aligned.all()
+
         if left_aligned and right_aligned:
             continue
 
         if not left_aligned:
             # left piece
-            assert lb1[i] < lb2[i]
+            assert (lb1[i] <= lb2[i]).all()
             left_lb = lb1.clone()
             left_ub = ub1.clone()
             left_ub[i] = lb2[i]
@@ -718,7 +725,7 @@ def lbub_exclude(lb1: Tensor, ub1: Tensor, lb2: Tensor, ub2: Tensor, accu_lb=Ten
 
         if not right_aligned:
             # right piece
-            assert ub2[i] < ub1[i]
+            assert (ub2[i] <= ub1[i]).all()
             right_lb = lb1.clone()
             right_ub = ub1.clone()
             right_lb[i] = ub2[i]

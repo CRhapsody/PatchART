@@ -60,6 +60,24 @@ class PseudoLenDataset(data.Dataset, ABC):
     pass
 
 
+# class OutAbsIns(PseudoLenDataset):
+#     """store the output abstraction of the network as a dataset"""
+#     def __init__(self, boxes_lb: Tensor, boxes_ub: Tensor):
+#         assert valid_lb_ub(boxes_lb, boxes_ub)
+#         self.boxes_lb = boxes_lb
+#         self.boxes_ub = boxes_ub
+#         # self.boxes_extra = boxes_extra
+#         super().__init__(self.boxes_lb)
+#         return
+
+#     def _getitem(self, idx):
+#         if self.boxes_extra is None:
+#             return self.boxes_lb[idx], self.boxes_ub[idx]
+#         else:
+#             return self.boxes_lb[idx], self.boxes_ub[idx], self.boxes_extra[idx]
+#     pass
+
+
 class AbsIns(PseudoLenDataset):
     """ Storing the split LB/UB boxes/abstractions. """
     def __init__(self, boxes_lb: Tensor, boxes_ub: Tensor, boxes_extra: Tensor = None):

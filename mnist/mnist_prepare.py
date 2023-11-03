@@ -16,7 +16,7 @@ py_file_location = "/home/chizm/PatchART/pgd"
 sys.path.append(os.path.abspath(py_file_location))
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-device = 'cuda:7' if torch.cuda.is_available() else 'cpu'
+device = 'cuda:1' if torch.cuda.is_available() else 'cpu'
 # print(f'Using {device} device')
 
 # cuda prepare
@@ -379,7 +379,7 @@ def stack():
     input_data = torch.randn(320, 3, 128, 128).to('cuda:7')  # 8张128x128大小的彩色图片
 
     
-    model.to('cuda:7')
+    model.to('cuda:1')
 
     
     while(1):
@@ -443,17 +443,17 @@ def pgd_get_data(radius = 0.1, multi_number = 10, data_num = 200):
     labels_mask[multi_number::multi_number+1] = False
     train_attack_labels = train_attack_labels[labels_mask]
 
-    torch.save((origin_data,origin_label),f'./data/MNIST/processed/origin_data_{radius}.pt')
-    torch.save((train_repair_data,train_repair_labels),f'./data/MNIST/processed/train_attack_data_full_{radius}.pt')
-    torch.save((train_attack_data,train_attack_labels),f'./data/MNIST/processed/test_attack_data_full_{radius}.pt')
+    torch.save((origin_data,origin_label),f'./data/MNIST/processed/origin_data_{radius}_{data_num}.pt')
+    torch.save((train_repair_data,train_repair_labels),f'./data/MNIST/processed/train_attack_data_full_{radius}_{data_num}.pt')
+    torch.save((train_attack_data,train_attack_labels),f'./data/MNIST/processed/test_attack_data_full_{radius}_{data_num}.pt')
 
 
 
-def grad_none(radius):
+def grad_none(radius,data_num):
     # load
-    origin_data,origin_label = torch.load(f'./data/MNIST/processed/origin_data_{radius}.pt')
-    train_attack_data,train_attack_labels = torch.load(f'./data/MNIST/processed/train_attack_data_full_{radius}.pt')
-    test_attack_data,test_attack_labels = torch.load(f'./data/MNIST/processed/test_attack_data_full_{radius}.pt')
+    origin_data,origin_label = torch.load(f'./data/MNIST/processed/origin_data_{radius}_{data_num}.pt')
+    train_attack_data,train_attack_labels = torch.load(f'./data/MNIST/processed/train_attack_data_full_{radius}_{data_num}.pt')
+    test_attack_data,test_attack_labels = torch.load(f'./data/MNIST/processed/test_attack_data_full_{radius}_{data_num}.pt')
     # grad none
     origin_data.requires_grad = False
     origin_label.requires_grad = False
@@ -488,13 +488,13 @@ def get_trainset_norm00():
     torch.save((trainset_inputs[:10000],trainset_labels[:10000]),'/home/chizm/PatchART/data/MNIST/processed/train_norm00.pt')
     # 但它太大了，有180M
 
-def adv_training(radius):
+def adv_training(radius,data_num):
     # device = 'cuda:1' if torch.cuda.is_available() else 'cpu'
     print(f'Using {device} device')
     model = NeuralNet().to(device)
     model.load_state_dict(torch.load("/home/chizm/PatchART/model/mnist/mnist.pth"))
-    train_attack_data,train_attack_labels = torch.load(f'./data/MNIST/processed/train_attack_data_full_{radius}.pt')
-    test_attack_data,test_attack_labels = torch.load(f'./data/MNIST/processed/test_attack_data_full_{radius}.pt')
+    train_attack_data,train_attack_labels = torch.load(f'./data/MNIST/processed/train_attack_data_full_{radius}_{data_num}.pt',map_location=device)
+    test_attack_data,test_attack_labels = torch.load(f'./data/MNIST/processed/test_attack_data_full_{radius}_{data_num}.pt',map_location=device)
     # dataset
     train_attack_dataset = torch.utils.data.TensorDataset(train_attack_data,train_attack_labels)
     test_attack_dataset = torch.utils.data.TensorDataset(test_attack_data,test_attack_labels)
@@ -655,13 +655,13 @@ def get_bitmap(in_lb: Tensor, in_ub: Tensor, in_bitmap: Tensor, batch_inputs: Te
 
         return bitmap
 
-def compare_pgd_step_length(radius):
+def compare_pgd_step_length(radius, repair_number):
     '''
     use the length of pgd steps to compare the hardness of attacking two model respectively
     the model1 is origin model, model2 is repaired model
     '''
     # load net
-    device = 'cuda:7' if torch.cuda.is_available() else 'cpu'
+    device = 'cuda:1' if torch.cuda.is_available() else 'cpu'
     print(f'Using {device} device')
     model1 = NeuralNet().to(device)
     model1.load_state_dict(torch.load("/home/chizm/PatchART/model/mnist/mnist.pth"))
@@ -673,19 +673,23 @@ def compare_pgd_step_length(radius):
     net = MnistNet(dom=deeppoly)
     net.to(device)
     patch_lists = []
-    for i in range(200):
+    for i in range(repair_number):
         patch_net = Mnist_patch_model(dom=deeppoly,
             name = f'patch network {i}')
         patch_net.to(device)
         patch_lists.append(patch_net)
     model2 =  Netsum(deeppoly, target_net = net, patch_nets= patch_lists, device=device)
-    model2.load_state_dict(torch.load(f"/home/chizm/PatchART/model/patch_format/Mnist-repair_number200-rapair_radius{radius}-.pt",map_location=device))
+    model2.load_state_dict(torch.load(f"/home/chizm/PatchART/model/reassure_format/Mnist-repair_number{repair_number}-rapair_radius{radius}-.pt",map_location=device))
 
-    model3 = adv_training(radius)
+    model3 = adv_training(radius, data_num=repair_number)
 
 
     # load data
-    datas,labels = torch.load(f'/home/chizm/PatchART/data/MNIST/processed/origin_data_{radius}.pt')
+    datas,labels = torch.load(f'/home/chizm/PatchART/data/MNIST/processed/origin_data_{radius}_{repair_number}.pt',map_location=device)
+    # return
+    
+    # datas = datas[:repair_number]
+    # labels = labels[:repair_number]
 
     # pgd
     pgd1 = PGD(model=model1, eps=radius, alpha=2/255, steps=200, random_start=True)
@@ -732,6 +736,8 @@ def compare_pgd_step_length(radius):
             
     
     print(f"ori_step {ori_step}, repair_step {repair_step}, pgd_step {pgd_step} \\ p1:{p1}, p2:{p2}, p3:{p3}")
+    with open(f'./data/MNIST/processed/compare_pgd_step_length_{radius}_{repair_number}.txt','w') as f:
+        f.write(f"ori_step {ori_step}, repair_step {repair_step}, pgd_step {pgd_step} \\ p1:{p1}, p2:{p2}, p3:{p3}")
 
 
 
@@ -741,9 +747,13 @@ if __name__ == "__main__":
     # test()
     # pgd_attack()
     # stack()
-    # pgd_get_data(radius=0.1,multi_number=10,data_num=200)
-    pgd_get_data(radius=0.3,multi_number=10,data_num=50)
-    # grad_none(0.3)
+    compare_pgd_step_length(radius=0.1,repair_number=1000)
+
+    for data in [500,1000]:
+        for radius in [0.3]:
+            # pgd_get_data(radius=radius,multi_number=10,data_num=data)
+    # pgd_get_data(radius=0.3,multi_number=10,data_num=1000)
+                # grad_none(radius, data_num=data)
     # get_trainset_norm00()
-    # compare_pgd_step_length(radius=0.1)
+            compare_pgd_step_length(radius=radius,repair_number=data)
 

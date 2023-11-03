@@ -9,6 +9,7 @@ from typing import Optional, Tuple, List
 from timeit import default_timer as timer
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
+
 import torch
 from torch import Tensor, nn
 from torch.optim import Adam
@@ -20,6 +21,7 @@ from art.repair_moudle import Netsum
 from mnist.mnist_utils import MnistNet, MnistProp, Mnist_patch_model
 # from mnist.u import MnistNet, MnistFeatureProp
 
+device = torch.device(f'cuda:2')
 MNIST_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'MNIST' / 'processed'
 MNIST_NET_DIR = Path(__file__).resolve().parent.parent / 'model' /'mnist'
 # MNIST_NET_DIR = Path(__file__).resolve().parent.parent / 'pgd' /'model' 
@@ -27,6 +29,28 @@ RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair
 RES_DIR.mkdir(parents=True, exist_ok=True)
 REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'patch_format'
 REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
+
+from torch import cuda
+# def pp_cuda_mem(stamp: str = '') -> str:
+#     device = torch.device('cuda:2' if torch.cuda.is_available() else 'cpu')
+#     def sizeof_fmt(num, suffix='B'):
+#         for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
+#             if abs(num) < 1024.0:
+#                 return "%3.1f%s%s" % (num, unit, suffix)
+#             num /= 1024.0
+#         return "%.1f%s%s" % (num, 'Yi', suffix)
+
+#     if not cuda.is_available():
+#         return ''
+
+#     return '\n'.join([
+#         f'----- {stamp} -----',
+#         f'Allocated: {sizeof_fmt(cuda.memory_allocated(device=device))}',
+#         f'Max Allocated: {sizeof_fmt(cuda.max_memory_allocated(device=device))}',
+#         f'Cached: {sizeof_fmt(cuda.memory_cached(device=device))}',
+#         f'Max Cached: {sizeof_fmt(cuda.max_memory_cached(device=device))}',
+#         f'----- End of {stamp} -----'
+#     ])
 
 
 class MnistArgParser(exp.ExpArgParser):
@@ -44,13 +68,14 @@ class MnistArgParser(exp.ExpArgParser):
                             help='the batchsize of repair datas')
         
         # the combinational form of support and patch net
-        self.add_argument('--reassure_support_and_patch_combine',type=bool, default=False,
-                        help='use REASSURE method to combine support and patch network')
+        # self.add_argument('--reassure_support_and_patch_combine',type=bool, default=False,
+        #                 help='use REASSURE method to combine support and patch network')
 
         self.add_argument('--repair_radius',type=float, default=0.2, 
                           help='the radius of repairing datas or features')
 
         # training
+        self.add_argument('--divided_repair', type=int, default=1, help='batch size for training')
         self.add_argument('--weight_decay', type=float, default=0.0, help='L2 regularization')
         self.add_argument('--k_coeff', type=float, default=1e-3, help='learning rate')
         self.add_argument('--accuracy_loss', type=str, choices=['L1', 'SmoothL1', 'MSE', 'CE'], default='CE',
@@ -111,10 +136,13 @@ class MnistPoints(exp.ConcIns):
         Loads to CPU/GPU automatically.
     """
     @classmethod
-    def load(cls, train: bool, device, trainnumber = None, testnumber = None, radius = 0,
+    def load(cls, train: bool, device, 
+            repairnumber = None,
+            trainnumber = None, testnumber = None, radius = 0,
             is_test_accuracy = False, 
             is_attack_testset_repaired = False, 
-            is_attack_repaired = False):
+            is_attack_repaired = False,
+            is_origin_data = False):
         '''
         trainnumber: 训练集数据量
         testnumber: 测试集数据量
@@ -129,9 +157,9 @@ class MnistPoints(exp.ConcIns):
         if train:
             fname = f'train_norm00.pt'  # note that it is using original data
             # fname = f'{suffix}_norm00.pt'
-            mnist_train_norm00_dir = "/pub/data/chizm/"
-            combine = torch.load(mnist_train_norm00_dir+fname, device)
-            # combine = torch.load(Path(MNIST_DATA_DIR, fname), device)
+            # mnist_train_norm00_dir = "/pub/data/chizm/"
+            # combine = torch.load(mnist_train_norm00_dir+fname, device)
+            combine = torch.load(Path(MNIST_DATA_DIR, fname), device)
             inputs, labels = combine 
             inputs = inputs[:trainnumber]
             labels = labels[:trainnumber]
@@ -142,19 +170,25 @@ class MnistPoints(exp.ConcIns):
                 inputs, labels = combine
                 inputs = inputs[:testnumber]
                 labels = labels[:testnumber]
+            elif is_origin_data:
+                fname = f'origin_data_{radius}_{repairnumber}.pt'
+                combine = torch.load(Path(MNIST_DATA_DIR, fname), device)
+                inputs, labels = combine
+                inputs = inputs[:repairnumber]
+                labels = labels[:repairnumber]
             
             elif is_attack_testset_repaired:
-                fname = f'test_attack_data_full_{radius}.pt'
+                fname = f'test_attack_data_full_{radius}_{repairnumber}.pt'
                 combine = torch.load(Path(MNIST_DATA_DIR, fname), device)
                 inputs, labels = combine
                 inputs = inputs[:testnumber]
                 labels = labels[:testnumber]
             elif is_attack_repaired:
-                fname = f'train_attack_data_full_{radius}.pt'
+                fname = f'train_attack_data_full_{radius}_{repairnumber}.pt'
                 combine = torch.load(Path(MNIST_DATA_DIR, fname), device)
                 inputs, labels = combine
-                inputs = inputs[:testnumber]
-                labels = labels[:testnumber]
+                inputs = inputs[:repairnumber]
+                labels = labels[:repairnumber]
 
             # clean_inputs, clean_labels = clean_combine
             # inputs = torch.cat((inputs[:testnumber], clean_inputs[:testnumber] ), dim=0)
@@ -214,12 +248,13 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     fpath = Path(MNIST_NET_DIR, fname)
 
     # train number是修复多少个点
-    originalset = torch.load(Path(MNIST_DATA_DIR, f'origin_data_{args.repair_radius}.pt'), device)
-    originalset = MnistPoints(inputs=originalset[0], labels=originalset[1])
-    repairset = MnistPoints.load(train=False, device=device, trainnumber=args.repair_number, radius=args.repair_radius,is_attack_repaired=True)
-    trainset = MnistPoints.load(train=True, device=device, trainnumber=args.train_datasize)
-    testset = MnistPoints.load(train=False, device=device, testnumber=args.test_datasize,is_test_accuracy=True)
-    attack_testset = MnistPoints.load(train=False, device=device, testnumber=args.test_datasize, radius=args.repair_radius,is_attack_testset_repaired=True)
+    # originalset = torch.load(Path(MNIST_DATA_DIR, f'origin_data_{args.repair_radius}.pt'), device)
+    # originalset = MnistPoints(inputs=originalset[0], labels=originalset[1])
+    originalset = MnistPoints.load(train=False, device=device, repairnumber=args.repair_number, radius=args.repair_radius,is_origin_data=True)
+    repairset = MnistPoints.load(train=False, device=device, repairnumber=args.repair_number, radius=args.repair_radius,is_attack_repaired=True)
+    trainset = MnistPoints.load(train=True, device=device, repairnumber=args.repair_number, trainnumber=args.train_datasize)
+    testset = MnistPoints.load(train=False, device=device, repairnumber=args.repair_number, testnumber=args.test_datasize,is_test_accuracy=True)
+    attack_testset = MnistPoints.load(train=False, device=device, repairnumber=args.repair_number, testnumber=args.test_datasize, radius=args.repair_radius,is_attack_testset_repaired=True)
 
     net = MnistNet(dom=args.dom)
     net.to(device)
@@ -238,13 +273,21 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
             # distingush the photo and the property
             if len(in_lb.shape) == 2:
                 batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1])
-            elif len(in_lb.shape) == 4:
-                batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
-            is_in = (batch_inputs_clone >= in_lb) & (batch_inputs_clone <= in_ub)
-            if len(in_lb.shape) == 2:
+                is_in = (batch_inputs_clone >= in_lb) & (batch_inputs_clone <= in_ub)
                 is_in = is_in.all(dim=-1) # every input is in the region of property, batch * n_prop
             elif len(in_lb.shape) == 4:
-                is_in = is_in.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
+                if in_lb.shape[0] > 500:
+                    is_in_list = []
+                    for i in range(batch_inputs_clone.shape[0]):
+                        batch_inputs_compare_datai = batch_inputs_clone[i].clone().expand(in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
+                        is_in_datai = (batch_inputs_compare_datai >= in_lb) & (batch_inputs_compare_datai <= in_ub)
+                        is_in_datai = is_in_datai.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
+                        is_in_list.append(is_in_datai)
+                    is_in = torch.stack(is_in_list, dim=0)
+                else:
+                    batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
+                    is_in = (batch_inputs_clone >= in_lb) & (batch_inputs_clone <= in_ub)
+                    is_in = is_in.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
             # convert to bitmap
             bitmap = torch.zeros((batch_inputs.shape[0], in_bitmap.shape[1]), device = device)
             # is in is a batch * in_bitmap.shape[0] tensor, in_bitmap.shape[1] is the number of properties
@@ -329,12 +372,12 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     start = timer()
 
     if args.no_abs or args.no_refine:
-        curr_abs_lb, curr_abs_ub, curr_abs_bitmap = in_lb, in_ub, in_bitmap
+        repair_abs_lb, repair_abs_ub, repair_abs_bitmap = in_lb, in_ub, in_bitmap
     else:
         # refine it at the very beginning to save some steps in later epochs
         # and use the refined bounds as the initial bounds for support network training
         
-        curr_abs_lb, curr_abs_ub, curr_abs_bitmap = v.split(in_lb, in_ub, in_bitmap, net, args.refine_top_k,
+        repair_abs_lb, repair_abs_ub, repair_abs_bitmap = v.split(in_lb, in_ub, in_bitmap, net, args.refine_top_k,
                                                                 tiny_width=args.tiny_width,
                                                                 stop_on_k_all=args.start_abs_cnt, for_patch=False) #,for_support=False
 
@@ -346,149 +389,250 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     scheduler = args.scheduler_fn(opti)  # could be None
 
     # TODO get the network output
-    def get_orinet_out(net, batch_abs_lb: Tensor, batch_abs_ub: Tensor, batch_abs_bitmap: Tensor) -> Tensor:
-        """ Return the safety distances over abstract domain. """
-        batch_abs_ins = args.dom.Ele.by_intvl(batch_abs_lb, batch_abs_ub)
-        batch_abs_outs = net(batch_abs_ins)
-        return batch_abs_outs
+    if args.no_refine:
+        def get_orinet_out(net, batch_abs_lb: Tensor, batch_abs_ub: Tensor) -> Tensor:
+            """ Return the safety distances over abstract domain. """
+            batch_abs_ins = args.dom.Ele.by_intvl(batch_abs_lb, batch_abs_ub)
+            batch_abs_outs = net(batch_abs_ins)
+            # lb, ub = batch_abs_outs.lbub()
+            return batch_abs_outs
+        def get_patch_and_ori_out(patch_net, oriout, batch_abs_lb: Tensor, batch_abs_ub: Tensor, batch_abs_bitmap: Tensor) -> Tensor:
+            """ Return the safety distances over abstract domain. """
+            batch_abs_ins = args.dom.Ele.by_intvl(batch_abs_lb, batch_abs_ub)
+            batch_abs_outs = patch_net(batch_abs_ins, batch_abs_bitmap, oriout)
+            # lb, ub = batch_abs_outs.lbub()
+            return batch_abs_outs
+        
+        
 
-    accuracies = []  # epoch 0: ratio
-    repair_acc = []
-    train_acc = []
-    attack_test_acc = []
-    certified = False
-    epoch = 0
+
+
 
     # set the
     # feature_traindata.requires_grad = True
     # feature_trainset = MnistPoints(feature_traindata, trainset.labels)
     
 
-    while True:
-        # first, evaluate current model
-        logging.info(f'[{utils.time_since(start)}] After epoch {epoch}:')
-        if not args.no_pts:
-            logging.info(f'Loaded {repairset.real_len()} points for repair.')
-            logging.info(f'Loaded {trainset.real_len()} points for training.')
-
-        if not args.no_abs:
-            logging.info(f'Loaded {len(curr_abs_lb)} abstractions for training.')
-            with torch.no_grad():
-                full_dists = run_abs(repair_net,curr_abs_lb, curr_abs_ub, curr_abs_bitmap)
-            logging.info(f'min loss {full_dists.min()}, max loss {full_dists.max()}.')
-            if full_dists.max() <= 0:
-                certified = True
-                logging.info(f'All {len(curr_abs_lb)} abstractions certified.')
-            else:
-                _, worst_idx = full_dists.max(dim=0)
-                # logging.info(f'Max loss at LB: {curr_abs_lb[worst_idx]}, UB: {curr_abs_ub[worst_idx]}, rule: {curr_abs_bitmap[worst_idx]}.')
-
-        # test the repaired model which combines the feature extractor, classifier and the patch network
-        # accuracies.append(eval_test(finally_net, testset))
+    def get_curr_setmap(dataset, bitmap, part):
+        # recostruct the dataset and bitmap
+        if part != args.divided_repair - 1:
+            curr_map = bitmap[int(part*bitmap.shape[0]/args.divided_repair):int((part+1)*bitmap.shape[0]/args.divided_repair)]
+            curr_set = MnistPoints(dataset.inputs[int(part*len(dataset.inputs)/args.divided_repair):int((part+1)*len(dataset.inputs)/args.divided_repair)], dataset.labels[int(part*len(dataset.labels)/args.divided_repair):int((part+1)*len(dataset.labels)/args.divided_repair)])
+        else:
+            curr_map = bitmap[int(part*bitmap.shape[0]/args.divided_repair):]
+            curr_set = MnistPoints(dataset.inputs[int(part*len(dataset.inputs)/args.divided_repair):], dataset.labels[int(part*len(dataset.inputs)/args.divided_repair):])
+        return curr_set, curr_map
         
-        accuracies.append(eval_test(repair_net, testset, bitmap = test_bitmap))
         
-        repair_acc.append(eval_test(repair_net, repairset, bitmap = repairset_bitmap))
+        
 
-        train_acc.append(eval_test(repair_net, trainset, bitmap = trainset_bitmap))
-
-        attack_test_acc.append(eval_test(repair_net, attack_testset, bitmap = attack_testset_bitmap))
-
-        logging.info(f'Test set accuracy {accuracies[-1]}.')
-        logging.info(f'repair set accuracy {repair_acc[-1]}.')
-        logging.info(f'train set accuracy {train_acc[-1]}.')
-        logging.info(f'attacked test set accuracy {attack_test_acc[-1]}.')
-
-        # check termination
-        if certified and epoch >= args.min_epochs:
-            # all safe and sufficiently trained
-            break
-
-        if epoch >= args.max_epochs:
-            break
-
-        epoch += 1
+    for o in range(args.divided_repair):
+        accuracies = []  # epoch 0: ratio
+        repair_acc = []
+        train_acc = []
+        attack_test_acc = []
         certified = False
-        logging.info(f'\n[{utils.time_since(start)}] Starting epoch {epoch}:')
+        epoch = 0
 
-        absset = exp.AbsIns(curr_abs_lb, curr_abs_ub, curr_abs_bitmap)
+        divide_repair_number = int(n_repair/args.divided_repair)
 
-        # dataset may have expanded, need to update claimed length to date
-        if not args.no_pts:
-            trainset.reset_claimed_len()
-        if not args.no_abs:
-            absset.reset_claimed_len()
-        if (not args.no_pts) and (not args.no_abs):
-            ''' Might simplify this to just using the amount of abstractions, is it unnecessarily complicated? '''
-            # need to enumerate both
-            max_claimed_len = max(trainset.claimed_len, absset.claimed_len)
-            trainset.claimed_len = max_claimed_len
-            absset.claimed_len = max_claimed_len
-
-        if not args.no_pts:
-            conc_loader = data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
-            nbatches = len(conc_loader)
-            conc_loader = iter(conc_loader)
-        if not args.no_abs:
-            abs_loader = data.DataLoader(absset, batch_size=args.repair_batch_size, shuffle=True)
-            nbatches = len(abs_loader)  # doesn't matter rewriting len(conc_loader), they are the same
-            abs_loader = iter(abs_loader)
-
-        total_loss = 0.
-        # with torch.enable_grad():
-        for i in range(nbatches):
-            opti.zero_grad()
-            batch_loss = 0.
-            if not args.no_pts:
-                batch_inputs, batch_labels = next(conc_loader)
-                batch_conc_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, batch_inputs)
-                batch_outputs = repair_net(batch_inputs, batch_conc_bitmap)
-                # batch_outputs.squeeze_(1)
-                batch_loss += args.accuracy_loss(batch_outputs, batch_labels)
-            if not args.no_abs:
-                batch_abs_lb, batch_abs_ub, batch_abs_bitmap = next(abs_loader)
-                batch_dists = run_abs(repair_net,batch_abs_lb, batch_abs_ub, batch_abs_bitmap)
-                
-                #这里又对batch的loss求了个均值，作为最后的safe_loss(下面的没看懂，好像类似于l1)
-                safe_loss = batch_dists.mean()  # L1, need to upgrade to batch_worsts to unlock loss other than L1
-                total_loss += safe_loss.item()
-                batch_loss += safe_loss
-            logging.debug(f'Epoch {epoch}: {i / nbatches * 100 :.2f}%. Batch loss {batch_loss.item()}')
-
-            #TODO 这里怎么办
-            batch_loss.backward()
-            opti.step()
-
-
+        # get the abstract output from the original network
+        if o != args.divided_repair - 1:
+            curr_abs_lb, curr_abs_ub, curr_abs_bitmap = repair_abs_lb[o*divide_repair_number:(o+1)*divide_repair_number], repair_abs_ub[o*divide_repair_number:(o+1)*divide_repair_number], repair_abs_bitmap[o*divide_repair_number:(o+1)*divide_repair_number]
+        else:
+            curr_abs_lb, curr_abs_ub, curr_abs_bitmap = repair_abs_lb[o*divide_repair_number:], repair_abs_ub[o*divide_repair_number:], repair_abs_bitmap[o*divide_repair_number:]
+        with torch.no_grad():
+            orinet_out = get_orinet_out(net, curr_abs_lb, curr_abs_ub)
         
-        total_loss /= nbatches
+         # reset the dataset and bitmap
+        curr_repairset, curr_repairset_bitmap = get_curr_setmap(repairset, repairset_bitmap, o)
+        curr_attack_testset, curr_attack_testset_bitmap = get_curr_setmap(attack_testset, attack_testset_bitmap, o)
 
-        # 修改学习率
-        if scheduler is not None:
-            scheduler.step(total_loss)
-        logging.info(f'[{utils.time_since(start)}] At epoch {epoch}: avg accuracy training loss {total_loss}.')
+        # with torch.no_grad():
+        #     orinet_out = get_orinet_out(net, curr_abs_lb[o*len()], curr_abs_ub)
 
-        # Refine abstractions, note that restart from scratch may output much fewer abstractions thus imprecise.
-        # TODO 这里继承在net上refine的输入，
-        if (not args.no_refine) and len(curr_abs_lb) < args.max_abs_cnt:
-            curr_abs_lb, curr_abs_ub, curr_abs_bitmap = v.split(curr_abs_lb, curr_abs_ub, curr_abs_bitmap, repair_net,
-                                                                args.refine_top_k,
-                                                                # tiny_width=args.tiny_width,
-                                                                stop_on_k_new=args.refine_top_k,for_feature=True)
-        pass
-    train_time = timer() - start
-    torch.save(repair_net.state_dict(), str(REPAIR_MODEL_DIR / f'Mnist-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-.pt'))
-    logging.info(f'Accuracy at every epoch: {accuracies}')
-    logging.info(f'After {epoch} epochs / {utils.pp_time(train_time)}, ' +
-                 f'eventually the trained network got certified? {certified}, ' +
-                 f'with {accuracies[-1]:.4f} accuracy on test set,' +
-                 f'with {repair_acc[-1]:.4f} accuracy on repair set,' +
-                 f'with {train_acc[-1]:.4f} accuracy on train set,' +
-                 f'with {attack_test_acc[-1]:.4f} accuracy on attack test set.')
-    # torch.save(repair_net.state_dict(), str(REPAIR_MODEL_DIR / '2_9.pt'))
-    # net.save_nnet(f'./ART_{nid.x.numpy().tolist()}_{nid.y.numpy().tolist()}_repair2p_noclamp_epoch_{epoch}.nnet',
-    #             mins = bound_mins, maxs = bound_maxs) 
+        logging.info(f'[{utils.time_since(start)}] Start repair part {o}: {o*divide_repair_number}')
+        while True:
+            # first, evaluate current model
+            
+            logging.info(f'[{utils.time_since(start)}] After epoch {epoch}:')
+            if not args.no_pts:
+                logging.info(f'Loaded {curr_repairset.real_len()} points for repair.')
+                logging.info(f'Loaded {curr_attack_testset.real_len()} points for attack test.')
+                logging.info(f'Loaded {trainset.real_len()} points for training.')
+
+            if not args.no_abs:
+                logging.info(f'Loaded {len(curr_abs_lb)} abstractions for training.')
+                with torch.no_grad():
+                    full_dists = run_abs(repair_net,curr_abs_lb, curr_abs_ub, curr_abs_bitmap)
+                logging.info(f'min loss {full_dists.min()}, max loss {full_dists.max()}.')
+                if full_dists.max() <= 0:
+                    certified = True
+                    logging.info(f'All {len(curr_abs_lb)} abstractions certified.')
+                else:
+                    _, worst_idx = full_dists.max(dim=0)
+                    # logging.info(f'Max loss at LB: {curr_abs_lb[worst_idx]}, UB: {curr_abs_ub[worst_idx]}, rule: {curr_abs_bitmap[worst_idx]}.')
+
+            # test the repaired model which combines the feature extractor, classifier and the patch network
+            # accuracies.append(eval_test(finally_net, testset))
+
+           
+
+            
+            accuracies.append(eval_test(repair_net, testset, bitmap = test_bitmap))
+            
+            repair_acc.append(eval_test(repair_net, curr_repairset, bitmap = curr_repairset_bitmap))
+
+            train_acc.append(eval_test(repair_net, trainset, bitmap = trainset_bitmap))
+
+            attack_test_acc.append(eval_test(repair_net, curr_attack_testset, bitmap = curr_attack_testset_bitmap))
+
+            logging.info(f'Test set accuracy {accuracies[-1]}.')
+            logging.info(f'repair set accuracy {repair_acc[-1]}.')
+            logging.info(f'train set accuracy {train_acc[-1]}.')
+            logging.info(f'attacked test set accuracy {attack_test_acc[-1]}.')
+
+            # check termination
+            # if certified and epoch >= args.min_epochs:
+            if len(repair_acc) >= 3:
+                if (repair_acc[-1] == 1.0 and attack_test_acc[-1] == 1.0) or certified or (repair_acc[-1] == repair_acc[-2] and attack_test_acc[-1] == attack_test_acc[-2] and repair_acc[-1] == repair_acc[-3] and attack_test_acc[-1] == attack_test_acc[-3]):
+                # all safe and sufficiently trained
+                    break
+                elif (repair_acc[-1] == 1.0 and attack_test_acc[-1] == 1.0) or certified:
+                    break
+
+            if epoch >= args.max_epochs:
+                break
+
+            epoch += 1
+            certified = False
+            logging.info(f'\n[{utils.time_since(start)}] Starting epoch {epoch}:')
+
+            absset = exp.AbsIns(curr_abs_lb, curr_abs_ub, curr_abs_bitmap)
+
+            # dataset may have expanded, need to update claimed length to date
+            if not args.no_pts:
+                trainset.reset_claimed_len()
+            if not args.no_abs:
+                absset.reset_claimed_len()
+            # if (not args.no_pts) and (not args.no_abs):
+            #     ''' Might simplify this to just using the amount of abstractions, is it unnecessarily complicated? '''
+            #     # need to enumerate both
+            #     max_claimed_len = max(trainset.claimed_len, absset.claimed_len)
+            #     trainset.claimed_len = max_claimed_len
+            #     absset.claimed_len = max_claimed_len
+
+            # if not args.no_pts:
+            #     conc_loader = data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
+            #     nbatches = len(conc_loader)
+            #     conc_loader = iter(conc_loader)
+            # if not args.no_abs:
+                # if args.no_refine:
+                # abs_loader = data.DataLoader(absset, batch_size=args.repair_batch_size, shuffle=False)
+            # else:
+            abs_loader = data.DataLoader(absset, batch_size=args.repair_batch_size, shuffle=False)
+            # nbatches = len(abs_loader)  # doesn't matter rewriting len(conc_loader), they are the same           
+            abs_shuffled_order = list(abs_loader.sampler)
+                
+            # abs_shuffled_indices = [index for batch in abs_shuffled_order for index in batch]
+
+
+
+            total_loss = 0.
+            # with torch.enable_grad():
+            full_epoch = 200
+            for i in range(full_epoch):
+                for batch_abs_lb, batch_abs_ub, batch_abs_bitmap in abs_loader:
+
+                    opti.zero_grad()
+                    # orinet_out.requires_grad = False
+                    orinet_out._lcnst._grad_fn = None
+                    orinet_out._lcnst._grad = None
+                    orinet_out._ucnst._grad_fn = None
+                    orinet_out._ucnst._grad = None
+                    orinet_out._lcoef._grad_fn = None
+                    orinet_out._lcoef._grad = None
+                    orinet_out._ucoef._grad_fn = None
+                    orinet_out._ucoef._grad = None
+                    orinet_out._grad_fn = None
+                    orinet_out._grad = None
+                    batch_loss = 0.
+                # if not args.no_pts:
+                #     batch_inputs, batch_labels = next(conc_loader)
+                #     batch_conc_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, batch_inputs)
+                #     batch_outputs = repair_net(batch_inputs, batch_conc_bitmap)
+                #     # batch_outputs.squeeze_(1)
+                #     batch_loss += args.accuracy_loss(batch_outputs, batch_labels)
+                # if not args.no_abs:
+                    
+                    # if args.no_refine:
+                    # import time
+                    # static the Gpu occupy
+                    # print(pp_cuda_mem(stamp='before1'))
+                    # time_start1=time.time()                    
+                    batchout = get_patch_and_ori_out(repair_net, orinet_out, batch_abs_lb, batch_abs_ub, batch_abs_bitmap)                
+                    batch_dists = all_props.safe_dist(batchout, batch_abs_bitmap)
+                    # time_end1=time.time()
+                    # print('time cost1',time_end1-time_start1,'s')
+                    # print(pp_cuda_mem(stamp='after1'))
+                    # else:
+                    # time_start2=time.time()
+                    # batch_dists2 = run_abs(repair_net,batch_abs_lb, batch_abs_ub, batch_abs_bitmap)
+                    # time_end2=time.time()
+                    # print('time cost2',time_end2-time_start2,'s')
+                    # print(pp_cuda_mem(stamp='after2'))
+
+                    #这里又对batch的loss求了个均值，作为最后的safe_loss(下面的没看懂，好像类似于l1)
+                    safe_loss = batch_dists.mean()  # L1, need to upgrade to batch_worsts to unlock loss other than L1
+                    total_loss += safe_loss.item()
+                    batch_loss += safe_loss
+                    
+                    logging.debug(f'Epoch {epoch}: {i :.2f}%. Batch loss {batch_loss.item()}')
+
+                #TODO 这里怎么办
+                    batch_loss.backward()
+                    opti.step()
+
+
+            
+            # total_loss /= nbatches
+            total_loss /= full_epoch
+
+            # 修改学习率
+            if scheduler is not None:
+                scheduler.step(total_loss)
+            logging.info(f'[{utils.time_since(start)}] At epoch {epoch}: avg accuracy training loss {total_loss}.')
+
+            # Refine abstractions, note that restart from scratch may output much fewer abstractions thus imprecise.
+            # TODO 这里继承在net上refine的输入，
+            if (not args.no_refine) and len(curr_abs_lb) < args.max_abs_cnt:
+                curr_abs_lb, curr_abs_ub, curr_abs_bitmap = v.split(curr_abs_lb, curr_abs_ub, curr_abs_bitmap, repair_net,
+                                                                    args.refine_top_k,
+                                                                    # tiny_width=args.tiny_width,
+                                                                    stop_on_k_new=args.refine_top_k,for_feature=True)
+            pass
+        train_time = timer() - start
+        torch.save(repair_net.state_dict(), str(REPAIR_MODEL_DIR / f'Mnist-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-.pt'))
+        logging.info(f'Accuracy at every epoch: {accuracies}')
+        logging.info(f'After {epoch} epochs / {utils.pp_time(train_time)}, ' +
+                    f'eventually the trained network got certified? {certified}, ' +
+                    f'with {accuracies[-1]:.4f} accuracy on test set,' +
+                    f'with {repair_acc[-1]:.4f} accuracy on repair set,' +
+                    f'with {train_acc[-1]:.4f} accuracy on train set,' +
+                    f'with {attack_test_acc[-1]:.4f} accuracy on attack test set.')
+        # torch.save(repair_net.state_dict(), str(REPAIR_MODEL_DIR / '2_9.pt'))
+        # net.save_nnet(f'./ART_{nid.x.numpy().tolist()}_{nid.y.numpy().tolist()}_repair2p_noclamp_epoch_{epoch}.nnet',
+        #             mins = bound_mins, maxs = bound_maxs) 
     
+    # final test
+    logging.info('final test')
+    logging.info(f'--Test set accuracy {eval_test(repair_net, testset, bitmap = test_bitmap)}')
+    logging.info(f'--Test repair set accuracy {eval_test(repair_net, repairset, bitmap = repairset_bitmap)}')
+    logging.info(f'--Test train set accuracy {eval_test(repair_net, trainset, bitmap = trainset_bitmap)}')
+    logging.info(f'--Test attack test set accuracy {eval_test(repair_net, attack_testset, bitmap = attack_testset_bitmap)}')
+    logging.info(f'traing time {timer() - start}s')
+    
+        
     return epoch, train_time, certified, accuracies[-1]
 
 def _run_repair(args: Namespace):
@@ -514,8 +658,7 @@ def test_goal_repair(parser: MnistArgParser):
         # 'start_abs_cnt': 5000,
         # 'max_abs_cnt': 
         'batch_size': 50,  # to make it faster
-        'min_epochs': 15,
-        'max_epochs': 25
+
     }
     parser.set_defaults(**defaults)
     args = parser.parse_args()
@@ -532,8 +675,10 @@ def test(lr:float = 0.005, repair_radius:float = 0.1, repair_number = 200, refin
          train_datasize = 200, test_datasize = 2000, 
          accuracy_loss:str = 'CE'):
     test_defaults = {
+        'no_pts': False,
         'no_refine': True,
         'debug': False,
+        'divided_repair': int(repair_number/100),
         'exp_fn': 'test_goal_repair',
         'refine_top_k': refine_top_k,
         'repair_batch_size': repair_number,
@@ -542,11 +687,13 @@ def test(lr:float = 0.005, repair_radius:float = 0.1, repair_number = 200, refin
         'no_repair': False,
         'repair_number': repair_number,
         'train_datasize':train_datasize,
-        'test_datasize': int(test_datasize * train_datasize/200),
+        'test_datasize': int(test_datasize * repair_number/200),
         'repair_radius': repair_radius,
         'lr': lr,
         'accuracy_loss': accuracy_loss,
         'tiny_width': repair_radius*0.0001,
+        'min_epochs': 15,
+        'max_epochs': 30,
 
         
     }
@@ -563,7 +710,7 @@ def test(lr:float = 0.005, repair_radius:float = 0.1, repair_number = 200, refin
 
 
 if __name__ == '__main__':
-    device = torch.device(f'cuda:7')
+
     # for lr in [0.005, 0.01]:
     #     for weight_decay in [0.0001, 0.00005]:
     #         # for k_coeff in [0.35, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75]:
@@ -574,8 +721,14 @@ if __name__ == '__main__':
     #                     #     continue
     #                     # for repair_radius in [0.1, 0.05, 0.03, 0.01]:
     #                     test(lr=lr, weight_decay=weight_decay, k_coeff=k_coeff, repair_radius=0.1, support_loss=support_loss, accuracy_loss=accuracy_loss)
-    test(lr=0.01, repair_radius=0.3, repair_number = 50, refine_top_k= 50, 
-         train_datasize = 10000, test_datasize = 2000, 
+    # for radius in [0.1, 0.3]:
+    
+
+    for radius in [0.3]:
+        # for repair_number,test_number in zip([500,1000],[5000,10000]):
+        for repair_number,test_number in zip([500,1000],[5000,10000]):
+            test(lr=0.01, repair_radius=radius, repair_number = repair_number, refine_top_k= 50, 
+         train_datasize = 10000, test_datasize = test_number, 
          accuracy_loss='CE')
 
     # # get the features of the dataset using mnist_net.split
