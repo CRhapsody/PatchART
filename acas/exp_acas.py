@@ -32,6 +32,8 @@ class AcasArgParser(exp.ExpArgParser):
 
     def __init__(self, log_path: Optional[str], *args, **kwargs):
         super().__init__(log_path, *args, **kwargs)
+        self.add_argument('--net', type=str, choices=[f'Acas_{i}_{j}'for j in range(1,10) for i in range(1,6)], default='1_1',
+                          help='ACAS Xu network ID, e.g., 1_1')
 
         # use repair or nor
         self.add_argument('--no_repair', type=bool, default=True, 
@@ -578,6 +580,7 @@ def _run_repair(nids: List[acas.AcasNetID], args: Namespace):
     res = []
     for nid in nids:
         logging.info(f'For {nid}')
+        args.net = f'{nid.x.numpy().tolist()}_{nid.y.numpy().tolist()}'
         outs = repair_acas(nid, args)
         res.append(outs)
 

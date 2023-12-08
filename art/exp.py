@@ -185,7 +185,10 @@ class ExpArgParser(argparse.ArgumentParser):
             logger.setLevel(logging.INFO)
 
         timestamp = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
-        args.stamp = f'lr{args.lr}-accuracy_loss{args.accuracy_loss}-{timestamp}'
+        if 'Acas' in args.net:
+            args.stamp = f'{args.net}-{timestamp}'
+        else:
+            args.stamp = f'{args.net}-{args.repair_location}-{args.repair_number}-{args.patch_size}-{timestamp}'
         logger.handlers = []  # reset, otherwise it may duplicate many times when calling setup_logger() multiple times
         if self.log_dir is not None:
             log_path = Path(self.log_dir, f'{args.stamp}.log')

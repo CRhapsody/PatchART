@@ -8,7 +8,7 @@ from torch import Tensor, nn
 from DiffAbs.DiffAbs import AbsDom, AbsEle
 
 from acas.acas_utils import AcasNet
-from mnist.mnist_utils import MnistNet
+from mnist.mnist_utils import MnistNet_FNN_small, MnistNet_FNN_big, MnistNet_CNN_small
 
 class SupportNet(nn.Module):
     '''
@@ -171,7 +171,8 @@ class Netsum(nn.Module):
         if out == None:
             out = self.target_net(x)
         else:
-            assert isinstance(out, AbsEle), 'out should be Tensor or AbsEle'
+            assert isinstance(out, AbsEle), 'out should be AbsEle'
+            
         # classes_score, violate_score = self.support_net(x) # batchsize * repair_num * []
         # n_prop = in_bitmap.shape[-1]
         for i,patch in enumerate(self.patch_nets):
@@ -232,7 +233,7 @@ class NetFeatureSum(nn.Module):
     This class is to add the patch net to target net:
     
     '''
-    def __init__(self, dom: AbsDom, target_net: MnistNet, patch_nets: List[nn.Module], device = None,):
+    def __init__(self, dom: AbsDom, target_net, patch_nets: List[nn.Module], device = None,):
         '''
         :params 
         '''

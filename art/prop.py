@@ -149,7 +149,7 @@ class AndProp(AbsProp):
         orig_label = torch.eye(nprops).byte()  # showing each input region which properties they should obey
         lbs, ubs = props[0].lbub(device=device) # both are 1 * input_dim
         labels = orig_label[[0]].expand(len(lbs), nprops).to(device) # for 1st prob, labels is 1 * nprob matrix [[1,0,0,...]] 
-
+        indentical_name = self.props[0].tex()
         for i, prop in enumerate(props):
             if i == 0:
                 continue
@@ -157,8 +157,13 @@ class AndProp(AbsProp):
             new_lbs, new_ubs = prop.lbub(device=device)
             assert valid_lb_ub(new_lbs, new_ubs)
             new_labels = orig_label[[i]].expand(len(new_lbs), nprops).to(device)
-
-            lbs, ubs, labels = self._join(lbs, ubs, labels, new_lbs, new_ubs, new_labels)
+            if 'feature' not in indentical_name:
+                lbs, ubs, labels = self._join(lbs, ubs, labels, new_lbs, new_ubs, new_labels)
+            else:
+                # cat the new lbs, ubs, labels to the end of the old ones
+                lbs = torch.cat((lbs, new_lbs), dim=0)
+                ubs = torch.cat((ubs, new_ubs), dim=0)
+                labels = torch.cat((labels, new_labels), dim=0)
         return lbs, ubs, labels
 
     def _join(self, x_lbs: Tensor, x_ubs: Tensor, x_labels: Tensor,
@@ -679,8 +684,27 @@ def lbub_intersect(lb1: Tensor, ub1: Tensor, lb2: Tensor, ub2: Tensor) -> Tuple[
     """
     assert lb1.size() == lb2.size() and ub1.size() == ub2.size()
     if len(lb1.shape) == 3:
-        res_lb = torch.max(lb1, lb2)
-        res_ub = torch.min(ub1, ub2)
+        # res_lb = torch.max(lb1, lb2)
+        # res_ub = torch.min(ub1, ub2)
+
+        if (lb1 >= ub2).all() or (lb2 >= ub1).all(): # no intersection
+            raise ValueError('Intersection failed.')
+        elif (lb1 >= lb2).all() and (ub1 <= ub2).all(): # 2 include 1
+            res_lb = lb1
+            res_ub = ub1
+        elif (lb2 >= lb1).all() and (ub2 <= ub1).all(): # 1 include 2
+            res_lb = lb2
+            res_ub = ub2
+        # 1 intersect 2 and 1 is right
+        elif (lb1 >= lb2).all() and (lb1 <= ub2).all() and (ub1 >= ub2).all():
+            res_lb = lb1
+            res_ub = ub2
+        elif (lb2 >= lb1).all() and (lb2 <= ub1).all() and (ub2 >= ub1).all():
+            res_lb = lb2
+            res_ub = ub1
+        else:
+            raise ValueError('Intersection failed.')
+        
     else:
         res_lb, _ = torch.max(torch.stack((lb1, lb2), dim=-1), dim=-1)
         res_ub, _ = torch.min(torch.stack((ub1, ub2), dim=-1), dim=-1)
@@ -716,7 +740,10 @@ def lbub_exclude(lb1: Tensor, ub1: Tensor, lb2: Tensor, ub2: Tensor, accu_lb=Ten
 
         if not left_aligned:
             # left piece
-            assert (lb1[i] <= lb2[i]).all()
+            if len(lb1[i].shape) == 3:
+                assert (lb1[i] <= lb2[i]).all()
+            else:
+                assert lb1[i] < lb2[i]
             left_lb = lb1.clone()
             left_ub = ub1.clone()
             left_ub[i] = lb2[i]
@@ -725,7 +752,10 @@ def lbub_exclude(lb1: Tensor, ub1: Tensor, lb2: Tensor, ub2: Tensor, accu_lb=Ten
 
         if not right_aligned:
             # right piece
-            assert (ub2[i] <= ub1[i]).all()
+            if len(ub2[i].shape) == 3:
+                assert (ub2[i] <= ub1[i]).all()
+            else:
+                assert ub2[i] < ub1[i]
             right_lb = lb1.clone()
             right_ub = ub1.clone()
             right_lb[i] = ub2[i]
