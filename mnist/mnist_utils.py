@@ -57,10 +57,10 @@ class PhotoProp(OneProp):
     def set_input_bound(self, new_low: Tensor = None, new_high: Tensor = None):
         if new_low is not None:
             new_low = new_low.to(device)
-            self.lower_bounds = torch.max(self.lower_bounds, new_low).to(device)
+            self.lower_bounds = new_low
         if new_high is not None:
             new_high = new_high.to(device)
-            self.upper_bounds = torch.min(self.upper_bounds, new_high)
+            self.upper_bounds = new_high
         assert(torch.all(self.lower_bounds <= self.upper_bounds))
 
         self.reset_input_bound()
@@ -126,7 +126,7 @@ class MnistProp(PhotoProp):
     def attack_input(cls, dom: AbsDom, input_shape: int, data: Tensor, label: int, radius: float,
                      number: int = 1):
         '''
-        The mnist feature property is Data-based property. One data point correspond to one l_0 ball.
+        The mnist property is Data-based property. One data point correspond to one l_0 ball.
         :params input_dimension: the input/feature dimension
         :params label: the output which should be retained
         :params radius: the radius of the attack input/feature
@@ -137,6 +137,21 @@ class MnistProp(PhotoProp):
         p.set_input_bound(new_low=data - radius)
         p.set_input_bound(new_high=data + radius)     
 
+        return p
+    
+    @classmethod
+    def feature_input(cls, dom: AbsDom, input_shape: int, lb: Tensor, ub: Tensor, label: int,
+                     number: int = 1):
+        '''
+        :params input_shape: the input/feature dimension
+        :params label: the output which should be retained
+        :params lb: the lower bound of the feature
+        :params ub: the upper bound of the feature
+        '''
+        p = MnistProp(name=f'feature_input{number}', input_shape=input_shape, dom=dom, safe_fn='cols_is_max', viol_fn='col_not_max',
+                    fn_args=[label]) 
+        p.set_input_bound(new_low=lb, new_high=ub)
+        # p.set_input_bound(new_high=ub)
         return p
     
     @classmethod
@@ -159,6 +174,26 @@ class MnistProp(PhotoProp):
             a_list.append(a)
         
         return a_list
+    
+    @classmethod
+    def all_feature_props(cls, dom: AbsDom, bounds: List[Tuple[Tensor, Tensor]], 
+                  labels: Tensor,
+                  feature_shape: int, 
+                  tasktype:str = 'feature_input'):
+        '''
+        :param tasktype: the type of task, e.g. 'attack_input' in mnist repair
+        :param dom: the domain of input, e.g. Deeppoly
+        :param bounds: the list of lb and ub, e.g. [(lb1, ub1), (lb2, ub2), ...]
+        :param input_shape: the dimension of input/feature
+        '''
+        a_list = []
+        for (lb,ub),label in zip(bounds,labels):
+            a = getattr(cls, tasktype)(dom, feature_shape, lb, ub, label.item())
+            a_list.append(a)
+        return a_list
+
+        
+        
 
 class MnistFeatureProp(FeatureProp):
     
@@ -240,16 +275,30 @@ class Mnist_patch_model(nn.Module):
         #     nn.ReLU(),
         #     nn.MaxPool2d(kernel_size=2)
         # )
-        self.extractor = nn.Sequential(
-            dom.Linear(in_features=1*28*28,out_features=256),
-            dom.ReLU(),
-            dom.Linear(in_features=256,out_features=64),
-            dom.ReLU(),
-        )
-        self.classifier = nn.Sequential(
-            # dom.Linear(in_features=16*14*14,out_features=10)
-            dom.Linear(in_features=64,out_features=10)
-        )
+        # multiply the input_shape
+        if 'small' in name:
+            self.extractor = nn.Sequential(
+                dom.Linear(in_features=1*28*28,out_features=64),
+                dom.ReLU(),
+                dom.Linear(in_features=64,out_features=16),
+                dom.ReLU(),
+            )
+            self.classifier = nn.Sequential(
+                # dom.Linear(in_features=16*14*14,out_features=10)
+                dom.Linear(in_features=16,out_features=10)
+            )
+        
+        else:
+            self.extractor = nn.Sequential(
+                dom.Linear(in_features=1*28*28,out_features=256),
+                dom.ReLU(),
+                dom.Linear(in_features=256,out_features=64),
+                dom.ReLU(),
+            )
+            self.classifier = nn.Sequential(
+                # dom.Linear(in_features=16*14*14,out_features=10)
+                dom.Linear(in_features=64,out_features=10)
+            )
         
     def forward(self,x):
         # x = self.extractor(x)
@@ -269,7 +318,148 @@ class Mnist_patch_model(nn.Module):
         ]
         return '\n'.join(ss)
 
-class MnistNet(nn.Module):
+class Mnist_feature_patch_model(nn.Module):
+    def __init__(self,dom: AbsDom, name: str, input_dimension: int) -> None:
+        super().__init__()
+        self.dom = dom
+        self.name = name
+        self.input_dimension = input_dimension
+        self.classifier = nn.Sequential(
+            dom.Linear(in_features=input_dimension,out_features=16),
+            dom.ReLU(),
+            dom.Linear(in_features=16,out_features=10),
+            dom.ReLU(),
+        )
+    def forward(self,x):
+        out = self.classifier(x)
+        return out
+    def __str__(self):
+        """ Just print everything for information. """
+        ss = [
+            '--- feature PatchNet ---',
+            'Name: %s' % self.name,
+            '--- End of feature PatchNet ---'
+        ]
+        return '\n'.join(ss)
+
+class MnistNet_FNN_small(nn.Module):
+    def __init__(self, dom: AbsDom) -> None:
+        super().__init__()
+        self.dom = dom
+        self.flatten = dom.Flatten()
+        self.fc1 = dom.Linear(784, 50)
+        self.relu = dom.ReLU()
+
+        self.fc2 = dom.Linear(50, 50)
+        self.fc3 = dom.Linear(50, 50)
+        self.fc4 = dom.Linear(50, 50)
+        self.fc5 = dom.Linear(50, 50)
+
+        self.fc6 = dom.Linear(50, 32)
+        self.fc7 = dom.Linear(32, 10)
+    
+    def forward(self, x: Union[Tensor, AbsEle]) -> Union[Tensor, AbsEle]:
+        
+        x = self.flatten(x)
+        x = self.fc1(x)
+        x = self.relu(x)
+
+        x = self.fc2(x)
+        x = self.relu(x)
+
+        x = self.fc3(x)
+        x = self.relu(x)
+
+        x = self.fc4(x)
+        x = self.relu(x)
+
+        x = self.fc5(x)
+        x = self.relu(x)
+
+        x = self.fc6(x)
+        x = self.relu(x)
+
+        x = self.fc7(x)
+        return x
+    
+    def split(self):
+        return nn.Sequential(
+            self.flatten,
+            self.fc1,
+            self.relu,
+            self.fc2,
+            self.relu,
+            self.fc3,
+            self.relu,
+            self.fc4,
+            self.relu,
+            self.fc5,
+            self.relu,
+            self.fc6,
+            self.relu
+        ), nn.Sequential(
+            self.fc7
+        )
+
+
+class MnistNet_FNN_big(nn.Module):
+    def __init__(self, dom: AbsDom) -> None:
+        super().__init__()
+        self.dom = dom
+        self.flatten = dom.Flatten()
+        self.fc1 = dom.Linear(784, 200)
+        self.relu = dom.ReLU()
+
+        self.fc2 = dom.Linear(200, 200)
+        self.fc3 = dom.Linear(200, 200)
+        self.fc4 = dom.Linear(200, 200)
+        self.fc5 = dom.Linear(200, 200)
+
+        self.fc6 = dom.Linear(200, 32)
+        self.fc7 = dom.Linear(32, 10)
+    def forward(self, x: Union[Tensor, AbsEle]) -> Union[Tensor, AbsEle]:
+        x = self.flatten(x)
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        x = self.relu(x)
+        x = self.fc3(x)
+        x = self.relu(x)
+
+        x = self.fc4(x)
+        x = self.relu(x)
+
+        x = self.fc5(x)
+        x = self.relu(x)
+
+        x = self.fc6(x)
+        x = self.relu(x)
+
+        x = self.fc7(x)
+        return x
+
+    def split(self):
+        return nn.Sequential(
+            self.flatten,
+            self.fc1,
+            self.relu,
+            self.fc2,
+            self.relu,
+            self.fc3,
+            self.relu,
+            self.fc4,
+            self.relu,
+            self.fc5,
+            self.relu,
+            self.fc6,
+            self.relu
+        ), nn.Sequential(
+            self.fc7
+        )
+
+
+
+class MnistNet_CNN_small(nn.Module):
     '''
     abstract module of bank, credit and census
     # :param json file: The configuration file of Fairness task in Socrates
@@ -306,78 +496,20 @@ class MnistNet(nn.Module):
         x = self.fc2(x)
         return x
     
-    # def split(self):
-    #     return nn.Sequential(
-    #         self.conv1,
-    #         self.maxpool,
-    #         self.relu,
-    #         self.conv2,
-    #         self.maxpool,
-    #         self.relu,
-    #         # torch.flatten(x, 1),
-    #         self.flatten,
-    #         self.fc1,
-    #         self.relu
-    #     ), nn.Sequential(
+    def split(self):
+        return nn.Sequential(
+            self.conv1,
+            self.relu,
+            # torch.flatten(x, 1),
+            self.flatten,
+            self.fc1,
+            self.relu
+        ), nn.Sequential(
             
-    #         self.fc2,
-    #         # self.sigmoid()
-    #     )
+            self.fc2,
+            # self.sigmoid()
+        )
 
-# class MnistNet(nn.Module):
-#     '''
-#     abstract module of bank, credit and census
-#     # :param json file: The configuration file of Fairness task in Socrates
-#     :param means: The means of Dataset
-#     :param range: The range of Dataset
-#     # :param inputsize: The input size of NN, which is related to Dataset
-
-#     '''
-#     def __init__(self, dom: AbsDom) -> None:
-#         super().__init__()
-#         self.dom = dom
-#         self.conv1 = dom.Conv2d(1, 32, kernel_size=5)
-#         self.conv2 = dom.Conv2d(32, 64, kernel_size=5)
-#         self.maxpool = dom.MaxPool2d(2)
-#         self.flatten = dom.Flatten()
-#         self.relu = dom.ReLU()
-#         self.fc1 = dom.Linear(1024, 32)
-#         self.fc2 = dom.Linear(32, 10)
-        
-#         # self.sigmoid = dom.Sigmoid()
-
-#     def forward(self, x: Union[Tensor, AbsEle]) -> Union[Tensor, AbsEle]:
-#         x = self.conv1(x)
-#         x = self.maxpool(x)
-#         x = self.relu(x)
-#         x = self.conv2(x)
-#         x = self.maxpool(x)
-#         x = self.relu(x)
-#         # x = torch.flatten(x, 1)
-#         # x = x.view(x.size[0], 1024)
-#         x = self.flatten(x)
-#         x = self.fc1(x)
-#         x = self.relu(x)
-#         x = self.fc2(x)
-#         return x
-    
-#     # def split(self):
-#     #     return nn.Sequential(
-#     #         self.conv1,
-#     #         self.maxpool,
-#     #         self.relu,
-#     #         self.conv2,
-#     #         self.maxpool,
-#     #         self.relu,
-#     #         # torch.flatten(x, 1),
-#     #         self.flatten,
-#     #         self.fc1,
-#     #         self.relu
-#     #     ), nn.Sequential(
-            
-#     #         self.fc2,
-#     #         # self.sigmoid()
-#     #     )
     
     
     

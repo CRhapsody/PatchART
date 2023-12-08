@@ -183,6 +183,8 @@ class Ele(AbsEle):
         '''
         return Ele(self._lcoef.expand_as(e._lcoef), self._lcnst.expand_as(e._lcnst), self._ucoef.expand_as(e._ucoef), self._ucnst.expand_as(e._ucnst), e.dlb, e.dub)
 
+    def clone(self) -> Ele:
+        return Ele(self._lcoef.clone(), self._lcnst.clone(), self._ucoef.clone(), self._ucnst.clone(), self.dlb.clone(), self.dub.clone())
 
     # define the flatten operation of abstract elements using view()
     def flatten(self, start_dim = 2,end_dim = -1) -> Ele:
@@ -543,7 +545,10 @@ class Dist(AbsDist):
             all_diffs, _ = torch.min(all_diffs, dim=-1)  # it's OK to have either one to be max, thus use torch.min()
 
         # then it needs to surpass everybody else, thus use torch.max() for maximum distance
-        diffs, _ = torch.max(all_diffs, dim=-1)
+        
+        # diffs, _ = torch.max(all_diffs, dim=-1)
+        positive = all_diffs[all_diffs > 0].unsqueeze(dim=0)
+        diffs = torch.sum(positive, dim=-1)
         return diffs
 
     def cols_not_min(self, e: Ele, *idxs: int) -> Tensor:
