@@ -30,28 +30,6 @@ RES_DIR.mkdir(parents=True, exist_ok=True)
 REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'patch_format'
 REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
-from torch import cuda
-# def pp_cuda_mem(stamp: str = '') -> str:
-#     device = torch.device('cuda:2' if torch.cuda.is_available() else 'cpu')
-#     def sizeof_fmt(num, suffix='B'):
-#         for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
-#             if abs(num) < 1024.0:
-#                 return "%3.1f%s%s" % (num, unit, suffix)
-#             num /= 1024.0
-#         return "%.1f%s%s" % (num, 'Yi', suffix)
-
-#     if not cuda.is_available():
-#         return ''
-
-#     return '\n'.join([
-#         f'----- {stamp} -----',
-#         f'Allocated: {sizeof_fmt(cuda.memory_allocated(device=device))}',
-#         f'Max Allocated: {sizeof_fmt(cuda.max_memory_allocated(device=device))}',
-#         f'Cached: {sizeof_fmt(cuda.memory_cached(device=device))}',
-#         f'Max Cached: {sizeof_fmt(cuda.max_memory_cached(device=device))}',
-#         f'----- End of {stamp} -----'
-#     ])
-
 
 class MnistArgParser(exp.ExpArgParser):
     """ Parsing and storing all ACAS experiment configuration arguments. """
@@ -371,20 +349,11 @@ def repair_mnist(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     # n_repair = MnistProp.LABEL_NUMBER
 
     patch_lists = []
-    if args.patch_size == 'big':
-        for i in range(n_repair):
-            patch_net = Mnist_patch_model(dom=args.dom,
-                name = f'big patch network {i}')
-            patch_net.to(device)
-            patch_lists.append(patch_net)
-        logging.info(f'--big patch network: {patch_net}')
-    elif args.patch_size == 'small':
-        for i in range(n_repair):
-            patch_net = Mnist_patch_model(dom=args.dom,
-                name = f'small patch network {i}')
-            patch_net.to(device)
-            patch_lists.append(patch_net)
-        logging.info(f'--small patch network: {patch_net}')
+    for i in range(args.repair_number):
+        patch_net = Mnist_patch_model(dom=args.dom,
+            name = f'{args.patch_size} patch network {i}').to(device)
+        patch_lists.append(patch_net)
+    logging.info(f'--{args.pa} patch network: {patch_net}')
 
     # the number of repair patch network,which is equal to the number of properties 
     repair_net =  Netsum(args.dom, target_net = net, patch_nets= patch_lists, device=device)

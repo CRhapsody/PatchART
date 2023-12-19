@@ -1,0 +1,21 @@
+ For resnet18 50 0.01568627450980392 : \  ori:30, patch:22, adv-train:46 \ 
+For resnet18 100 0.01568627450980392 : \  ori:59, patch:32, adv-train:90 \ 
+For resnet18 200 0.01568627450980392 : \  ori:124, patch:81, adv-train:141 \ 
+For resnet18 500 0.01568627450980392 : \  ori:314, patch:190, adv-train:388 \ 
+For resnet18 1000 0.01568627450980392 : \  ori:648, patch:358, adv-train:638 \ 
+For resnet18 50 0.03137254901960784 : \  ori:26, patch:9, adv-train:40 \ 
+For resnet18 100 0.03137254901960784 : \  ori:50, patch:17, adv-train:75 \ 
+For resnet18 200 0.03137254901960784 : \  ori:114, patch:43, adv-train:150 \ 
+For resnet18 500 0.03137254901960784 : \  ori:309, patch:104, adv-train:347 \ 
+For resnet18 1000 0.03137254901960784 : \  ori:614, patch:194, adv-train:663 \ 
+ 
+For vgg19 50 0.01568627450980392 : \  ori:31, patch:0, adv-train:36 \ 
+For vgg19 100 0.01568627450980392 : \  ori:60, patch:0, adv-train:76 \ 
+For vgg19 200 0.01568627450980392 : \  ori:128, patch:0, adv-train:139 \ 
+For vgg19 500 0.01568627450980392 : \  ori:334, patch:0, adv-train:366 \ 
+For vgg19 1000 0.01568627450980392 : \  ori:626, patch:0, adv-train:647 \ 
+For vgg19 50 0.03137254901960784 : \  ori:31, patch:0, adv-train:38 \ 
+For vgg19 100 0.03137254901960784 : \  ori:63, patch:0, adv-train:79 \ 
+For vgg19 200 0.03137254901960784 : \  ori:126, patch:0, adv-train:165 \ 
+For vgg19 500 0.03137254901960784 : \  ori:299, patch:0, adv-train:376 \ 
+For vgg19 1000 0.03137254901960784 : \  ori:610, patch:0, adv-train:738 \ 

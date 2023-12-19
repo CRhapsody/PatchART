@@ -12,14 +12,35 @@ cfg = {
 
 
 class VGG(nn.Module):
+    # def __init__(self, vgg_name):
+    #     super(VGG, self).__init__()
+    #     self.features = self._make_layers(cfg[vgg_name])
+    #     self.classifier = nn.Linear(512, 10)
+
+    # def forward(self, x):
+    #     out = self.features(x)
+    #     out = out.view(out.size(0), -1)
+    #     out = self.classifier(out)
+    #     return out
     def __init__(self, vgg_name):
         super(VGG, self).__init__()
         self.features = self._make_layers(cfg[vgg_name])
+        self.linear1 = nn.Linear(512, 512)
+        self.linear2 = nn.Linear(512, 512)
         self.classifier = nn.Linear(512, 10)
+        self.act = nn.ReLU()
+
+        # self.sp = nn.Linear(32, 10)
 
     def forward(self, x):
         out = self.features(x)
         out = out.view(out.size(0), -1)
+        # out = self.classifier(out)
+        # out = self.sp(out)
+        out = self.linear1(out)
+        out = self.act(out)
+        out = self.linear2(out)
+        out = self.act(out)
         out = self.classifier(out)
         return out
 
@@ -36,10 +57,19 @@ class VGG(nn.Module):
                 in_channels = x
         layers += [nn.AvgPool2d(kernel_size=1, stride=1)]
         return nn.Sequential(*layers)
-
+    
+    def split(self):
+        return nn.Sequential(*self.features,
+            #    nn.Flatten(),self.classifier     ), nn.Sequential(
+            #         self.sp
+            #     )
+                nn.Flatten(), self.linear1, self.act, self.linear2, self.act
+                ), nn.Sequential(
+                    self.classifier
+                )
 
 def test():
-    net = VGG('VGG11')
+    net = VGG('VGG19')
     x = torch.randn(2,3,32,32)
     y = net(x)
     print(y.size())

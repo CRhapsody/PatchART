@@ -187,8 +187,10 @@ class ExpArgParser(argparse.ArgumentParser):
         timestamp = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
         if 'Acas' in args.net:
             args.stamp = f'{args.net}-{timestamp}'
+        elif 'small' in args.net or 'big' in args.net:
+            args.stamp = f'{args.net}-{args.repair_radius}-{args.repair_number}-{args.patch_size}-{timestamp}'
         else:
-            args.stamp = f'{args.net}-{args.repair_location}-{args.repair_number}-{args.patch_size}-{timestamp}'
+            args.stamp = f'{args.net}-{args.repair_radius}-{args.repair_location}-{args.repair_number}-{timestamp}'
         logger.handlers = []  # reset, otherwise it may duplicate many times when calling setup_logger() multiple times
         if self.log_dir is not None:
             log_path = Path(self.log_dir, f'{args.stamp}.log')

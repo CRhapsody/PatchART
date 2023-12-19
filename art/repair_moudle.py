@@ -143,7 +143,8 @@ class Netsum(nn.Module):
     This class is to add the patch net to target net:
     
     '''
-    def __init__(self, dom: AbsDom, target_net: AcasNet, patch_nets: List[nn.Module], device = None ):
+    def __init__(self, dom: AbsDom, target_net, patch_nets: List[nn.Module], device = None,
+                 generalization = False, repair_direction_dict = None):
         '''
         :params 
         '''
@@ -158,38 +159,81 @@ class Netsum(nn.Module):
         self.patch_nets = patch_nets
         self.acti = dom.ReLU()
         self.len_patch_lists = len(self.patch_nets)
+        self.generalization = generalization
+        self.repair_direction_dict = repair_direction_dict
 
         if device is not None:
             for i,patch in enumerate(self.patch_nets):
                 self.add_module(f'patch{i}',patch)
                 patch.to(device)
+        # initial bitmap
+        self.bitmap = None
         
         # self.sigmoid = dom.Sigmoid()
         # self.connect_layers = []
+    def set_bitmap(self, bitmap):
+        self.bitmap = bitmap
+    def set_generalization(self, generalization):
+        self.generalization = generalization
+    def set_repair_direction_dict(self, repair_direction_dict):
+        self.repair_direction_dict = repair_direction_dict
+    def get_bitmap(self, original_out):
+        with torch.no_grad():
+            # get the max and runner-up score of out
+            _,index = torch.topk(original_out,2,dim = -1)
+            # max_index = index[...,0]
+            # runnerup_index = index[...,1]
+            # match with repair_direction_dict : (,2)
+            index_clone = index.clone().unsqueeze_(1).expand(index.shape[0],self.repair_direction_dict.shape[0], index.shape[-1])
+            is_in = torch.eq(index_clone,self.repair_direction_dict).all(dim = -1)
+            # is_in 是一个bool矩阵（input_num, patch_num），表示每个输入是否在repair_direction_dict中，并且和哪几项相同
+            # 将 bool 矩阵转化为int矩阵
+            # is_in = is_in.int()
+            # 检查 is_in中的零行向量，如果有，说明这个输入不在任何一个patch中
+            is_in_test_zero = is_in.sum(dim = -1) == 0
+            # 记录其行索引
+            is_in_test_zero_index = is_in_test_zero.nonzero(as_tuple=True)[0]
+            # 从index中把这些行选出来
+            is_in_zero_assign = index[is_in_test_zero_index][...,0].unsqueeze_(1).expand(-1, self.repair_direction_dict.shape[0])
+            # 将所有修复标签相同的patch拿来修复
+            is_in_zero_assign_map = torch.eq(is_in_zero_assign, self.repair_direction_dict[...,0])
+            is_in[is_in_test_zero] = is_in_zero_assign_map
+            is_in = is_in.to(torch.uint8)
+            self.bitmap = is_in # 这里是直接将对应patch的结果都加了起来
+        return self.bitmap
+            
 
-    def forward(self, x, in_bitmap, out = None):
+
+    def forward(self, x, in_bitmap = None, out = None):
         if out == None:
             out = self.target_net(x)
         else:
             assert isinstance(out, AbsEle), 'out should be AbsEle'
+
+
+
+        if self.generalization and self.bitmap is None and self.repair_direction_dict is not None:
+            in_bitmap = self.get_bitmap(out)
+
             
         # classes_score, violate_score = self.support_net(x) # batchsize * repair_num * []
         # n_prop = in_bitmap.shape[-1]
-        for i,patch in enumerate(self.patch_nets):
-            bits = in_bitmap[..., i]
-            if not bits.any():
-            # no one here needs to obey this property
-                continue
+        if in_bitmap is not None:
+            for i,patch in enumerate(self.patch_nets):
+                bits = in_bitmap[..., i]
+                if not bits.any():
+                # no one here needs to obey this property
+                    continue
 
-            ''' The default nonzero(as_tuple=True) returns a tuple, make scatter_() unhappy.
-                Here we just extract the real data from it to make it the same as old nonzero().squeeze(dim=-1).
-            '''
-            bits = bits.nonzero(as_tuple=True)[0]
-            if isinstance(out, Tensor):
-                out[bits] += patch(x[bits])
-            elif isinstance(out, AbsEle):
-                replace_item = out[bits] + patch(x[bits]) # may not only one prop
-                out.replace(in_bitmap[..., i], replace_item)
+                ''' The default nonzero(as_tuple=True) returns a tuple, make scatter_() unhappy.
+                    Here we just extract the real data from it to make it the same as old nonzero().squeeze(dim=-1).
+                '''
+                bits = bits.nonzero(as_tuple=True)[0]
+                if isinstance(out, Tensor):
+                    out[bits] += patch(x[bits])
+                elif isinstance(out, AbsEle):
+                    replace_item = out[bits] + patch(x[bits]) # may not only one prop
+                    out.replace(in_bitmap[..., i], replace_item)
         return out
         
         
@@ -207,6 +251,8 @@ class Netsum(nn.Module):
             '--- End of IntersectionNetSum ---'
         ]
         return '\n'.join(ss)
+
+
 
 # class NetOnlySumPatch(Netsum):
 #     def forward(self, x, in_bitmap, out):
@@ -318,6 +364,16 @@ class NetFeatureSum(nn.Module):
         ]
         return '\n'.join(ss)
 
+class NetFeatureSumPatch(nn.Module):
+    def __init__(self, feature_extractor ,feature_sumnet: Netsum):
+        super().__init__()
+        self.feature_extractor = feature_extractor
+        self.feature_sumnet = feature_sumnet
+
+    def forward(self, x, bitmap):
+        feature = self.feature_extractor(x)
+        out = self.feature_sumnet(feature, bitmap)
+        return out
 
 class IntersectionNetSum(nn.Module):
     '''

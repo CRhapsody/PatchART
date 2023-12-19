@@ -613,9 +613,10 @@ def adv_training(net, radius, data_num, device):
     test_attack_loader = DataLoader(test_attack_dataset, batch_size=128)
     # train
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50)
     model.train()
-    for epoch in range(25):
+    for epoch in range(200):
         print(f"adv-training epoch {epoch}")
         # epoch_loss = 0
         # correct, total = 0,0
@@ -625,12 +626,12 @@ def adv_training(net, radius, data_num, device):
         #     inputs,labels = iter_train.__next__()
             inputs = inputs.to(device)
             labels = labels.to(device)
-            for step in range(50):
-                optimizer.zero_grad()
-                outputs = model(inputs)
-                loss = criterion(outputs, labels)
-                loss.backward()
-                optimizer.step()
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+        scheduler.step()
     
     return model.eval()
 
@@ -648,8 +649,9 @@ def adv_training_test(net, radius,device):
     # load attack data
     train_attack_data,train_attack_labels = torch.load(f'./data/MNIST/processed/train_attack_data_full_{net}_{radius}.pt')
     test_attack_data,test_attack_labels = torch.load(f'./data/MNIST/processed/test_attack_data_full_{net}_{radius}.pt')
-    test_data, test_labels = torch.load('./data/MNIST/processed/test_norm00.pt')
-    train_data,train_labels = torch.load('/pub/data/chizm/train_norm00.pt')
+    test_data, test_labels = torch.load('/home/chizm/PatchART/data/MNIST/processed/test_norm00.pt')
+    # train_data,train_labels = torch.load('/home/chizm/PatchART/data/MNIST/processed/train_norm00.pt')
+    train_data,train_labels = torch.load(f'/home/chizm/PatchART/data/MNIST/processed/origin_data_{net}_{radius}.pt')
     print(torch.cuda.max_memory_allocated() / 1e9, "GB")
     # dataset
     train_attack_dataset = torch.utils.data.TensorDataset(train_attack_data,train_attack_labels)
@@ -664,32 +666,28 @@ def adv_training_test(net, radius,device):
     # train
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.01)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50)
     model.train()
+    from torchattacks import PGD
+    pgd_attack = PGD(model, eps=radius, alpha=0.1, steps=10, random_start=True)
     for epoch in range(10):
         print(f"epoch {epoch}")
         # epoch_loss = 0
         correct, total = 0,0
         for inputs,labels in train_attack_loader:
-
-        # for i in range(train_nbatch):
-        #     inputs,labels = iter_train.__next__()
+        # for inputs,labels in train_loader:
             inputs = inputs.to(device)
             labels = labels.to(device)
-            # for step in range(50):
             optimizer.zero_grad()
+
+            # attack_in = pgd_attack(inputs, labels)
             outputs = model(inputs)
+
+            # outputs = model(attack_in)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
-            # epoch_loss += loss.item()
-                # pred = torch.max(outputs,1)
-                # total += labels.size(0)
-                # correct += (pred.indices == labels).sum().item()
-        #         pred = torch.max(outputs,1)
-        #         acc = (pred == labels).sum().item()/labels.size(0)
-        #     print(" Loss: ",epoch_loss," Accuracy:",acc)
-        # print("epoch:",epoch+1, " Loss: ",epoch_loss," Accuracy:",acc)
-        
+        scheduler.step()
         
     # test
     model.eval()
@@ -882,6 +880,132 @@ def compare_pgd_step_length(net, patch_format,
     #                 return False
     #     return True
 
+def compare_autoattack(net, patch_format, 
+                            radius, repair_number):
+    '''
+    use the length of pgd steps to compare the hardness of attacking two model respectively
+    the model1 is origin model, model2 is repaired model
+    '''
+    # load net
+    from art.repair_moudle import Netsum
+    from DiffAbs.DiffAbs import deeppoly
+    from mnist.mnist_utils import MnistNet_CNN_small,MnistNet_FNN_small, MnistNet_FNN_big, Mnist_patch_model,MnistProp
+    device = 'cuda:3' if torch.cuda.is_available() else 'cpu'
+    print(f'Using {device} device')
+    if net == 'CNN_small':
+        model1 = CNN_small_NeuralNet().to(device)
+        orinet = MnistNet_CNN_small(dom=deeppoly)
+    elif net == 'FNN_big':
+        model1 = FNN_big_NeuralNet().to(device)
+        orinet = MnistNet_FNN_big(dom=deeppoly)
+    elif net == 'FNN_small':
+        model1 = FNN_small_NeuralNet().to(device)
+        orinet = MnistNet_FNN_small(dom=deeppoly)
+    model1.load_state_dict(torch.load(f"/home/chizm/PatchART/model/mnist/mnist_{net}.pth"))
+
+  
+
+
+
+    orinet.to(device)
+    patch_lists = []
+    for i in range(repair_number):
+        if patch_format == 'small':
+            patch_net = Mnist_patch_model(dom=deeppoly, name = f'small patch network {i}')
+        elif patch_format == 'big':
+            patch_net = Mnist_patch_model(dom=deeppoly,name = f'big patch network {i}')
+        patch_net.to(device)
+        patch_lists.append(patch_net)
+    model2 =  Netsum(deeppoly, target_net = orinet, patch_nets= patch_lists, device=device)
+    model2.load_state_dict(torch.load(f"/home/chizm/PatchART/model/patch_format/Mnist-{net}-repair_number{repair_number}-rapair_radius{radius}-{patch_format}.pt",map_location=device))
+
+    model3 = adv_training(net,radius, data_num=repair_number, device=device)
+
+
+    # load data
+    datas,labels = torch.load(f'/home/chizm/PatchART/data/MNIST/processed/origin_data_{net}_{radius}.pt',map_location=device)
+    # return
+    
+    datas = datas[:repair_number]
+    labels = labels[:repair_number]
+
+    # pgd
+    # pgd1 = PGD(model=model1, eps=radius, alpha=2/255, steps=50, random_start=True)
+    # pgd2 = PGD(model=model2, eps=radius, alpha=2/255, steps=50, random_start=True)
+    # pgd3 = PGD(model=model3, eps=radius, alpha=2/255, steps=50, random_start=True)
+    from torchattacks import AutoAttack
+
+
+    # attack
+    # ori_step = 0
+    # repair_step = 0
+    # pgd_step = 0
+
+    # get bitmap
+    from art.prop import AndProp
+    from art.bisecter import Bisecter
+    repairlist = [(data[0],data[1]) for data in zip(datas, labels)]
+    repair_prop_list = MnistProp.all_props(deeppoly, DataList=repairlist, input_shape= datas.shape[1:], radius= radius)
+    # get the all props after join all l_0 ball feature property
+    # TODO squeeze the property list, which is the same as the number of label
+    all_props = AndProp(props=repair_prop_list)
+    # v = Bisecter(deeppoly, all_props)
+    in_lb, in_ub = all_props.lbub(device)
+    in_bitmap = all_props.bitmap(device)
+
+    bitmap = get_bitmap(in_lb, in_ub, in_bitmap, datas, device)
+
+    p1 = 0
+    p2 = 0
+    p3 = 0
+
+    for ith, (image, label) in enumerate(zip(datas,labels)):
+        image = image.unsqueeze(0).to(device)
+        label = label.unsqueeze(0).to(device)
+
+        at1 = AutoAttack(model1, norm='Linf', eps=radius, version='standard', verbose=True)
+        adv_images1 = at1(image, label)
+        if model1(adv_images1).argmax(dim=1)!= label:
+            print("success1")
+            p1 += 1
+        else:
+            print("fail")
+        at2 = AutoAttack(model2, norm='Linf', eps=radius, version='standard', verbose=True, bitmap=bitmap)
+        adv_images2 = at2(image, label)
+        if model2(adv_images2, bitmap[ith]).argmax(dim=1) != label:
+            print("success2")
+            p2 += 1
+        else:
+            print("fail")
+        at3 = AutoAttack(model3, norm='Linf', eps=radius, version='standard', verbose=True)
+        adv_images3 = at3(image, label)
+        if model3(adv_images3).argmax(dim=1) != label:
+            print("success3")
+            p3 += 1
+        else:
+            print("fail")
+        
+        # step1, ori_acc = pgd1.forward_sumsteps(image,label)
+        # step2, repair_acc = pgd2.forward_sumsteps(image,label, device=device, bitmap = [in_lb, in_ub, in_bitmap])
+        # step3, adt_acc = pgd3.forward_sumsteps(image,label)
+        # ori_step += step1
+        # repair_step += step2
+        # pgd_step += step3
+        # if ori_acc == 1:
+        #     p1 += 1
+        # if repair_acc == 1:
+        #     p2 += 1
+        # if adt_acc == 1:
+        #     p3 += 1
+            
+    
+    # print(f"ori_step {ori_step}, repair_step {repair_step}, pgd_step {pgd_step} \\ ori:{p1}, patch:{p2}, adv-train:{p3}")
+    with open(f'/home/chizm/PatchART/results/mnist/repair/autoattack/compare_autoattack_ac.txt','a') as f:
+        f.write(f"For {net} {radius} {data} {patch_format}: \\  ori:{p1}, patch:{p2}, adv-train:{p3} \\ \n")
+
+
+
+
 if __name__ == "__main__":
     # model = train(net='FNN_big',epoch_num=20)
     # test(net='FNN_big')
@@ -889,11 +1013,15 @@ if __name__ == "__main__":
     # stack()
     # compare_pgd_step_length(radius=0.3,repair_number=1000)
 
-    for data in [50, 100, 200, 500, 1000]:
-        for radius in [0.05,0.1,0.3]:
-            for net in ['FNN_small','FNN_big', 'CNN_small']:
-                for patch_format in ['small','big']:
-                    compare_pgd_step_length(net, patch_format, radius, data)
+    for data in [1000]:
+        # for radius in [0.05,0.1,0.3]:
+        for radius in [0.3]:
+            # for net in ['FNN_small','FNN_big', 'CNN_small']:
+            for net in [ 'CNN_small']:
+                for patch_format in ['small']:
+                    # compare_pgd_step_length(net, patch_format, radius, data)
+                    # compare_autoattack(net, patch_format, radius, data)
+                    adv_training_test(net, radius,device='cuda:0')
     #         pgd_get_data(radius=radius,multi_number=10,data_num=data,general = True)
             # pgd_get_data(net=net,radius=radius,multi_number=10,data_num=1000)
             # grad_none(net = net,radius = radius)

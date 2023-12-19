@@ -402,6 +402,7 @@ class MnistNet_FNN_small(nn.Module):
         )
 
 
+
 class MnistNet_FNN_big(nn.Module):
     def __init__(self, dom: AbsDom) -> None:
         super().__init__()
