@@ -35,10 +35,15 @@ device = torch.device(f'cuda:2')
 MNIST_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'MNIST' / 'processed'
 MNIST_NET_DIR = Path(__file__).resolve().parent.parent / 'model' /'mnist'
 # MNIST_NET_DIR = Path(__file__).resolve().parent.parent / 'pgd' /'model' 
-RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'generalization'
+# RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'generalization' / 'origin'
+RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'generalization' / 'label'
 RES_DIR.mkdir(parents=True, exist_ok=True)
-REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'patch_format'
+# REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'patch_format'
+REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'mnist_label_format'
 REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
+
+COMP_DIR = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'generalization' / 'compare'
+COMP_DIR.mkdir(parents=True, exist_ok=True)
 
 class MnistArgParser(exp.ExpArgParser):
     """ Parsing and storing all ACAS experiment configuration arguments. """
@@ -58,6 +63,8 @@ class MnistArgParser(exp.ExpArgParser):
                             help='the batchsize of repair datas')
         self.add_argument('--patch_size', type=str, default= 'big', 
                           choices=['big', 'small'], help='the size of patch network')
+        self.add_argument('--label_repaired', type=bool, default=False,
+                            help='if True, we use the label repaired method')
         # the combinational form of support and patch net
         # self.add_argument('--reassure_support_and_patch_combine',type=bool, default=False,
         #                 help='use REASSURE method to combine support and patch network')
@@ -199,7 +206,7 @@ def test_repaired(args: Namespace) -> float:
     # load the dataset
     originalset = MnistPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_origin_data=True)
     repairset = MnistPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_attack_repaired=True)
-    # attack_testset = MnistPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, testnumber=args.test_datasize, radius=args.repair_radius,is_attack_testset_repaired=True)
+    attack_testset = MnistPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, testnumber=args.test_datasize, radius=args.repair_radius,is_attack_testset_repaired=True)
 
     # from buggy dataset and its original dataset, we get the true label and error label of buggy dataset respectively
     # then we assign the error label and true label to the every patch as their strategies
@@ -276,8 +283,8 @@ def test_repaired(args: Namespace) -> float:
 
 
     
-    def get_strategy(idx):
-        return assign_table[idx]
+    # def get_strategy(idx):
+    #     return assign_table[idx]
     
     # def compare_attack_testset_and_repairset_output(buggy_predict = buggy_predicted):
     #     with torch.no_grad():
@@ -306,14 +313,9 @@ def test_repaired(args: Namespace) -> float:
     logging.info(f'--For testset, out of {len(testset)} items, ratio {ratio}')
 
 
-    # construct the property from testset
-    input_shape = testset.inputs.shape[1:]
-    generlist = [(data[0],data[1]) for data in zip(testset.inputs, testset.labels)]
-    gener_prop_list = MnistProp.all_props(args.dom, DataList=generlist, input_shape = input_shape, radius= args.repair_radius)
-    all_props = AndProp(props=gener_prop_list)
 
-    in_lb, in_ub = all_props.lbub(device)
-    all_props.labels = repaired_net.bitmap
+    in_lb = testset.inputs - args.repair_radius
+    in_ub = testset.inputs + args.repair_radius
 
 
 
@@ -336,44 +338,50 @@ def test_repaired(args: Namespace) -> float:
             
         # net.load_state_dict(torch.load(Path(MNIST_NET_DIR, f'mnist_{args.net}.pth')))
         net.to(device)
-        PGD_attack = PGD(net, eps=64/255., alpha=16/255., steps=100, random_start=False)
-        train_loader = data.DataLoader(testset, batch_size=50, shuffle=True)
+        # PGD_attack = PGD(net, eps=args.repair_radius, alpha=args.repair_radius/4., steps=20, random_start=False)
+        train_loader = data.DataLoader(repairset, batch_size=25, shuffle=True)
         
+        test_loader = data.DataLoader(testset, batch_size=25, shuffle=True)
+
         loss_fn = nn.CrossEntropyLoss()
         optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.1)
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50)
-        
-        for epoch in range(50):            
+        net.train()
+        for epoch in range(200):            
             loss_sum = 0
-            for images, labels in train_loader:
-                images, labels = images.to(device), labels.to(device)
-
+            # for images, labels in train_loader:
+            #     images, labels = images.to(device), labels.to(device)
+            for (train_images, train_labels), (test_images, test_labels) in zip(train_loader, test_loader):
                 
                 # 对抗训练样本和原始样本同时作为训练集进行训练                
-                net.eval()
-                adv_images = PGD_attack(images, labels)      
+                # net.eval()
+                # adv_images = PGD_attack(images, labels)      
                 # print(adv_images[0])   
-                torchvision.transforms.ToPILImage()(adv_images[0].cpu()).save(f'./tmp.png')       
-                net.zero_grad()
-                net.train()
-                outs = net(adv_images)
-                with torch.no_grad():
-                    prediction = outs.argmax(dim=1)
-                    correct = (prediction == labels).sum().item()
+                # torchvision.transforms.ToPILImage()(adv_images[0].cpu()).save(f'./tmp.png')       
+                # net.train()
+                # outs = net(adv_images)
+                outs = net(train_images)
+                # with torch.no_grad():
+                #     prediction = outs.argmax(dim=1)
+                #     correct = (prediction == labels).sum().item()
 
-                loss = loss_fn(outs, labels)
-                # loss2 = loss_fn(net(images), labels)
-                # loss = (loss + loss2) / 2
-                loss.backward()
+                loss1 = loss_fn(outs, train_labels)
+
+                loss1.backward()
+                optimizer.step()
+
+                outs = net(test_images)
+                loss2 = loss_fn(outs, test_labels)
+                loss2.backward()
                 optimizer.step()
 
                 optimizer.zero_grad()
-                loss_sum += loss.item()
+                loss_sum += loss1.item()
 
-                loss = loss_fn(net(images), labels)
-                loss.backward()
-                optimizer.step()
-                optimizer.zero_grad()
+                # loss = loss_fn(net(images), labels)
+                # loss.backward()
+                # optimizer.step()
+                # optimizer.zero_grad()
             if epoch % 1 == 0:
                 logging.info(f'--epoch {epoch} loss {loss_sum/len(train_loader)}')
             scheduler.step()
@@ -391,11 +399,13 @@ def test_repaired(args: Namespace) -> float:
     #     image = image.unsqueeze(0).to(device)
     #     label = label.unsqueeze(0).to(device)
     correct1_sum, correct2_sum, correct3_sum = 0, 0, 0
+    # count = 0
     adv_train_net.train()
     for images, labels in testloader:
+        # count+=1
         images, labels = images.to(device), labels.to(device)
 
-        logging.info(f'attack net1 ')
+        # logging.info(f'attack net1 ')
         at1 = AutoAttack(adv_train_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=100)
         adv_images1 = at1(images, labels)
         outs1 = adv_train_net(adv_images1)
@@ -403,7 +413,7 @@ def test_repaired(args: Namespace) -> float:
         correct1 = (predicted1 == labels).sum().item()
         correct1_sum += correct1
         logging.info(f'correct1 {correct1}')
-        logging.info(f'attack net2 ')
+        # logging.info(f'attack net2 ')
 
         at2 = AutoAttack(repaired_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=100)
         adv_images2 = at2(images, labels)
@@ -413,7 +423,7 @@ def test_repaired(args: Namespace) -> float:
         correct2 = (predicted2 == labels).sum().item()
         correct2_sum += correct2
         logging.info(f'correct2 {correct2}')
-        logging.info(f'attack net3 ')
+        # logging.info(f'attack net3 ')
 
         at3 = AutoAttack(original_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=100)
         adv_images3 = at3(images, labels)
@@ -422,14 +432,24 @@ def test_repaired(args: Namespace) -> float:
         correct3 = (predicted3 == labels).sum().item()
         correct3_sum += correct3
         logging.info(f'correct3 {correct3}')
+        # if count % 100 == 0:
+        #     logging.info(f'--For testset, out of {count} items, adv training net ratio {correct1_sum}, repaired net ratio {correct2_sum}, original net ratio {correct3_sum}')
 
     logging.info(f'--For testset, out of {len(testset)} items, adv training net ratio {correct1_sum/len(testset)}')
     logging.info(f'--For testset, out of {len(testset)} items, repaired net ratio {correct2_sum/len(testset)}')
     logging.info(f'--For testset, out of {len(testset)} items, original net ratio {correct3_sum/len(testset)}')
 
 
+    # write the result to the file
 
 
+    with open(Path(COMP_DIR, f'compare_generalization.txt'), 'a') as f:
+        f.write(f'For net: {args.net}, radius: {args.repair_radius},' +
+                f'repair_number: {args.repair_number}, test_datasize: {args.test_datasize}, ' +
+                f'accuarcy rate: {ratio},' + 
+                f'adv training net ratio: {correct1_sum/len(testset)}, ' +
+                f'repaired net ratio: {correct2_sum/len(testset)},' + 
+                f'original net ratio: {correct3_sum/len(testset)}\n')
 
 
 
@@ -453,6 +473,201 @@ def test_repaired(args: Namespace) -> float:
     #         ratio = correct / len(labels)
     #         logging.info(f'--For testset, out of {len(labels)} items, ratio {ratio}')
 
+def test_label_repaired(args: Namespace) -> float:
+    logging.info(f'--test_label_repaired')
+    if args.net == 'CNN_small':
+        original_net = MnistNet_CNN_small(dom=args.dom)
+    elif args.net == 'FNN_big':
+        original_net = MnistNet_FNN_big(dom=args.dom)
+    elif args.net == 'FNN_small':
+        original_net = MnistNet_FNN_small(dom=args.dom)
+    original_net.to(device)
+    patch_lists = []
+    for i in range(10):
+        patch_net = Mnist_patch_model(dom=args.dom,
+            name = f'{args.patch_size} patch network {i}').to(device)
+        patch_lists.append(patch_net)
+    logging.info(f'--big patch network: {patch_net}')
+
+    # load the repaired model
+    state = torch.load(Path(REPAIR_MODEL_DIR, f'Mnist-{args.net}-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-{args.patch_size}.pt'))
+    repaired_net = Netsum(args.dom, original_net, patch_lists, device=device,
+                          generalization=True, is_label_repaired=args.label_repaired)
+    repaired_net.load_state_dict(state)
+    # load the dataset
+    originalset = MnistPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_origin_data=True)
+    repairset = MnistPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_attack_repaired=True)
+    attack_testset = MnistPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, testnumber=args.test_datasize, radius=args.repair_radius,is_attack_testset_repaired=True)
+
+    # from buggy dataset and its original dataset, we get the true label and error label of buggy dataset respectively
+    # then we assign the error label and true label to the every patch as their strategies
+    assign_table = torch.zeros(args.repair_number, 2).to(device)
+    with torch.no_grad():
+        buggy_outs = original_net(repairset.inputs)
+        buggy_predicted = buggy_outs.argmax(dim=1)
+
+    for i in range(args.repair_number):
+        assign_table[i][0] = originalset.labels[i]
+        assign_table[i][1] = buggy_predicted[i]
+
+    repaired_net.set_repair_direction_dict(assign_table)
+
+
+
+
+
+
+    def get_bitmap(in_lb: Tensor, in_ub: Tensor, in_bitmap: Tensor, batch_inputs: Tensor):
+        '''
+        in_lb: n_prop * input
+        in_ub: n_prop * input
+        batch_inputs: batch * input
+        '''
+        with torch.no_grad():
+            # if len(batch_inputs.shape) == 3:
+            batch_inputs_clone = batch_inputs.clone().unsqueeze_(1)
+            # elif len(batch_inputs.shape) == 4:
+            #     batch_inputs_clone = batch_inputs.clone()
+            # distingush the photo and the property
+            if len(in_lb.shape) == 2:
+                batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1])
+                is_in = (batch_inputs_clone >= in_lb) & (batch_inputs_clone <= in_ub)
+                is_in = is_in.all(dim=-1) # every input is in the region of property, batch * n_prop
+            elif len(in_lb.shape) == 4:
+                # if in_lb.shape[0] > 600:
+                #     is_in_list = []
+                #     # for i in range(batch_inputs_clone.shape[0]):
+                #     # for every 500 inputs, we compare them with the property
+                #     for i in range(math.ceil(batch_inputs_clone.shape[0]/500)):
+                #         batch_inputs_compare_datai = batch_inputs_clone[i*500:(i+1)*500].clone().expand(in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
+                #         is_in_datai = (batch_inputs_compare_datai >= in_lb) & (batch_inputs_compare_datai <= in_ub)
+                #         is_in_datai = is_in_datai.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
+                #         is_in_list.append(is_in_datai)
+
+                #         # batch_inputs_compare_datai = batch_inputs_clone[i].clone().expand(in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
+                #         # is_in_datai = (batch_inputs_compare_datai >= in_lb) & (batch_inputs_compare_datai <= in_ub)
+                #         # is_in_datai = is_in_datai.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
+                #         # is_in_list.append(is_in_datai)
+                #     is_in = torch.stack(is_in_list, dim=0)
+                # else:
+                    batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
+                    is_in = (batch_inputs_clone >= in_lb) & (batch_inputs_clone <= in_ub)
+                    is_in = is_in.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
+            # convert to bitmap
+            bitmap = torch.zeros((batch_inputs.shape[0], in_bitmap.shape[1]), device = device).to(torch.uint8)
+            # is in is a batch * in_bitmap.shape[0] tensor, in_bitmap.shape[1] is the number of properties
+            # the every row of is_in is the bitmap of the input which row of in_bitmap is allowed
+            # for i in range(is_in.shape[0]):
+            #     for j in range(is_in.shape[1]):
+            #         if is_in[i][j]:
+            #             bitmap[i] = in_bitmap[j]
+            #             break
+            #         else:
+            #             continue
+            bitmap_i, inbitmap_j =  is_in.nonzero(as_tuple=True)
+            if bitmap_i.shape[0] != 0:
+                bitmap[bitmap_i, :] = in_bitmap[inbitmap_j, :]
+            else:
+                pass
+            return bitmap
+
+
+    
+    # def get_strategy(idx):
+    #     return assign_table[idx]
+    
+    # def compare_attack_testset_and_repairset_output(buggy_predict = buggy_predicted):
+    #     with torch.no_grad():
+    #         attack_testset_outs = repaired_net(attack_testset.inputs)
+    #         attack_testset_predicted = attack_testset_outs.argmax(dim=1)
+
+    #         # repaired_predict should repeated 10 times
+    #         buggy_assign = buggy_predict.repeat(10,1).t().flatten()
+    #         correct = (attack_testset_predicted == buggy_assign).sum().item()
+    #         ratio = correct / len(attack_testset)
+    #         logging.info(f'--For attack testset and repairset, out of {len(attack_testset)} items, ratio {ratio}')
+    # compare_attack_testset_and_repairset_output()
+
+    # load the trainset and testset as testing set
+    logging.info(f'--load the trainset and testset as testing set')
+    # trainset = MnistPoints.load(train=True, device=device, net=args.net, trainnumber=args.train_datasize)
+    testset = MnistPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, testnumber=args.test_datasize,is_test_accuracy=True)    # trainset = MnistPoints.load(train=True, device=device, net=args.net, trainnumber=args.train_datasize)
+
+    # evaluate the repaired net on testset
+    logging.info(f'--evaluate the original net on testset')
+    ratio = eval_test(original_net, testset)
+    logging.info(f'--For testset, out of {len(testset)} items, ratio {ratio}')
+
+    logging.info(f'--evaluate the repaired net on testset and get the bitmap')
+    ratio = eval_test(repaired_net, testset, repair_hash_table = assign_table, generalization=True)
+    logging.info(f'--For testset, out of {len(testset)} items, ratio {ratio}')
+
+
+
+    in_lb = testset.inputs - args.repair_radius
+    in_ub = testset.inputs + args.repair_radius
+
+    from torchattacks import PGD,AutoAttack
+
+
+
+    logging.info(f'--test the defense against autoattack')
+    testloader = data.DataLoader(testset, batch_size=32, shuffle=False)
+    # for ith, (image, label) in enumerate(zip(testset.inputs,testset.labels)):
+    #     image = image.unsqueeze(0).to(device)
+    #     label = label.unsqueeze(0).to(device)
+    correct1_sum, correct2_sum, correct3_sum = 0, 0, 0
+    # count = 0
+    # adv_train_net.train()
+    for images, labels in testloader:
+        # count+=1
+        images, labels = images.to(device), labels.to(device)
+
+        # logging.info(f'attack net1 ')
+        # at1 = AutoAttack(adv_train_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=100)
+        # adv_images1 = at1(images, labels)
+        # outs1 = adv_train_net(adv_images1)
+        # predicted1 = outs1.argmax(dim=1)
+        # correct1 = (predicted1 == labels).sum().item()
+        # correct1_sum += correct1
+        # logging.info(f'correct1 {correct1}')
+        # logging.info(f'attack net2 ')
+
+        at2 = AutoAttack(repaired_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=100)
+        adv_images2 = at2(images, labels)
+        adv_images2_bitmap = get_bitmap(in_lb, in_ub, repaired_net.bitmap, adv_images2)
+        outs2 = repaired_net(adv_images2, in_bitmap = adv_images2_bitmap)
+        predicted2 = outs2.argmax(dim=1)
+        correct2 = (predicted2 == labels).sum().item()
+        correct2_sum += correct2
+        logging.info(f'correct2 {correct2}')
+        # logging.info(f'attack net3 ')
+
+        # at3 = AutoAttack(original_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=100)
+        # adv_images3 = at3(images, labels)
+        # outs3 = original_net(adv_images3)
+        # predicted3 = outs3.argmax(dim=1)
+        # correct3 = (predicted3 == labels).sum().item()
+        # correct3_sum += correct3
+        # logging.info(f'correct3 {correct3}')
+        # if count % 100 == 0:
+        #     logging.info(f'--For testset, out of {count} items, adv training net ratio {correct1_sum}, repaired net ratio {correct2_sum}, original net ratio {correct3_sum}')
+
+    # logging.info(f'--For testset, out of {len(testset)} items, adv training net ratio {correct1_sum/len(testset)}')
+    logging.info(f'--For testset, out of {len(testset)} items, repaired net ratio {correct2_sum/len(testset)}')
+    # logging.info(f'--For testset, out of {len(testset)} items, original net ratio {correct3_sum/len(testset)}')
+
+
+    # write the result to the file
+
+
+    with open(Path(COMP_DIR, f'compare_generalization.txt'), 'a') as f:
+        f.write(f'For net: {args.net}, radius: {args.repair_radius},' +
+                f'repair_number: {args.repair_number}, test_datasize: {args.test_datasize}, ' +
+                f'accuarcy rate: {ratio},' + 
+                # f'adv training net ratio: {correct1_sum/len(testset)}, ' +
+                f'repaired net ratio: {correct2_sum/len(testset)}\n') 
+                # f'original net ratio: {correct3_sum/len(testset)}\n')
 
 
 
@@ -475,36 +690,26 @@ def test_repaired(args: Namespace) -> float:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-def _run_repair(args: Namespace):
+def _run_test(args: Namespace):
     """ Run for different networks with specific configuration. """
     logging.info('===== start repair ======')
-    res = []
     # for nid in nids:
     logging.info(f'For pgd attack net')
-    outs = test_repaired(args)
-    res.append(outs)
+    if args.label_repaired:
+        test_label_repaired(args)
+    else:
+        test_repaired(args)
+    # res.append(outs)
 
-    avg_res = torch.tensor(res).mean(dim=0)
-    logging.info(f'=== Avg <epochs, train_time, certified, accuracy> for pgd attack networks:')
-    logging.info(avg_res)
+    # avg_res = torch.tensor(res).mean(dim=0)
+    # logging.info(f'=== Avg <epochs, train_time, certified, accuracy> for pgd attack networks:')
+    # logging.info(avg_res)
     return
 
 
 
 
-def test_goal_repair(parser: MnistArgParser):
+def test_goal_test(parser: MnistArgParser):
     """ Q1: Show that we can train previously unsafe networks to safe. """
     defaults = {
         # 'start_abs_cnt': 5000,
@@ -520,21 +725,21 @@ def test_goal_repair(parser: MnistArgParser):
     if args.no_repair:
         print('why not repair?')
     else:
-        _run_repair(args)
+        _run_test(args)
     return
 
 def test(lr:float = 0.005, net:str = 'CNN_small',repair_radius:float = 0.1, repair_number = 200, refine_top_k = 300,
          train_datasize = 200, test_datasize = 2000, 
-         accuracy_loss:str = 'CE',patch_size = 'big'):
+         accuracy_loss:str = 'CE',patch_size = 'big',label_repaired = False):
     test_defaults = {
         'net': net,
         'patch_size': patch_size,
-        'no_pts': False,
-        'no_refine': True,
-        'debug': False,
-        'divided_repair': math.ceil(repair_number/100),
-        'exp_fn': 'test_goal_repair',
-        'refine_top_k': refine_top_k,
+        # 'no_pts': False,
+        # 'no_refine': True,
+        # 'debug': False,
+        # 'divided_repair': math.ceil(repair_number/100),
+        'exp_fn': 'test_goal_test',
+        # 'refine_top_k': refine_top_k,
         'repair_batch_size': repair_number,
         'start_abs_cnt': 500,
         'max_abs_cnt': 1000,
@@ -543,11 +748,12 @@ def test(lr:float = 0.005, net:str = 'CNN_small',repair_radius:float = 0.1, repa
         'train_datasize':train_datasize,
         'test_datasize': test_datasize,
         'repair_radius': repair_radius,
-        'lr': lr,
-        'accuracy_loss': accuracy_loss,
-        'tiny_width': repair_radius*0.0001,
-        'min_epochs': 15,
-        'max_epochs': 100,
+        'label_repaired': label_repaired,
+        # 'lr': lr,
+        # 'accuracy_loss': accuracy_loss,
+        # 'tiny_width': repair_radius*0.0001,
+        # 'min_epochs': 15,
+        # 'max_epochs': 100,
 
         
     }
@@ -570,8 +776,9 @@ if __name__ == '__main__':
         for patch_size in ['small']:
         # for patch_size in ['big']:
             # for radius in [0.3]:
-            for radius in [0.3]: #,0.1,0.3
-                for repair_number,test_number in zip([1000],[500]):
-                    test(lr=10, net=net, repair_radius=radius, repair_number = repair_number, refine_top_k= 50, 
-         train_datasize = 10000, test_datasize = test_number, 
-         accuracy_loss='CE',patch_size=patch_size)
+            for radius in [0.05,0.1,0.3]: #,0.1,0.3
+                # for repair_number,test_number in zip([1000],[10000]):
+                for repair_number in [50, 100, 200, 500, 1000]:
+                    test(net=net, repair_radius=radius, repair_number = repair_number, 
+         train_datasize = 10000, test_datasize = 10000, 
+         accuracy_loss='CE',patch_size=patch_size,label_repaired = True)

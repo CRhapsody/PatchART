@@ -1003,7 +1003,116 @@ def compare_autoattack(net, patch_format,
     with open(f'/home/chizm/PatchART/results/mnist/repair/autoattack/compare_autoattack_ac.txt','a') as f:
         f.write(f"For {net} {radius} {data} {patch_format}: \\  ori:{p1}, patch:{p2}, adv-train:{p3} \\ \n")
 
+def patch_label_autoattack(net, patch_format, 
+                            radius, repair_number, device):
+    from art.repair_moudle import Netsum
+    from DiffAbs.DiffAbs import deeppoly
+    from mnist.mnist_utils import MnistNet_CNN_small,MnistNet_FNN_small, MnistNet_FNN_big, Mnist_patch_model,MnistProp
+    device = device if torch.cuda.is_available() else 'cpu'
+    print(f'Using {device} device')
+    if net == 'CNN_small':
+        # model1 = CNN_small_NeuralNet().to(device)
+        orinet = MnistNet_CNN_small(dom=deeppoly)
+    elif net == 'FNN_big':
+        # model1 = FNN_big_NeuralNet().to(device)
+        orinet = MnistNet_FNN_big(dom=deeppoly)
+    elif net == 'FNN_small':
+        # model1 = FNN_small_NeuralNet().to(device)
+        orinet = MnistNet_FNN_small(dom=deeppoly)
 
+    orinet.to(device)
+    patch_lists = []
+    for i in range(10):
+        if patch_format == 'small':
+            patch_net = Mnist_patch_model(dom=deeppoly, name = f'small patch network {i}')
+        elif patch_format == 'big':
+            patch_net = Mnist_patch_model(dom=deeppoly,name = f'big patch network {i}')
+        patch_net.to(device)
+        patch_lists.append(patch_net)
+    model2 =  Netsum(deeppoly, target_net = orinet, patch_nets= patch_lists, device=device)
+    model2.load_state_dict(torch.load(f"/home/chizm/PatchART/model/mnist_label_format/Mnist-{net}-repair_number{repair_number}-rapair_radius{radius}-{patch_format}.pt",map_location=device))
+
+    datas,labels = torch.load(f'/home/chizm/PatchART/data/MNIST/processed/origin_data_{net}_{radius}.pt',map_location=device)
+    # return
+    
+    datas = datas[:repair_number]
+    labels = labels[:repair_number]
+
+    # pgd
+    # pgd1 = PGD(model=model1, eps=radius, alpha=2/255, steps=50, random_start=True)
+    # pgd2 = PGD(model=model2, eps=radius, alpha=2/255, steps=50, random_start=True)
+    # pgd3 = PGD(model=model3, eps=radius, alpha=2/255, steps=50, random_start=True)
+    from torchattacks import AutoAttack
+
+
+    # attack
+    # ori_step = 0
+    # repair_step = 0
+    # pgd_step = 0
+
+    # get bitmap
+    from art.prop import AndProp
+    from art.bisecter import Bisecter
+    repairlist = [(data[0],data[1]) for data in zip(datas, labels)]
+    repair_prop_list = MnistProp.all_props(deeppoly, DataList=repairlist, input_shape= datas.shape[1:], radius= radius)
+    # get the all props after join all l_0 ball feature property
+    # TODO squeeze the property list, which is the same as the number of label
+    all_props = AndProp(props=repair_prop_list)
+    # v = Bisecter(deeppoly, all_props)
+    in_lb, in_ub = all_props.lbub(device)
+    in_bitmap = all_props.bitmap(device)
+
+    bitmap = get_bitmap(in_lb, in_ub, in_bitmap, datas, device)
+
+    p1 = 0
+    p2 = 0
+    p3 = 0
+
+    for ith, (image, label) in enumerate(zip(datas,labels)):
+        image = image.unsqueeze(0).to(device)
+        label = label.unsqueeze(0).to(device)
+
+        # at1 = AutoAttack(model1, norm='Linf', eps=radius, version='standard', verbose=True)
+        # adv_images1 = at1(image, label)
+        # if model1(adv_images1).argmax(dim=1)!= label:
+        #     print("success1")
+        #     p1 += 1
+        # else:
+        #     print("fail")
+        at2 = AutoAttack(model2, norm='Linf', eps=radius, version='standard', verbose=False, bitmap=bitmap)
+        adv_images2 = at2(image, label)
+        if model2(adv_images2, bitmap[ith]).argmax(dim=1) != label:
+            print("success2")
+            p2 += 1
+        else:
+            print("fail")
+        # at3 = AutoAttack(model3, norm='Linf', eps=radius, version='standard', verbose=True)
+        # adv_images3 = at3(image, label)
+        # if model3(adv_images3).argmax(dim=1) != label:
+        #     print("success3")
+        #     p3 += 1
+        # else:
+        #     print("fail")
+        
+        # step1, ori_acc = pgd1.forward_sumsteps(image,label)
+        # step2, repair_acc = pgd2.forward_sumsteps(image,label, device=device, bitmap = [in_lb, in_ub, in_bitmap])
+        # step3, adt_acc = pgd3.forward_sumsteps(image,label)
+        # ori_step += step1
+        # repair_step += step2
+        # pgd_step += step3
+        # if ori_acc == 1:
+        #     p1 += 1
+        # if repair_acc == 1:
+        #     p2 += 1
+        # if adt_acc == 1:
+        #     p3 += 1
+            
+    
+    # print(f"ori_step {ori_step}, repair_step {repair_step}, pgd_step {pgd_step} \\ ori:{p1}, patch:{p2}, adv-train:{p3}")
+    # with open(f'/home/chizm/PatchART/results/mnist/repair/autoattack/compare_autoattack_ac.txt','a') as f:
+    #     f.write(f"For {net} {radius} {data} {patch_format}: \\  ori:{p1}, patch:{p2}, adv-train:{p3} \\ \n")
+    with open(f'/home/chizm/PatchART/results/mnist/repair/autoattack/compare_autoattack_ac.txt','a') as f:
+        f.write(f"For {net} {radius} {repair_number} : {patch_format}_label:{p2}\n")
 
 
 if __name__ == "__main__":
@@ -1013,15 +1122,17 @@ if __name__ == "__main__":
     # stack()
     # compare_pgd_step_length(radius=0.3,repair_number=1000)
 
-    for data in [1000]:
-        # for radius in [0.05,0.1,0.3]:
-        for radius in [0.3]:
-            # for net in ['FNN_small','FNN_big', 'CNN_small']:
-            for net in [ 'CNN_small']:
-                for patch_format in ['small']:
+    # for data in [1000]:
+    for data in [50,100,200,500,1000]:
+        for radius in [0.05,0.1,0.3]:
+            # for radius in [0.3]:
+                for net in ['FNN_small','FNN_big', 'CNN_small']:
+                # for net in [ 'CNN_small']:
+                    for patch_format in ['small', 'big']:
+                        patch_label_autoattack(net, patch_format, radius, data,device='cuda:0')
                     # compare_pgd_step_length(net, patch_format, radius, data)
                     # compare_autoattack(net, patch_format, radius, data)
-                    adv_training_test(net, radius,device='cuda:0')
+                    # adv_training_test(net, radius,device='cuda:0')
     #         pgd_get_data(radius=radius,multi_number=10,data_num=data,general = True)
             # pgd_get_data(net=net,radius=radius,multi_number=10,data_num=1000)
             # grad_none(net = net,radius = radius)

@@ -1,0 +1,474 @@
+{
+    "vgg19": {
+        "4": {
+            "50": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.86
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.78
+                },
+                "label": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            },
+            "100": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.87
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.93
+                },
+                "label": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            },
+            "200": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.885
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.845
+                },
+                "label": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            },
+            "500": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.848
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.82
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            },
+            "1000": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.833
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.751
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            }
+        },
+        "8": {
+            "50": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.84
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.76
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            },
+            "100": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.85
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.87
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            },
+            "200": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.865
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.84
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            },
+            "500": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.88
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.854
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            },
+            "1000": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.875
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.799
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            }
+        }
+    },
+    "resnet18": {
+        "4": {
+            "50": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.84
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.82
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            },
+            "100": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.82
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.91
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            },
+            "200": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.81
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.86
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            },
+            "500": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.788
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.826
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            },
+            "1000": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.803
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.753
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            }
+        },
+        "8": {
+            "50": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.84
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.84
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            },
+            "100": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.87
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.8
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            },
+            "200": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.88
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.86
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            },
+            "500": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.858
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.826
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            },
+            "1000": {
+                "patch": {
+                    "defense success of apgd & apgdt": 0.0
+                },
+                "ori": {
+                    "defense success of apgd & apgdt": 0.856
+                },
+                "adv-train": {
+                    "defense success of apgd & apgdt": 0.798
+                },
+                "label": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "care": {
+                    "defense success of apgd & apgdt": 0
+                },
+                "prdnn": {
+                    "defense success of apgd & apgdt": "None"
+                },
+                "aprnn": {
+                    "defense success of apgd & apgdt": 0.0
+                }
+            }
+        }
+    }
+}

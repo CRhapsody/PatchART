@@ -146,16 +146,28 @@ class AndProp(AbsProp):
         assert nprops > 0
 
         # initialize for 1st prop
-        orig_label = torch.eye(nprops).byte()  # showing each input region which properties they should obey
-        lbs, ubs = props[0].lbub(device=device) # both are 1 * input_dim
-        labels = orig_label[[0]].expand(len(lbs), nprops).to(device) # for 1st prob, labels is 1 * nprob matrix [[1,0,0,...]] 
+
         indentical_name = self.props[0].tex()
+        if 'input' in indentical_name: # mnist or cifar
+            nprops = props[0].LABEL_NUMBER
+            orig_label = torch.eye(nprops).byte()
+        else: #acas
+            orig_label = torch.eye(nprops).byte()  # showing each input region which properties they should obey
+        lbs, ubs = props[0].lbub(device=device) # both are 1 * input_dim
+        if 'input' in indentical_name:
+            zeroth = props[0].fn_args[0]
+            labels = orig_label[[zeroth]].expand(len(lbs), nprops).to(device) # for 1st prob, labels is 1 * nprob matrix [[1,0,0,...]]
+        else:
+            labels = orig_label[[0]].expand(len(lbs), nprops).to(device) # for 1st prob, labels is 1 * nprob matrix [[1,0,0,...]] 
+
         for i, prop in enumerate(props):
             if i == 0:
                 continue
 
             new_lbs, new_ubs = prop.lbub(device=device)
             assert valid_lb_ub(new_lbs, new_ubs)
+            if 'input' in indentical_name:
+                i = props[i].fn_args[0]
             new_labels = orig_label[[i]].expand(len(new_lbs), nprops).to(device)
             if 'feature' not in indentical_name:
                 lbs, ubs, labels = self._join(lbs, ubs, labels, new_lbs, new_ubs, new_labels)
@@ -308,7 +320,18 @@ class AndProp(AbsProp):
             return dists
 
         res = []
-        for i, prop in enumerate(self.props):
+        if 'input' in self.props[0].tex():
+            num_patches = self.labels.size()[-1]
+        else:
+            num_patches = len(self.props)
+        # for i, prop in enumerate(self.props):
+        for i in range(num_patches):
+            if 'input' in self.props[0].tex():
+                for _, prop in enumerate(self.props):
+                    if prop.fn_args[0] == i:
+                        break
+            else:
+                prop = self.props[i]
             bits = bitmap[..., i]
             if not bits.any():
                 # no one here needs to obey this property
@@ -320,6 +343,8 @@ class AndProp(AbsProp):
             bits = bits.nonzero(as_tuple=True)[0]
             assert bits.dim() == 1
             piece_outs = outs[bits]
+            # if piece_outs._lcnst.shape[0] == 2:
+            #     print('debug')
             piece_dists = prop.safe_dist(piece_outs, *args, **kwargs)
             full_dists = torch.zeros(len(bitmap), *piece_dists.size()[1:], device=piece_dists.device)
             full_dists.scatter_(0, bits, piece_dists)

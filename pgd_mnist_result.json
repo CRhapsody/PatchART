@@ -1,0 +1,1196 @@
+{
+    "FNN_small": {
+        "0.05": {
+            "50": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.72
+                },
+                "art": {
+                    "autoattack_success": 0.08
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0.1
+                }
+            },
+            "100": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.68
+                },
+                "art": {
+                    "autoattack_success": 0.08
+                },
+                "care": {
+                    "autoattack_success": 0.99
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0.1
+                }
+            },
+            "200": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.815
+                },
+                "art": {
+                    "autoattack_success": 0.09
+                },
+                "care": {
+                    "autoattack_success": 0.98
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0.1
+                }
+            },
+            "500": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.84
+                },
+                "art": {
+                    "autoattack_success": 0.09
+                },
+                "care": {
+                    "autoattack_success": 0.986
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "1000": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.923
+                },
+                "art": {
+                    "autoattack_success": 0.085
+                },
+                "care": {
+                    "autoattack_success": 0.977
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0
+                }
+            }
+        },
+        "0.1": {
+            "50": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0.08
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0.1
+                }
+            },
+            "100": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.97
+                },
+                "art": {
+                    "autoattack_success": 0.09
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0.1
+                }
+            },
+            "200": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.995
+                },
+                "art": {
+                    "autoattack_success": 0.085
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0.1
+                }
+            },
+            "500": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.998
+                },
+                "art": {
+                    "autoattack_success": 0.09
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "1000": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0.09
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0
+                }
+            }
+        },
+        "0.3": {
+            "50": {
+                "small": {
+                    "autoattack_success": 0.08
+                },
+                "big": {
+                    "autoattack_success": 0.08
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0.08
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0.1
+                }
+            },
+            "100": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.01
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0.08
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0.1
+                }
+            },
+            "200": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.01
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0.09
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0.1
+                }
+            },
+            "500": {
+                "small": {
+                    "autoattack_success": 0.002
+                },
+                "big": {
+                    "autoattack_success": 0.004
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0.088
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "1000": {
+                "small": {
+                    "autoattack_success": 0.003
+                },
+                "big": {
+                    "autoattack_success": 0.004
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0.09
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0
+                }
+            }
+        }
+    },
+    "FNN_big": {
+        "0.05": {
+            "50": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.42
+                },
+                "art": {
+                    "autoattack_success": 0.06
+                },
+                "care": {
+                    "autoattack_success": 0.98
+                },
+                "prdnn": {
+                    "autoattack_success": 0.98
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "100": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.42
+                },
+                "art": {
+                    "autoattack_success": 0.09
+                },
+                "care": {
+                    "autoattack_success": 0.93
+                },
+                "prdnn": {
+                    "autoattack_success": 0.99
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "200": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.57
+                },
+                "art": {
+                    "autoattack_success": 0.095
+                },
+                "care": {
+                    "autoattack_success": 0.955
+                },
+                "prdnn": {
+                    "autoattack_success": 0.975
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "500": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.788
+                },
+                "art": {
+                    "autoattack_success": 0.092
+                },
+                "care": {
+                    "autoattack_success": 0.952
+                },
+                "prdnn": {
+                    "autoattack_success": 0.994
+                },
+                "reassure": {
+                    "autoattack_success": 0
+                }
+            },
+            "1000": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.913
+                },
+                "art": {
+                    "autoattack_success": 0.08
+                },
+                "care": {
+                    "autoattack_success": 0.929
+                },
+                "prdnn": {
+                    "autoattack_success": 0.996
+                },
+                "reassure": {
+                    "autoattack_success": 0
+                }
+            }
+        },
+        "0.1": {
+            "50": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.94
+                },
+                "art": {
+                    "autoattack_success": 0.08
+                },
+                "care": {
+                    "autoattack_success": 0.98
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "100": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.98
+                },
+                "art": {
+                    "autoattack_success": 0.08
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "200": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.925
+                },
+                "art": {
+                    "autoattack_success": 0.085
+                },
+                "care": {
+                    "autoattack_success": 0.985
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "500": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.99
+                },
+                "art": {
+                    "autoattack_success": 0.09
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 0.998
+                },
+                "reassure": {
+                    "autoattack_success": 0
+                }
+            },
+            "1000": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.996
+                },
+                "art": {
+                    "autoattack_success": 0.089
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0
+                }
+            }
+        },
+        "0.3": {
+            "50": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0.08
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "100": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0.08
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "200": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0.09
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "500": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0.088
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0
+                }
+            },
+            "1000": {
+                "small": {
+                    "autoattack_success": 0.001
+                },
+                "big": {
+                    "autoattack_success": 0.001
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0.088
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0
+                }
+            }
+        }
+    },
+    "CNN_small": {
+        "0.05": {
+            "50": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.02
+                },
+                "art": {
+                    "autoattack_success": 0.08
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "100": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.0
+                },
+                "art": {
+                    "autoattack_success": 0.07
+                },
+                "care": {
+                    "autoattack_success": 0.99
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "200": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.125
+                },
+                "art": {
+                    "autoattack_success": 0.075
+                },
+                "care": {
+                    "autoattack_success": 0.99
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "500": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.696
+                },
+                "art": {
+                    "autoattack_success": 0
+                },
+                "care": {
+                    "autoattack_success": 0.986
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0
+                }
+            },
+            "1000": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.957
+                },
+                "art": {
+                    "autoattack_success": 0
+                },
+                "care": {
+                    "autoattack_success": 0.985
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0
+                }
+            }
+        },
+        "0.1": {
+            "50": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.24
+                },
+                "art": {
+                    "autoattack_success": 0.08
+                },
+                "care": {
+                    "autoattack_success": 0.98
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "100": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.25
+                },
+                "art": {
+                    "autoattack_success": 0.08
+                },
+                "care": {
+                    "autoattack_success": 0.99
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "200": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.005
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.785
+                },
+                "art": {
+                    "autoattack_success": 0.085
+                },
+                "care": {
+                    "autoattack_success": 0.995
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "500": {
+                "small": {
+                    "autoattack_success": 0.002
+                },
+                "big": {
+                    "autoattack_success": 0.002
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.934
+                },
+                "art": {
+                    "autoattack_success": 0
+                },
+                "care": {
+                    "autoattack_success": 0.998
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0
+                }
+            },
+            "1000": {
+                "small": {
+                    "autoattack_success": 0.001
+                },
+                "big": {
+                    "autoattack_success": 0.002
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 0.989
+                },
+                "art": {
+                    "autoattack_success": 0
+                },
+                "care": {
+                    "autoattack_success": 0.994
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0
+                }
+            }
+        },
+        "0.3": {
+            "50": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0.08
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "100": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0.09
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "200": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0.09
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 1.0
+                }
+            },
+            "500": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0
+                },
+                "care": {
+                    "autoattack_success": 1.0
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0
+                }
+            },
+            "1000": {
+                "small": {
+                    "autoattack_success": 0.0
+                },
+                "big": {
+                    "autoattack_success": 0.0
+                },
+                "ori": {
+                    "autoattack_success": 1.0
+                },
+                "adv-train": {
+                    "autoattack_success": 1.0
+                },
+                "art": {
+                    "autoattack_success": 0
+                },
+                "care": {
+                    "autoattack_success": 0.1
+                },
+                "prdnn": {
+                    "autoattack_success": 1.0
+                },
+                "reassure": {
+                    "autoattack_success": 0
+                }
+            }
+        }
+    }
+}

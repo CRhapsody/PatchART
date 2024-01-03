@@ -1,20 +1,23 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from mnist.mnist_utils import PhotoProp
 import enum
-import sys
+
 from itertools import product
-from pathlib import Path
+
 from typing import List, Optional, Tuple, Iterable, Sequence, Union
 import torch
 from torch import Tensor, nn
 from DiffAbs.DiffAbs import AbsDom, AbsEle
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from art.prop import OneProp, AndProp
 from art.utils import sample_points
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 from vgg import VGG
-from resnet import ResNet,BasicBlock
+# from resnet import ResNet,BasicBlock
 
 class CifarProp(PhotoProp):
     LABEL_NUMBER = 10
@@ -124,13 +127,27 @@ class Vgg_model(VGG):
         self.dom = AbsDom
         self.classifier = dom.Linear(512, 10)
         # self.sp = dom.Linear(32, 10)
+from torchvision.models.resnet import ResNet, BasicBlock
 
 class Resnet_model(ResNet):
     def __init__(self, dom: AbsDom) -> None:
         super().__init__(BasicBlock, [2, 2, 2, 2])
         self.dom = dom
-        self.linear = dom.Linear(512, 10)
+        self.fc = dom.Linear(512, 10)
         # self.sp = dom.Linear(32, 10)
+    def split(self):
+        return nn.Sequential(
+            self.conv1, 
+            self.bn1, 
+            self.relu,
+            self.maxpool,
+            self.layer1, self.layer2, self.layer3, self.layer4,
+            nn.AdaptiveAvgPool2d((1, 1)),
+            nn.Flatten(),
+            # self.linear
+            ), nn.Sequential(
+                self.fc
+                )
     
 
 

@@ -547,7 +547,9 @@ class Dist(AbsDist):
         # then it needs to surpass everybody else, thus use torch.max() for maximum distance
         
         # diffs, _ = torch.max(all_diffs, dim=-1)
-        positive = all_diffs[all_diffs > 0].unsqueeze(dim=0)
+        # positive = all_diffs[all_diffs > 0].unsqueeze(dim=0).reshape(all_diffs.size()[0], -1)
+        positive = torch.where(all_diffs > 0, all_diffs, torch.zeros_like(all_diffs))
+
         diffs = torch.sum(positive, dim=-1)
         return diffs
 

@@ -143,17 +143,18 @@ class AcasNetID(object):
     def goal_safety_ids(cls, dom: AbsDom) -> List[AcasNetID]:
         """ Those networks with safety violations (i.e., phi2 and phi8), to train to be safe by construction. """
         phi2 = AcasProp.property2(dom)
-        phi8 = AcasProp.property8(dom)
+        # phi8 = AcasProp.property8(dom)
 
-        ids = phi2.applicable.bool() | phi8.applicable.bool()
-        ids = ids.nonzero(as_tuple=False)  # Batch x 2
-        # ids = [AcasNetID(row[0] + 1, row[1] + 1) for row in ids]
+        # ids = phi2.applicable.bool() | phi8.applicable.bool()
+        ids = phi2.applicable.bool()
+        ids = ids.nonzero(as_tuple=False) # Batch x 2
+        ids = [AcasNetID(row[0] + 1, row[1] + 1) for row in ids]
         # ids = [AcasNetID(torch.tensor(2),torch.tensor(9))]
         # ids = [AcasNetID(torch.tensor(2), torch.tensor(1)),AcasNetID(torch.tensor(2), torch.tensor(3)),
         # AcasNetID(torch.tensor(2), torch.tensor(4)),AcasNetID(torch.tensor(2), torch.tensor(6)),
         # AcasNetID(torch.tensor(2), torch.tensor(8))]
         # ids = [AcasNetID(torch.tensor(1),torch.tensor(1)),AcasNetID(torch.tensor(1),torch.tensor(9)),AcasNetID(torch.tensor(2),torch.tensor(9)),AcasNetID(torch.tensor(3),torch.tensor(3)),AcasNetID(torch.tensor(4),torch.tensor(5))]
-        ids = AcasNetID.all_exp_ids()[1:]
+        # ids = AcasNetID.all_exp_ids()[1:]
         return ids
     
     def goal_adv_ids(cls, dom: AbsDom) -> List[AcasNetID]:

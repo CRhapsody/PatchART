@@ -19,7 +19,7 @@ import acas_utils as acas
 from art.prop import AndProp
 from art.bisecter import Bisecter
 from art import exp, utils
-from art.repair_moudle import SupportNet, PatchNet, Netsum, IntersectionNetSum
+from art.repair_moudle import PatchNet, Netsum
 
 RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'acas' / 'repair' / 'debug'
 RES_DIR.mkdir(parents=True, exist_ok=True)
@@ -580,7 +580,8 @@ def _run_repair(nids: List[acas.AcasNetID], args: Namespace):
     res = []
     for nid in nids:
         logging.info(f'For {nid}')
-        args.net = f'{nid.x.numpy().tolist()}_{nid.y.numpy().tolist()}'
+        # args.net = f'{nid.x.numpy().tolist()}_{nid.y.numpy().tolist()}'
+        args.net = f'{nid.x}_{nid.y}'
         outs = repair_acas(nid, args)
         res.append(outs)
 
@@ -635,8 +636,8 @@ def test_goal_accuracy(parser: AcasArgParser):
     defaults = {
         # 'start_abs_cnt': 5000,
         'batch_size': 32,  # to make it faster
-        'min_epochs': 25,
-        'max_epochs': 35
+        'min_epochs': 5,
+        'max_epochs': 25
     }
     parser.set_defaults(**defaults)
     args = parser.parse_args()
@@ -652,7 +653,7 @@ def test_goal_accuracy(parser: AcasArgParser):
 
 
 if __name__ == '__main__':
-    device = torch.device('cuda:7') if torch.cuda.is_available() else torch.device('cpu')
+    device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 
     test_defaults = {
         'exp_fn': 'test_goal_safety',

@@ -1,7 +1,7 @@
 '''VGG11/13/16/19 in Pytorch.'''
 import torch
 import torch.nn as nn
-
+# import torchvision.models.vgg.VGG
 
 cfg = {
     'VGG11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
@@ -29,12 +29,13 @@ class VGG(nn.Module):
         self.linear2 = nn.Linear(512, 512)
         self.classifier = nn.Linear(512, 10)
         self.act = nn.ReLU()
-
+        self.flatten = nn.Flatten()
         # self.sp = nn.Linear(32, 10)
 
     def forward(self, x):
         out = self.features(x)
-        out = out.view(out.size(0), -1)
+        # out = out.view(out.size(0), -1)
+        out = self.flatten(out)
         # out = self.classifier(out)
         # out = self.sp(out)
         out = self.linear1(out)
@@ -42,6 +43,7 @@ class VGG(nn.Module):
         out = self.linear2(out)
         out = self.act(out)
         out = self.classifier(out)
+
         return out
 
     def _make_layers(self, cfg):
@@ -55,7 +57,9 @@ class VGG(nn.Module):
                            nn.BatchNorm2d(x),
                            nn.ReLU(inplace=True)]
                 in_channels = x
-        layers += [nn.AvgPool2d(kernel_size=1, stride=1)]
+        # layers += [nn.AvgPool2d(kernel_size=1, stride=1)]
+        # convert to nn.adaptive_avg_pool2d
+        layers += [nn.AdaptiveAvgPool2d((1, 1))]
         return nn.Sequential(*layers)
     
     def split(self):

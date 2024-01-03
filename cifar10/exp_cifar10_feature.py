@@ -22,15 +22,15 @@ from cifar10_utils import CifarProp, Cifar_feature_patch_model, Resnet_model, Vg
 # from mnist.mnist_utils import MnistNet_CNN_small, MnistNet_FNN_big, MnistNet_FNN_small, MnistProp, Mnist_feature_patch_model
 # from mnist.u import MnistNet, MnistFeatureProp
 torch.manual_seed(10668091966382305352)
-device = torch.device(f'cuda:1')
+device = torch.device(f'cuda:2')
 
 
 
 CIFAR_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'cifar10'
 CIFAR_NET_DIR = Path(__file__).resolve().parent.parent / 'model' / 'cifar10'
-RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'cifar10' / 'repair'
+RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'cifar10' / 'label'
 RES_DIR.mkdir(parents=True, exist_ok=True)
-REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'cifar10_patch_format'
+REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'cifar10_label_format'
 REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -191,48 +191,20 @@ class CifarPoints(exp.ConcIns):
         return cls(inputs, labels)
     pass
 
-def eval_test(net, testset: CifarPoints, bitmap: Tensor, categories=None) -> float:
+def eval_test(net, set: CifarPoints, bitmap: Tensor = None) -> float:
     """ Evaluate accuracy on test set.
     :param categories: e.g., acas.AcasOut
     """
     with torch.no_grad():
-        outs = net(testset.inputs, bitmap)
+        if bitmap is None:
+            outs = net(set.inputs)
+        else:
+            outs = net(set.inputs, bitmap)
         predicted = outs.argmax(dim=1)
-        correct = (predicted == testset.labels).sum().item()
+        correct = (predicted == set.labels).sum().item()
         # ratio = correct / len(testset)
-        ratio = correct / len(testset.inputs)
+        ratio = correct / len(set.inputs)
 
-        # per category
-        if categories is not None:
-            for cat in categories:
-                idxs = testset.labels == cat
-                cat_predicted = predicted[idxs]
-                cat_labels = testset.labels[idxs]
-                cat_correct = (cat_predicted == cat_labels).sum().item()
-                cat_ratio = math.nan if len(cat_labels) == 0 else cat_correct / len(cat_labels)
-                logging.debug(f'--For category {cat}, out of {len(cat_labels)} items, ratio {cat_ratio}')
-    return ratio
-
-def eval_test_init(net, testset: CifarPoints, categories=None) -> float:
-    """ Evaluate accuracy on test set.
-    :param categories: e.g., acas.AcasOut
-    """
-    with torch.no_grad():
-        outs = net(testset.inputs)
-        predicted = outs.argmax(dim=1)
-        correct = (predicted == testset.labels).sum().item()
-        # ratio = correct / len(testset)
-        ratio = correct / len(testset.inputs)
-
-        # per category
-        if categories is not None:
-            for cat in categories:
-                idxs = testset.labels == cat
-                cat_predicted = predicted[idxs]
-                cat_labels = testset.labels[idxs]
-                cat_correct = (cat_predicted == cat_labels).sum().item()
-                cat_ratio = math.nan if len(cat_labels) == 0 else cat_correct / len(cat_labels)
-                logging.debug(f'--For category {cat}, out of {len(cat_labels)} items, ratio {cat_ratio}')
     return ratio
 
 
@@ -263,11 +235,18 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         net = Resnet_model(dom=args.dom)
         fname = f'resnet18.pth'
         fpath = Path(CIFAR_NET_DIR, fname)
+    
 
-
-    net.load_state_dict(torch.load(fpath, map_location=device))
+    net.load_state_dict(torch.load(fpath))
     net.to(device)
 
+    net.eval()
+    # test init accuracy
+    logging.info(f'--Test repair set accuracy {eval_test(net, repairset)}')
+    logging.info(f'--Test original set accuracy {eval_test(net, originalset)}')
+    logging.info(f'--Test test set accuracy {eval_test(net, testset)}')
+    logging.info(f'--Test attack test set accuracy {eval_test(net, attack_testset)}')
+    logging.info(f'--Test train set accuracy {eval_test(net, trainset)}')
     # judge the batch_inputs is in which region of property
     def get_bitmap(in_lb: Tensor, in_ub: Tensor, in_bitmap: Tensor, batch_inputs: Tensor):
         '''
@@ -643,7 +622,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     feature_ub = torch.cat(feature_ub_list)
 
 
-    n_repair = feature_lb.shape[0]
+    # n_repair = feature_lb.shape[0]
     feature_shape = feature_lb.shape[1:]
     # repairlist = [(data[0],data[1]) for data in zip(repairset.inputs, repairset.labels)]
     # repair_prop_list = MnistProp.all_props(args.dom, DataList=repairlist, feature_shape= feature_shape,radius= args.repair_radius)
@@ -692,7 +671,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
     test_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, testset.inputs)
     repairset_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, repairset.inputs)
-    trainset_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, trainset.inputs)
+    # trainset_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, trainset.inputs)
     attack_testset_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, attack_testset.inputs)
 
     # test_bitmap = get_bitmap(feature_lb, feature_ub, feature_bitmap, feature_testset.inputs, feature_testset.labels, repairset.labels, predicted)
@@ -711,10 +690,10 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
 
     # test init accuracy
-    logging.info(f'--Test repair set accuracy {eval_test_init(net, repairset)}')
+    logging.info(f'--Test repair set accuracy {eval_test(net, repairset)}')
 
     patch_lists = []
-
+    n_repair = all_props.labels.shape[1]
     for i in range(n_repair):
         patch_net = Cifar_feature_patch_model(dom=args.dom,
             name = f'feature patch network {i}',input_dimension=feature_shape[0])
@@ -783,7 +762,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     for o in range(args.divided_repair):
         accuracies = []  # epoch 0: ratio
         repair_acc = []
-        train_acc = []
+        # train_acc = []
         attack_test_acc = []
         certified = False
         epoch = 0
@@ -799,7 +778,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
             # param_copy = opti.param_groups[0]['params'].copy()
         opti.param_groups[0]['params'] = opti.param_groups[0]['params'][2:]
 
-        divide_repair_number = int(n_repair/args.divided_repair)
+        divide_repair_number = int(args.repair_number/args.divided_repair)
 
         # get the abstract output from the original network
         if o != args.divided_repair - 1:
@@ -825,7 +804,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
             if not args.no_pts:
                 logging.info(f'Loaded {curr_repairset.real_len()} points for repair.')
                 logging.info(f'Loaded {curr_attack_testset.real_len()} points for attack test.')
-                logging.info(f'Loaded {trainset.real_len()} points for training.')
+                # logging.info(f'Loaded {trainset.real_len()} points for training.')
 
             if not args.no_abs:
                 logging.info(f'Loaded {len(curr_abs_lb)} abstractions for training.')
@@ -850,14 +829,14 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
             # repair_acc.append(eval_test(repair_net, feature_repairset, bitmap = curr_repairset_bitmap))
             repair_acc.append(eval_test(repair_net, curr_repairset, bitmap = curr_repairset_bitmap))
 
-            train_acc.append(eval_test(repair_net, feature_trainset, bitmap = trainset_bitmap))
+            # train_acc.append(eval_test(repair_net, feature_trainset, bitmap = trainset_bitmap))
 
             # attack_test_acc.append(eval_test(repair_net, feature_attack_testset, bitmap = curr_attack_testset_bitmap))
             attack_test_acc.append(eval_test(repair_net, curr_attack_testset, bitmap = curr_attack_testset_bitmap))
 
             logging.info(f'Test set accuracy {accuracies[-1]}.')
             logging.info(f'repair set accuracy {repair_acc[-1]}.')
-            logging.info(f'train set accuracy {train_acc[-1]}.')
+            # logging.info(f'train set accuracy {train_acc[-1]}.')
             logging.info(f'attacked test set accuracy {attack_test_acc[-1]}.')
 
             # check termination
@@ -988,7 +967,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                     f'eventually the trained network got certified? {certified}, ' +
                     f'with {accuracies[-1]:.4f} accuracy on test set,' +
                     f'with {repair_acc[-1]:.4f} accuracy on repair set,' +
-                    f'with {train_acc[-1]:.4f} accuracy on train set,' +
+                    # f'with {train_acc[-1]:.4f} accuracy on train set,' +
                     f'with {attack_test_acc[-1]:.4f} accuracy on attack test set.')
         # torch.save(repair_net.state_dict(), str(REPAIR_MODEL_DIR / '2_9.pt'))
         # net.save_nnet(f'./ART_{nid.x.numpy().tolist()}_{nid.y.numpy().tolist()}_repair2p_noclamp_epoch_{epoch}.nnet',
@@ -1002,7 +981,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     # logging.info(f'--Test attack test set accuracy {eval_test(repair_net, attack_testset, bitmap = attack_testset_bitmap)}')
     logging.info(f'--Test set accuracy {eval_test(repair_net, feature_testset, bitmap = test_bitmap)}')
     logging.info(f'--Test repair set accuracy {eval_test(repair_net, feature_repairset, bitmap = repairset_bitmap)}')
-    logging.info(f'--Test train set accuracy {eval_test(repair_net, feature_trainset, bitmap = trainset_bitmap)}')
+    # logging.info(f'--Test train set accuracy {eval_test(repair_net, feature_trainset, bitmap = trainset_bitmap)}')
     logging.info(f'--Test attack test set accuracy {eval_test(repair_net, feature_attack_testset, bitmap = attack_testset_bitmap)}')
     logging.info(f'traing time {timer() - start}s')
     
@@ -1106,6 +1085,7 @@ if __name__ == '__main__':
 
 
    # for net in ['FNN_small', 'FNN_big', 'CNN_small']:
+    # for net in ['vgg19', 'resnet18']:
     # for net in ['resnet18']:
     for net in ['vgg19']:
         # for patch_size in ['small', 'big']:
@@ -1113,7 +1093,8 @@ if __name__ == '__main__':
             for radius in [4,8]: 
 
             # for radius in [0.05,0.1,0.3]: #,0.1,0.3
-                # for repair_number,test_number in zip([1000],[10000]):
+                # for repair_number,test_number in zip([200],[2000]):
+                # for repair_number,test_number in zip([50],[500]):
                 # for repair_number,test_number in zip([1000],[10000]):
                 for repair_number,test_number in zip([50,100,200,500,1000],[500,1000,2000,5000,10000]):
                     # if radius == 4 and (repair_number == 50 or repair_number == 100 or repair_number == 200):

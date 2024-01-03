@@ -525,8 +525,12 @@ def bisect_by(lb: Tensor, ub: Tensor, idxs: Tensor,
     :param extra: if not None, it contains the bit vector for each LB/UB piece showing which prop they should obey
     """
     # scatter_() to convert indices into one-hot encoding
-    split_idxs = idxs.unsqueeze(dim=-1)  # Batch x 1
-    onehot_idxs = torch.zeros_like(lb).byte().scatter_(-1, split_idxs, 1)
+    if lb.dim() == 2:
+        split_idxs = idxs.unsqueeze(dim=-1)  # Batch x 1
+        onehot_idxs = torch.zeros_like(lb).byte().scatter_(-1, split_idxs, 1)
+    elif lb.dim() == 4:
+        split_idxs = idxs.unsqueeze(dim=1).unsqueeze(dim=1)
+        onehot_idxs = torch.zeros_like(lb).byte().scatter_(-1, split_idxs, 1)
 
     # then bisect the specified cols only
     mid = (lb + ub) / 2.0
