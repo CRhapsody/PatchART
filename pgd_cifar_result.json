@@ -81,7 +81,7 @@
                     "defense success of apgd & apgdt": 0.82
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0.0
@@ -104,7 +104,7 @@
                     "defense success of apgd & apgdt": 0.751
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0.0
@@ -129,7 +129,7 @@
                     "defense success of apgd & apgdt": 0.76
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0.0
@@ -152,7 +152,7 @@
                     "defense success of apgd & apgdt": 0.87
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0.0
@@ -175,7 +175,7 @@
                     "defense success of apgd & apgdt": 0.84
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0.0
@@ -198,7 +198,7 @@
                     "defense success of apgd & apgdt": 0.854
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0.0
@@ -221,7 +221,7 @@
                     "defense success of apgd & apgdt": 0.799
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0.0
@@ -248,7 +248,7 @@
                     "defense success of apgd & apgdt": 0.82
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0
@@ -271,7 +271,7 @@
                     "defense success of apgd & apgdt": 0.91
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0
@@ -294,7 +294,7 @@
                     "defense success of apgd & apgdt": 0.86
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0
@@ -317,7 +317,7 @@
                     "defense success of apgd & apgdt": 0.826
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0
@@ -340,7 +340,7 @@
                     "defense success of apgd & apgdt": 0.753
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0
@@ -365,7 +365,7 @@
                     "defense success of apgd & apgdt": 0.84
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0
@@ -388,7 +388,7 @@
                     "defense success of apgd & apgdt": 0.8
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0
@@ -411,7 +411,7 @@
                     "defense success of apgd & apgdt": 0.86
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0
@@ -434,7 +434,7 @@
                     "defense success of apgd & apgdt": 0.826
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0
@@ -457,7 +457,7 @@
                     "defense success of apgd & apgdt": 0.798
                 },
                 "label": {
-                    "defense success of apgd & apgdt": "None"
+                    "defense success of apgd & apgdt": 0.0
                 },
                 "care": {
                     "defense success of apgd & apgdt": 0

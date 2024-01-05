@@ -1,21 +1,60 @@
- For resnet18 50 0.01568627450980392 : \  ori:30, patch:22, adv-train:46 \ 
-For resnet18 100 0.01568627450980392 : \  ori:59, patch:32, adv-train:90 \ 
-For resnet18 200 0.01568627450980392 : \  ori:124, patch:81, adv-train:141 \ 
-For resnet18 500 0.01568627450980392 : \  ori:314, patch:190, adv-train:388 \ 
-For resnet18 1000 0.01568627450980392 : \  ori:648, patch:358, adv-train:638 \ 
-For resnet18 50 0.03137254901960784 : \  ori:26, patch:9, adv-train:40 \ 
-For resnet18 100 0.03137254901960784 : \  ori:50, patch:17, adv-train:75 \ 
-For resnet18 200 0.03137254901960784 : \  ori:114, patch:43, adv-train:150 \ 
-For resnet18 500 0.03137254901960784 : \  ori:309, patch:104, adv-train:347 \ 
-For resnet18 1000 0.03137254901960784 : \  ori:614, patch:194, adv-train:663 \ 
- 
-For vgg19 50 0.01568627450980392 : \  ori:31, patch:0, adv-train:36 \ 
-For vgg19 100 0.01568627450980392 : \  ori:60, patch:0, adv-train:76 \ 
-For vgg19 200 0.01568627450980392 : \  ori:128, patch:0, adv-train:139 \ 
-For vgg19 500 0.01568627450980392 : \  ori:334, patch:0, adv-train:366 \ 
-For vgg19 1000 0.01568627450980392 : \  ori:626, patch:0, adv-train:647 \ 
-For vgg19 50 0.03137254901960784 : \  ori:31, patch:0, adv-train:38 \ 
-For vgg19 100 0.03137254901960784 : \  ori:63, patch:0, adv-train:79 \ 
-For vgg19 200 0.03137254901960784 : \  ori:126, patch:0, adv-train:165 \ 
-For vgg19 500 0.03137254901960784 : \  ori:299, patch:0, adv-train:376 \ 
-For vgg19 1000 0.03137254901960784 : \  ori:610, patch:0, adv-train:738 \ 
+For resnet18 50 4 : ori:30, patch:22, adv-train:46
+For resnet18 100 4 : ori:59, patch:32, adv-train:90
+For resnet18 200 4 : ori:124, patch:81, adv-train:141
+For resnet18 500 4 : ori:314, patch:190, adv-train:388
+For resnet18 1000 4 : ori:648, patch:358, adv-train:638
+For resnet18 50 8 : ori:26, patch:9, adv-train:40
+For resnet18 100 8 : ori:50, patch:17, adv-train:75
+For resnet18 200 8 : ori:114, patch:43, adv-train:150
+For resnet18 500 8 : ori:309, patch:104, adv-train:347
+For resnet18 1000 8 : ori:614, patch:194, adv-train:663
+For vgg19 50 4 : ori:31, patch:0, adv-train:40
+For vgg19 100 4 : ori:60, patch:0, adv-train:87
+For vgg19 200 4 : ori:128, patch:0, adv-train:167
+For vgg19 500 4 : ori:333, patch:0, adv-train:400
+For vgg19 1000 4 : ori:626, patch:0, adv-train:751
+For vgg19 50 8 : ori:31, patch:0, adv-train:39
+For vgg19 100 8 : ori:64, patch:0, adv-train:84
+For vgg19 200 8 : ori:126, patch:0, adv-train:170
+For vgg19 500 8 : ori:302, patch:0, adv-train:426
+For vgg19 1000 8 : ori:612, patch:0, adv-train:828
+For vgg19 50 4 : ori:43, patch:0, adv-train:39
+For vgg19 100 4 : ori:87, patch:0, adv-train:93
+For vgg19 200 4 : ori:177, patch:0, adv-train:169
+For vgg19 500 4 : ori:424, patch:0, adv-train:410
+For vgg19 1000 4 : ori:833, patch:0, adv-train:751
+For resnet18 50 4 : ori:42, patch:0, adv-train:41
+For resnet18 100 4 : ori:82, patch:0, adv-train:91
+For resnet18 200 4 : ori:162, patch:0, adv-train:172
+For resnet18 500 4 : ori:394, patch:0, adv-train:413
+For resnet18 1000 4 : ori:803, patch:0, adv-train:753
+For vgg19 50 8 : ori:42, patch:0, adv-train:38
+For vgg19 100 8 : ori:85, patch:0, adv-train:87
+For vgg19 200 8 : ori:173, patch:0, adv-train:168
+For vgg19 500 8 : ori:440, patch:0, adv-train:427
+For vgg19 1000 8 : ori:875, patch:0, adv-train:799
+For resnet18 50 8 : ori:42, patch:0, adv-train:42
+For resnet18 100 8 : ori:87, patch:0, adv-train:80
+For resnet18 200 8 : ori:176, patch:0, adv-train:172
+For resnet18 500 8 : ori:429, patch:0, adv-train:413
+For resnet18 1000 8 : ori:856, patch:0, adv-train:798
+For vgg19 50 4 : label:0
+For vgg19 100 4 : label:0
+For vgg19 200 4 : label:0
+For vgg19 500 4 : label:0
+For vgg19 1000 4 : label:0
+For resnet18 50 4 : label:0
+For resnet18 100 4 : label:0
+For resnet18 200 4 : label:0
+For resnet18 500 4 : label:0
+For resnet18 1000 4 : label:0
+For vgg19 50 8 : label:0
+For vgg19 100 8 : label:0
+For vgg19 200 8 : label:0
+For vgg19 500 8 : label:0
+For vgg19 1000 8 : label:0
+For resnet18 50 8 : label:0
+For resnet18 100 8 : label:0
+For resnet18 200 8 : label:0
+For resnet18 500 8 : label:0
+For resnet18 1000 8 : label:0

@@ -270,7 +270,8 @@ class Netsum(nn.Module):
                 '''
                 bits = bits.nonzero(as_tuple=True)[0]
                 if isinstance(out, Tensor):
-                    out[bits] += patch(x[bits])
+                    p_out = patch(x)
+                    out[bits] += p_out[bits]
                 elif isinstance(out, AbsEle):
                     replace_item = out[bits] + patch(x[bits]) # may not only one prop
                     out.replace(in_bitmap[..., i], replace_item)
@@ -410,7 +411,7 @@ class NetFeatureSumPatch(nn.Module):
         self.feature_extractor = feature_extractor
         self.feature_sumnet = feature_sumnet
 
-    def forward(self, x, bitmap):
+    def forward(self, x, bitmap = None):
         feature = self.feature_extractor(x)
         out = self.feature_sumnet(feature, bitmap)
         return out

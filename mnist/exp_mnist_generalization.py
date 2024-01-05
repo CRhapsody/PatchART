@@ -35,12 +35,17 @@ device = torch.device(f'cuda:2')
 MNIST_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'MNIST' / 'processed'
 MNIST_NET_DIR = Path(__file__).resolve().parent.parent / 'model' /'mnist'
 # MNIST_NET_DIR = Path(__file__).resolve().parent.parent / 'pgd' /'model' 
-# RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'generalization' / 'origin'
-RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'generalization' / 'label'
+RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'generalization' / 'origin'
 RES_DIR.mkdir(parents=True, exist_ok=True)
-# REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'patch_format'
-REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'mnist_label_format'
+
+RES_DIR_LABEL = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'generalization' / 'label'
+RES_DIR_LABEL.mkdir(parents=True, exist_ok=True)
+
+REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'patch_format'
+# REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'mnist_label_format'
 REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
+LABEL_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'mnist_label_format' 
+LABEL_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 COMP_DIR = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'generalization' / 'compare'
 COMP_DIR.mkdir(parents=True, exist_ok=True)
@@ -186,11 +191,15 @@ def test_repaired(args: Namespace) -> float:
     # original_net = eval(f'MnistNet_{args.net}(dom = {args.dom})').to(device)
     if args.net == 'CNN_small':
         original_net = MnistNet_CNN_small(dom=args.dom)
+        for_repair_net = MnistNet_CNN_small(dom=args.dom)
     elif args.net == 'FNN_big':
         original_net = MnistNet_FNN_big(dom=args.dom)
+        for_repair_net = MnistNet_FNN_big(dom=args.dom)
     elif args.net == 'FNN_small':
         original_net = MnistNet_FNN_small(dom=args.dom)
+        for_repair_net = MnistNet_FNN_small(dom=args.dom)
     original_net.to(device)
+    original_net.load_state_dict(torch.load(Path(MNIST_NET_DIR, f'mnist_{args.net}.pth')))
     patch_lists = []
     for i in range(args.repair_number):
         patch_net = Mnist_patch_model(dom=args.dom,
@@ -199,8 +208,10 @@ def test_repaired(args: Namespace) -> float:
     logging.info(f'--big patch network: {patch_net}')
 
     # load the repaired model
+    # for_repair_net.load_state_dict(torch.load(Path(REPAIR_MODEL_DIR, f'Mnist-{args.net}-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-{args.patch_size}.pt')))
+    for_repair_net.to(device)
     state = torch.load(Path(REPAIR_MODEL_DIR, f'Mnist-{args.net}-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-{args.patch_size}.pt'))
-    repaired_net = Netsum(args.dom, original_net, patch_lists, device=device,
+    repaired_net = Netsum(args.dom, for_repair_net, patch_lists, device=device,
                           generalization=True)
     repaired_net.load_state_dict(state)
     # load the dataset
@@ -309,7 +320,7 @@ def test_repaired(args: Namespace) -> float:
     logging.info(f'--For testset, out of {len(testset)} items, ratio {ratio}')
 
     logging.info(f'--evaluate the repaired net on testset and get the bitmap')
-    ratio = eval_test(repaired_net, testset, repair_hash_table = assign_table, generalization=True)
+    ratio = eval_test(repaired_net)
     logging.info(f'--For testset, out of {len(testset)} items, ratio {ratio}')
 
 
@@ -477,10 +488,13 @@ def test_label_repaired(args: Namespace) -> float:
     logging.info(f'--test_label_repaired')
     if args.net == 'CNN_small':
         original_net = MnistNet_CNN_small(dom=args.dom)
+        for_repair_net = MnistNet_CNN_small(dom=args.dom)
     elif args.net == 'FNN_big':
         original_net = MnistNet_FNN_big(dom=args.dom)
+        for_repair_net = MnistNet_FNN_big(dom=args.dom)
     elif args.net == 'FNN_small':
         original_net = MnistNet_FNN_small(dom=args.dom)
+        for_repair_net = MnistNet_FNN_small(dom=args.dom)
     original_net.to(device)
     patch_lists = []
     for i in range(10):
@@ -490,8 +504,9 @@ def test_label_repaired(args: Namespace) -> float:
     logging.info(f'--big patch network: {patch_net}')
 
     # load the repaired model
-    state = torch.load(Path(REPAIR_MODEL_DIR, f'Mnist-{args.net}-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-{args.patch_size}.pt'))
-    repaired_net = Netsum(args.dom, original_net, patch_lists, device=device,
+    state = torch.load(Path(LABEL_MODEL_DIR, f'Mnist-{args.net}-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-{args.patch_size}.pt'))
+    for_repair_net.to(device)
+    repaired_net = Netsum(args.dom, for_repair_net, patch_lists, device=device,
                           generalization=True, is_label_repaired=args.label_repaired)
     repaired_net.load_state_dict(state)
     # load the dataset
@@ -757,7 +772,10 @@ def test(lr:float = 0.005, net:str = 'CNN_small',repair_radius:float = 0.1, repa
 
         
     }
-    parser = MnistArgParser(RES_DIR, description='MNIST Correct by Construction')
+    if args.label_repaired:
+        parser = MnistArgParser(RES_DIR_LABEL, description='MNIST Correct by Construction, label repaired')
+    else:
+        parser = MnistArgParser(RES_DIR, description='MNIST Correct by Construction')
     parser.set_defaults(**test_defaults)
     args, _ = parser.parse_known_args()
 

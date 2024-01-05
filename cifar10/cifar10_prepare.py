@@ -975,7 +975,7 @@ def patch_label_autoattack(net,
     
     # print(f"ori_step {ori_step}, repair_step {repair_step}, pgd_step {pgd_step} \\ ori:{p1}, patch:{p2}, adv-train:{p3}")
     with open(f'/home/chizm/PatchART/results/cifar10/repair/autoattack/compare_autoattack_ac.txt','a') as f:
-        f.write(f"For {net} {radius} {repair_number} : label:{p2}\n")
+        f.write(f"For {net} {repair_number} {radius} : label:{p2}\n")
 if __name__ == '__main__':
     # training('vgg19','cuda:0')
     # get_dataset()
@@ -999,9 +999,11 @@ if __name__ == '__main__':
                     # grad_none(net,radius=radius)
         # for net in ['resnet18']:
         #     for radius in [4,8]:
-                for repair_num in [50,100,200,500,1000]:  
-                    # compare_autoattack(net,radius_bit=radius, repair_number=repair_num)
-                    patch_label_autoattack(net,radius_bit=radius, repair_number=repair_num,device='cuda:1')
+                for repair_num in [50,100,200,500,1000]: 
+                    if net == 'vgg19' and radius == 4 and (repair_num == 50 or repair_num == 100 or repair_num == 200):
+                        continue
+                    compare_autoattack(net,radius_bit=radius, repair_number=repair_num)
+                    # patch_label_autoattack(net,radius_bit=radius, repair_number=repair_num,device='cuda:1')
         # for net in ['resnet18']:
         #     for radius in [4]:
         #         for repair_num in [50,100,200,500,1000]:
