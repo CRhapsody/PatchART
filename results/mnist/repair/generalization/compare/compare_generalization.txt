@@ -1,0 +1,228 @@
+For net: CNN_small, radius: 0.05, repair_number: 50, adv_training:1.0, PatchRepair:0.9663, original:0.7064
+For net: CNN_small, radius: 0.05, repair_number: 100, adv_training:1.0, PatchRepair:0.9827, original:0.7064
+For net: CNN_small, radius: 0.05, repair_number: 200, adv_training:1.0, PatchRepair:0.9827, original:0.7071
+For net: CNN_small, radius: 0.05, repair_number: 500, adv_training:1.0, PatchRepair:0.9827, original:0.7062
+For net: CNN_small, radius: 0.05, repair_number: 1000, adv_training:1.0, PatchRepair:0.9827, original:0.7065
+For net: CNN_small, radius: 0.1, repair_number: 50, adv_training:0.9995, PatchRepair:0.9823, original:0.0814
+For net: CNN_small, radius: 0.1, repair_number: 100, adv_training:0.9998, PatchRepair:0.982, original:0.082
+For net: CNN_small, radius: 0.1, repair_number: 200, adv_training:0.9997, PatchRepair:0.9824, original:0.0813
+For net: CNN_small, radius: 0.1, repair_number: 500, adv_training:0.9996, PatchRepair:0.9825, original:0.0814
+For net: CNN_small, radius: 0.1, repair_number: 1000, adv_training:0.9995, PatchRepair:0.9826, original:0.0818
+For net: CNN_small, radius: 0.3, repair_number: 50, adv_training:0.8531, PatchRepair:0.9827, original:0.0
+For net: CNN_small, radius: 0.3, repair_number: 100, adv_training:0.8211, PatchRepair:0.9827, original:0.0
+For net: CNN_small, radius: 0.3, repair_number: 200, adv_training:0.8581, PatchRepair:0.9827, original:0.0
+For net: CNN_small, radius: 0.3, repair_number: 500, adv_training:0.851, PatchRepair:0.9827, original:0.0
+For net: CNN_small, radius: 0.3, repair_number: 1000, adv_training:0.8459, PatchRepair:0.982, original:0.0
+For net: FNN_small, radius: 0.05, repair_number: 50, adv_training:0.9935, PatchRepair:0.8998, original:0.0997
+For net: FNN_small, radius: 0.05, repair_number: 100, adv_training:0.9941, PatchRepair:0.9645, original:0.0993
+For net: FNN_small, radius: 0.05, repair_number: 200, adv_training:0.9942, PatchRepair:0.9658, original:0.0995
+For net: FNN_small, radius: 0.05, repair_number: 500, adv_training:0.9928, PatchRepair:0.9656, original:0.0998
+For net: FNN_small, radius: 0.05, repair_number: 1000, adv_training:0.9937, PatchRepair:0.9658, original:0.0994
+For net: FNN_small, radius: 0.1, repair_number: 50, adv_training:0.8435, PatchRepair:0.9625, original:0.0002
+For net: FNN_small, radius: 0.1, repair_number: 100, adv_training:0.8609, PatchRepair:0.9496, original:0.0002
+For net: FNN_small, radius: 0.1, repair_number: 200, adv_training:0.8769, PatchRepair:0.9525, original:0.0002
+For net: FNN_small, radius: 0.1, repair_number: 500, adv_training:0.8548, PatchRepair:0.9529, original:0.0002
+For net: FNN_small, radius: 0.1, repair_number: 1000, adv_training:0.8786, PatchRepair:0.9653, original:0.0002
+For net: FNN_small, radius: 0.3, repair_number: 50, adv_training:0.1135, PatchRepair:0.868, original:0.0
+For net: FNN_small, radius: 0.3, repair_number: 100, adv_training:0.1135, PatchRepair:0.962, original:0.0
+
+For net: FNN_small, radius: 0.3, repair_number: 200, adv_training:0.1135, PatchRepair:0.9115, original:0.0
+For net: FNN_small, radius: 0.3, repair_number: 500, adv_training:0.1135, PatchRepair:0.9205, original:0.0
+For net: FNN_small, radius: 0.3, repair_number: 1000, adv_training:0.1135, PatchRepair:0.9655, original:0.0
+
+For net: FNN_big, radius: 0.05, repair_number: 50, adv_training:1.0, PatchRepair:0.9703, original:0.4047
+
+For net: FNN_big, radius: 0.05, repair_number: 100, adv_training:1.0, PatchRepair:0.9712, original:0.405
+
+For net: FNN_big, radius: 0.05, repair_number: 200, adv_training:1.0, PatchRepair:0.9709, original:0.4049
+
+For net: FNN_big, radius: 0.05, repair_number: 500, adv_training:0.9999, PatchRepair:0.9718, original:0.4052
+For net: FNN_big, radius: 0.05, repair_number: 1000, adv_training:1.0, PatchRepair:0.9718, original:0.4051
+For net: FNN_big, radius: 0.1, repair_number: 50, adv_training:0.9807, PatchRepair:0.9713, original:0.0154
+For net: FNN_big, radius: 0.1, repair_number: 100, adv_training:0.9818, PatchRepair:0.9715, original:0.0156
+For net: FNN_big, radius: 0.1, repair_number: 200, adv_training:0.9817, PatchRepair:0.9709, original:0.0157
+For net: FNN_big, radius: 0.1, repair_number: 500, adv_training:0.9776, PatchRepair:0.9716, original:0.0155
+For net: FNN_big, radius: 0.1, repair_number: 1000, adv_training:0.9727, PatchRepair:0.9718, original:0.0156
+For net: FNN_big, radius: 0.3, repair_number: 50, adv_training:0.0207, PatchRepair:0.9604, original:0.0
+For net: FNN_big, radius: 0.3, repair_number: 100, adv_training:0.1135, PatchRepair:0.9675, original:0.0
+
+
+
+For net: CNN_small, radius: 0.05, repair_number: 50, adv_training:0.7413, PatchRepair:0.9663, original:0.7062
+For net: CNN_small, radius: 0.05, repair_number: 100, adv_training:0.8196, PatchRepair:0.9827, original:0.7068
+For net: CNN_small, radius: 0.05, repair_number: 200, adv_training:0.8613, PatchRepair:0.9827, original:0.7057
+For net: CNN_small, radius: 0.05, repair_number: 500, adv_training:0.8038, PatchRepair:0.9827, original:0.7064
+For net: CNN_small, radius: 0.05, repair_number: 1000, adv_training:0.7059, PatchRepair:0.9827, original:0.7066
+For net: CNN_small, radius: 0.1, repair_number: 50, adv_training:0.5095, PatchRepair:0.9822, original:0.0813
+For net: CNN_small, radius: 0.1, repair_number: 100, adv_training:0.5783, PatchRepair:0.9819, original:0.0819
+For net: CNN_small, radius: 0.1, repair_number: 200, adv_training:0.4976, PatchRepair:0.9824, original:0.0827
+For net: CNN_small, radius: 0.1, repair_number: 500, adv_training:0.4648, PatchRepair:0.9825, original:0.0821
+For net: CNN_small, radius: 0.1, repair_number: 1000, adv_training:0.2822, PatchRepair:0.9826, original:0.0822
+For net: CNN_small, radius: 0.3, repair_number: 50, adv_training:0.0, PatchRepair:0.9827, original:0.0
+For net: CNN_small, radius: 0.3, repair_number: 100, adv_training:0.0, PatchRepair:0.9827, original:0.0
+For net: CNN_small, radius: 0.3, repair_number: 200, adv_training:0.0, PatchRepair:0.9827, original:0.0
+For net: CNN_small, radius: 0.3, repair_number: 500, adv_training:0.0, PatchRepair:0.9827, original:0.0
+For net: CNN_small, radius: 0.3, repair_number: 1000, adv_training:0.0, PatchRepair:0.9821, original:0.0
+For net: FNN_small, radius: 0.05, repair_number: 50, adv_training:0.1009, PatchRepair:0.8996, original:0.0997
+For net: FNN_small, radius: 0.05, repair_number: 100, adv_training:0.3129, PatchRepair:0.9643, original:0.0995
+For net: FNN_small, radius: 0.05, repair_number: 200, adv_training:0.5425, PatchRepair:0.9658, original:0.0996
+For net: FNN_small, radius: 0.05, repair_number: 500, adv_training:0.6043, PatchRepair:0.9656, original:0.0997
+For net: FNN_small, radius: 0.05, repair_number: 1000, adv_training:0.5996, PatchRepair:0.9658, original:0.1
+For net: FNN_small, radius: 0.1, repair_number: 50, adv_training:0.0687, PatchRepair:0.9628, original:0.0002
+For net: FNN_small, radius: 0.1, repair_number: 100, adv_training:0.1856, PatchRepair:0.9504, original:0.0002
+For net: FNN_small, radius: 0.1, repair_number: 200, adv_training:0.1899, PatchRepair:0.952, original:0.0002
+For net: FNN_small, radius: 0.1, repair_number: 500, adv_training:0.1433, PatchRepair:0.9527, original:0.0002
+For net: FNN_small, radius: 0.1, repair_number: 1000, adv_training:0.0979, PatchRepair:0.9652, original:0.0002
+For net: FNN_small, radius: 0.3, repair_number: 50, adv_training:0.0, PatchRepair:0.8637, original:0.0
+For net: FNN_small, radius: 0.3, repair_number: 100, adv_training:0.0006, PatchRepair:0.9621, original:0.0
+For net: FNN_small, radius: 0.3, repair_number: 200, adv_training:0.0, PatchRepair:0.9081, original:0.0
+For net: FNN_small, radius: 0.3, repair_number: 500, adv_training:0.0, PatchRepair:0.9197, original:0.0
+For net: FNN_small, radius: 0.3, repair_number: 1000, adv_training:0.0001, PatchRepair:0.9656, original:0.0
+
+For net: FNN_big, radius: 0.3, repair_number: 200, adv_training:0.1135, PatchRepair:0.9714, original:0.0
+For net: FNN_big, radius: 0.05, repair_number: 50, adv_training:0.1961, PatchRepair:0.9702, original:0.4051
+For net: FNN_big, radius: 0.3, repair_number: 500, adv_training:0.1135, PatchRepair:0.9716, original:0.0
+For net: FNN_big, radius: 0.3, repair_number: 1000, adv_training:0.1135, PatchRepair:0.9715, original:0.0
+For net: FNN_big, radius: 0.05, repair_number: 100, adv_training:0.3745, PatchRepair:0.9712, original:0.4052
+For net: FNN_big, radius: 0.05, repair_number: 200, adv_training:0.6339, PatchRepair:0.9709, original:0.4055
+For net: FNN_big, radius: 0.05, repair_number: 500, adv_training:0.6754, PatchRepair:0.9718, original:0.405
+For net: FNN_big, radius: 0.05, repair_number: 1000, adv_training:0.694, PatchRepair:0.9718, original:0.405
+For net: FNN_big, radius: 0.1, repair_number: 50, adv_training:0.0926, PatchRepair:0.9713, original:0.0152
+For net: FNN_big, radius: 0.1, repair_number: 100, adv_training:0.1928, PatchRepair:0.9714, original:0.0154
+For net: FNN_big, radius: 0.1, repair_number: 200, adv_training:0.2532, PatchRepair:0.9709, original:0.0154
+For net: FNN_big, radius: 0.1, repair_number: 500, adv_training:0.1637, PatchRepair:0.9717, original:0.0153
+For net: FNN_big, radius: 0.1, repair_number: 1000, adv_training:0.1325, PatchRepair:0.9718, original:0.0151
+For net: FNN_big, radius: 0.3, repair_number: 50, adv_training:0.0, PatchRepair:0.9603, original:0.0
+For net: FNN_big, radius: 0.3, repair_number: 100, adv_training:0.0, PatchRepair:0.9669, original:0.0
+For net: FNN_big, radius: 0.3, repair_number: 200, adv_training:0.0, PatchRepair:0.9715, original:0.0
+For net: FNN_big, radius: 0.3, repair_number: 500, adv_training:0.0, PatchRepair:0.9717, original:0.0
+For net: FNN_big, radius: 0.3, repair_number: 1000, adv_training:0.0, PatchRepair:0.9716, original:0.0
+For net: FNN_small, radius: 0.05, repair_number: 50, prdnn:0.0318, care:0.0889, art:0.0892
+For net: FNN_small, radius: 0.1, repair_number: 50, prdnn:0.0001, care:0.0002, art:0.0958
+For net: FNN_small, radius: 0.3, repair_number: 50, prdnn:0.0, care:0.0, art:0.0974
+For net: FNN_small, radius: 0.05, repair_number: 100, prdnn:0.0515, care:0.0929, art:0.1135
+For net: FNN_small, radius: 0.1, repair_number: 100, prdnn:0.0, care:0.0001, art:0.0958
+For net: FNN_small, radius: 0.3, repair_number: 100, prdnn:0.0, care:0.0, art:0.0958
+For net: FNN_small, radius: 0.05, repair_number: 200, prdnn:0.0107, care:0.0859, art:0.101
+For net: FNN_small, radius: 0.1, repair_number: 200, prdnn:0.0, care:0.0002, art:0.101
+For net: FNN_small, radius: 0.3, repair_number: 200, prdnn:0.0, care:0.0, art:0.0958
+For net: FNN_small, radius: 0.05, repair_number: 500, prdnn:0.0053, care:0.0829, art:0.0892
+For net: FNN_small, radius: 0.1, repair_number: 500, prdnn:0.0, care:0.0, art:0.098
+For net: FNN_small, radius: 0.3, repair_number: 500, prdnn:0.0, care:0.0, art:0.1028
+For net: FNN_small, radius: 0.05, repair_number: 1000, prdnn:0.0021, care:0.0614, art:0.1135
+For net: FNN_small, radius: 0.1, repair_number: 1000, prdnn:0.0, care:0.0, art:0.098
+For net: FNN_small, radius: 0.3, repair_number: 1000, prdnn:0.0, care:0.0, art:0.098
+For net: FNN_big, radius: 0.05, repair_number: 50, prdnn:0.3832, care:0.3767, art:0.1135
+For net: FNN_big, radius: 0.1, repair_number: 50, prdnn:0.0071, care:0.0259, art:0.0974
+For net: FNN_big, radius: 0.3, repair_number: 50, prdnn:0.0, care:0.0, art:0.1135
+For net: FNN_big, radius: 0.05, repair_number: 100, prdnn:0.3981, care:0.3571, art:0.1032
+For net: FNN_big, radius: 0.1, repair_number: 100, prdnn:0.0092, care:0.0177, art:0.0982
+For net: FNN_big, radius: 0.3, repair_number: 100, prdnn:0.0, care:0.0, art:0.1135
+For net: FNN_big, radius: 0.05, repair_number: 200, prdnn:0.3316, care:0.3792, art:0.0892
+For net: FNN_big, radius: 0.1, repair_number: 200, prdnn:0.0082, care:0.0262, art:0.0982
+For net: FNN_big, radius: 0.3, repair_number: 200, prdnn:0.0, care:0.0, art:0.1028
+For net: FNN_big, radius: 0.05, repair_number: 500, prdnn:0.2968, care:0.3545, art:0.101
+For net: FNN_big, radius: 0.1, repair_number: 500, prdnn:0.0023, care:0.012, art:0.0892
+For net: FNN_big, radius: 0.3, repair_number: 500, prdnn:0.0, care:0.0, art:0.1032
+For net: FNN_big, radius: 0.05, repair_number: 1000, prdnn:0.2548, care:0.3677, art:0.1135
+For net: FNN_big, radius: 0.1, repair_number: 1000, prdnn:0.0012, care:0.0138, art:0.1028
+For net: FNN_big, radius: 0.3, repair_number: 1000, prdnn:0.0, care:0.0, art:0.1135
+For net: CNN_small, radius: 0.05, repair_number: 50, prdnn:0.3746, care:0.7063, art:0.0982
+For net: CNN_small, radius: 0.1, repair_number: 50, prdnn:0.0002, care:0.0831, art:0.1032
+For net: CNN_small, radius: 0.3, repair_number: 50, prdnn:0.0, care:0.0, art:0.0982
+For net: CNN_small, radius: 0.05, repair_number: 100, prdnn:0.2945, care:0.706, art:0.0974
+For net: CNN_small, radius: 0.1, repair_number: 100, prdnn:0.0, care:0.0815, art:0.0958
+For net: CNN_small, radius: 0.3, repair_number: 100, prdnn:0.0, care:0.0, art:0.0892
+For net: CNN_small, radius: 0.05, repair_number: 200, prdnn:0.1036, care:0.706, art:0.0974
+For net: CNN_small, radius: 0.1, repair_number: 200, prdnn:0.0, care:0.0823, art:0.0982
+For net: CNN_small, radius: 0.3, repair_number: 200, prdnn:0.0, care:0.0, art:0.0892
+For net: FNN_small, radius: 0.05, repair_number: 50, aprnn:0.0233
+For net: FNN_small, radius: 0.1, repair_number: 50, aprnn:0.0
+For net: FNN_small, radius: 0.3, repair_number: 50, aprnn:0.0
+For net: FNN_small, radius: 0.05, repair_number: 100, aprnn:0.0078
+For net: FNN_small, radius: 0.1, repair_number: 100, aprnn:0.0
+For net: FNN_small, radius: 0.3, repair_number: 100, aprnn:0.0
+For net: FNN_small, radius: 0.05, repair_number: 200, aprnn:0.0126
+For net: FNN_small, radius: 0.1, repair_number: 200, aprnn:0.0
+For net: FNN_small, radius: 0.3, repair_number: 200, aprnn:0.0
+For net: FNN_small, radius: 0.05, repair_number: 500, aprnn:0.0526
+For net: FNN_small, radius: 0.1, repair_number: 500, aprnn:0.001
+For net: FNN_small, radius: 0.3, repair_number: 500, aprnn:0.0
+For net: FNN_small, radius: 0.05, repair_number: 1000, aprnn:0.0091
+For net: FNN_small, radius: 0.1, repair_number: 1000, aprnn:0.0021
+For net: FNN_small, radius: 0.3, repair_number: 1000, aprnn:0.0
+For net: FNN_big, radius: 0.05, repair_number: 50, aprnn:0.3166
+For net: FNN_big, radius: 0.1, repair_number: 50, aprnn:0.0112
+For net: FNN_big, radius: 0.3, repair_number: 50, aprnn:0.0
+For net: FNN_big, radius: 0.05, repair_number: 100, aprnn:0.1903
+For net: FNN_big, radius: 0.1, repair_number: 100, aprnn:0.0001
+For net: FNN_big, radius: 0.3, repair_number: 100, aprnn:0.0
+For net: FNN_big, radius: 0.05, repair_number: 200, aprnn:0.1276
+For net: FNN_big, radius: 0.1, repair_number: 200, aprnn:0.0006
+For net: FNN_big, radius: 0.3, repair_number: 200, aprnn:0.0
+For net: FNN_big, radius: 0.05, repair_number: 500, aprnn:0.0168
+For net: FNN_big, radius: 0.1, repair_number: 500, aprnn:0.0
+For net: FNN_big, radius: 0.3, repair_number: 500, aprnn:0.0
+For net: FNN_big, radius: 0.05, repair_number: 1000, aprnn:0.0177
+For net: FNN_big, radius: 0.1, repair_number: 1000, aprnn:0.0
+For net: FNN_big, radius: 0.3, repair_number: 1000, aprnn:0.0
+For net: CNN_small, radius: 0.05, repair_number: 50, aprnn:0.7038
+For net: CNN_small, radius: 0.1, repair_number: 50, aprnn:0.0871
+For net: CNN_small, radius: 0.3, repair_number: 50, aprnn:0.0
+For net: CNN_small, radius: 0.05, repair_number: 100, aprnn:0.6923
+For net: CNN_small, radius: 0.1, repair_number: 100, aprnn:0.086
+For net: CNN_small, radius: 0.3, repair_number: 100, aprnn:0.0
+For net: CNN_small, radius: 0.05, repair_number: 200, aprnn:0.706
+For net: CNN_small, radius: 0.1, repair_number: 200, aprnn:0.0916
+For net: CNN_small, radius: 0.3, repair_number: 200, aprnn:0.0
+For net: CNN_small, radius: 0.05, repair_number: 500, aprnn:0.714
+For net: CNN_small, radius: 0.1, repair_number: 500, aprnn:0.0844
+For net: CNN_small, radius: 0.3, repair_number: 500, aprnn:0.0
+For net: CNN_small, radius: 0.05, repair_number: 1000, aprnn:0.6569
+For net: CNN_small, radius: 0.1, repair_number: 1000, aprnn:0.046
+For net: CNN_small, radius: 0.3, repair_number: 1000, aprnn:0.0
+For net: CNN_small, radius: 0.05, repair_number: 50, label:0.9665
+For net: CNN_small, radius: 0.05, repair_number: 100, label:0.9827
+For net: CNN_small, radius: 0.05, repair_number: 200, label:0.9827
+For net: CNN_small, radius: 0.05, repair_number: 500, label:0.9827
+For net: CNN_small, radius: 0.05, repair_number: 1000, label:0.9827
+For net: CNN_small, radius: 0.1, repair_number: 50, label:0.9805
+For net: CNN_small, radius: 0.1, repair_number: 100, label:0.9804
+For net: CNN_small, radius: 0.1, repair_number: 200, label:0.9806
+For net: CNN_small, radius: 0.1, repair_number: 500, label:0.9806
+For net: CNN_small, radius: 0.1, repair_number: 1000, label:0.9803
+For net: CNN_small, radius: 0.3, repair_number: 50, label:0.9827
+For net: CNN_small, radius: 0.3, repair_number: 100, label:0.9826
+For net: CNN_small, radius: 0.3, repair_number: 200, label:0.9827
+For net: CNN_small, radius: 0.3, repair_number: 500, label:0.9827
+For net: CNN_small, radius: 0.3, repair_number: 1000, label:0.9827
+For net: FNN_small, radius: 0.05, repair_number: 50, label:0.8985
+For net: FNN_small, radius: 0.05, repair_number: 100, label:0.9601
+For net: FNN_small, radius: 0.05, repair_number: 200, label:0.9657
+For net: FNN_small, radius: 0.05, repair_number: 500, label:0.9657
+For net: FNN_small, radius: 0.05, repair_number: 1000, label:0.9657
+For net: FNN_small, radius: 0.1, repair_number: 50, label:0.895
+For net: FNN_small, radius: 0.1, repair_number: 100, label:0.9479
+For net: FNN_small, radius: 0.1, repair_number: 200, label:0.9477
+For net: FNN_small, radius: 0.1, repair_number: 500, label:0.9626
+For net: FNN_small, radius: 0.1, repair_number: 1000, label:0.963
+For net: FNN_small, radius: 0.3, repair_number: 50, label:0.4449
+For net: FNN_small, radius: 0.3, repair_number: 100, label:0.8609
+For net: FNN_small, radius: 0.3, repair_number: 200, label:0.8585
+For net: FNN_small, radius: 0.3, repair_number: 500, label:0.8971
+For net: FNN_small, radius: 0.3, repair_number: 1000, label:0.9419
+For net: FNN_big, radius: 0.05, repair_number: 50, label:0.968
+For net: FNN_big, radius: 0.05, repair_number: 100, label:0.9682
+For net: FNN_big, radius: 0.05, repair_number: 200, label:0.968
+For net: FNN_big, radius: 0.05, repair_number: 500, label:0.9718
+For net: FNN_big, radius: 0.05, repair_number: 1000, label:0.9718
+For net: FNN_big, radius: 0.1, repair_number: 50, label:0.9684
+For net: FNN_big, radius: 0.1, repair_number: 100, label:0.9686
+For net: FNN_big, radius: 0.1, repair_number: 200, label:0.9684
+For net: FNN_big, radius: 0.1, repair_number: 500, label:0.9682
+For net: FNN_big, radius: 0.1, repair_number: 1000, label:0.9695
+For net: FNN_big, radius: 0.3, repair_number: 50, label:0.8911
+For net: FNN_big, radius: 0.3, repair_number: 100, label:0.8913
+For net: FNN_big, radius: 0.3, repair_number: 200, label:0.8926
+For net: FNN_big, radius: 0.3, repair_number: 500, label:0.9591
+For net: FNN_big, radius: 0.3, repair_number: 1000, label:0.971

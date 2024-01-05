@@ -677,21 +677,21 @@ def convert_dict_to_csv():
         #             writer.writerow(row)
 
     # write another csv file for generalization result
-    # header = ['net', 'radius', 'data_number', 'tool', 'defense success of apgd & apgdt']
-    # generalization_r = generalizaiton_result()
-    # with open('cifar_generalization_result.csv', 'w') as f:
-    #     writer = csv.writer(f)
-    #     writer.writerow(header)
+    header = ['net', 'radius', 'data_number', 'tool', 'defense success of apgd & apgdt']
+    generalization_r = generalizaiton_result()
+    with open('cifar_generalization_result.csv', 'w') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
 
-    #     for net in ['FNN_small', 'FNN_big', 'CNN_small']:
-    #         for radius in [4, 8]:
-    #             radius = str(radius)
-    #             for data_number in [50,100,200,500,1000]:
-    #                 data_number = str(data_number)
-    #                 for tool in ['PatchRepair', 'original', 'adv_training', 'art', 'care', 'prdnn', 'reassure', 'aprnn']:
-    #                     defense = generalization_r[net][radius][data_number][tool]['defense success of apgd & apgdt']
-    #                     row = [net, radius, data_number, tool, defense]
-    #                     writer.writerow(row)
+        for net in ['vgg19', 'resnet18']:
+            for radius in [4, 8]:
+                radius = str(radius)
+                for data_number in [50,100,200,500,1000]:
+                    data_number = str(data_number)
+                    for tool in ['PatchRepair', 'original', 'adv_training', 'label', 'care', 'prdnn', 'aprnn']:
+                        defense = generalization_r[net][radius][data_number][tool]['defense success of apgd & apgdt']
+                        row = [net, radius, data_number, tool, defense]
+                        writer.writerow(row)
 
 
 # def read_art_result():
@@ -838,45 +838,51 @@ def pgd_result():
         json.dump(result_dict, f, indent=4)
     return result_dict
 
-# def generalizaiton_result():
-#     pgd_result_file = '/home/chizm/PatchART/results/mnist/repair/generalization/compare/compare_generalization.txt'
-#     result_dict = {}
-#     for net in ['FNN_small', 'FNN_big', 'CNN_small']:
-#         result_dict[net] = {}
-#         for radius in [4, 8]:
-#             radius = str(radius)
-#             result_dict[net][radius] = {}
-#             for data_number in [50,100,200,500,1000]:
-#                 data_number = str(data_number)
-#                 result_dict[net][radius][data_number] = {}
-#                 for tool in ['PatchRepair', 'label', 'original', 'adv_training', 'art', 'care', 'prdnn', 'reassure', 'aprnn']:
-#                     result_dict[net][radius][data_number][tool] = {}
-#                     for item in ['defense success of apgd & apgdt']:
-#                         result_dict[net][radius][data_number][tool][item] = 'None'
-#     with open(pgd_result_file, 'r') as f:
-#         lines = f.readlines()
-#         for line in lines:
-#             if line == '\n':
-#                 continue
-#             line = line.split(' ')
-#             net = line[2][:-1]
-#             radius = line[4][:-1]
-#             data_number = line[6][:-1]
+def generalizaiton_result():
+    pgd_result_file = '/home/chizm/PatchART/results/cifar10/repair/generalization/compare/compare_generalization.txt'
+    result_dict = {}
+    for net in ['vgg19', 'resnet18']:
+        result_dict[net] = {}
+        for radius in [4, 8]:
+            radius = str(radius)
+            result_dict[net][radius] = {}
+            for data_number in [50,100,200,500,1000]:
+                data_number = str(data_number)
+                result_dict[net][radius][data_number] = {}
+                for tool in ['PatchRepair', 'label', 'original', 'adv_training', 'care', 'prdnn','aprnn']:
+                    result_dict[net][radius][data_number][tool] = {}
+                    for item in ['defense success of apgd & apgdt']:
+                        if tool == 'prdnn' and (data_number == '500' or data_number == '1000'):
+                            result_dict[net][radius][data_number][tool][item] = 'None'
+                        else:
+                            # because the pgd of repair data is 0
+                            result_dict[net][radius][data_number][tool][item] = 0
+    with open(pgd_result_file, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            if line == '\n':
+                continue
+            line = line.split(' ')
+            net = line[2][:-1]
+            radius = line[4][:-1]
+            data_number = line[6][:-1]
 
-#             line = line[7:]
-#             if line[-1] == '\n':
-#                 line = line[:-1]
-#             for a in line:
-#                 a = a.split(':')
-#                 tool = a[0]
-#                 pgd = a[1][:-1]
-#                 pgd = float(pgd)
-#                 result_dict[net][radius][data_number][tool]['defense success of apgd & apgdt'] = pgd
+            line = line[7:]
+            if line[-1] == '\n':
+                line = line[:-1]
+            for a in line:
+                a = a.split(':')
+                tool = a[0]
+                if tool == 'label_repair':
+                    tool = 'label'
+                pgd = a[1][:-1]
+                pgd = float(pgd)
+                result_dict[net][radius][data_number][tool]['defense success of apgd & apgdt'] = pgd
 
-#     # save the result to json file
-#     with open('pgd_generlization_mnist_result.json', 'w') as f:
-#         json.dump(result_dict, f, indent=4)
-#     return result_dict    
+    # save the result to json file
+    with open('pgd_generlization_cifar10_result.json', 'w') as f:
+        json.dump(result_dict, f, indent=4)
+    return result_dict    
 
 
 
@@ -886,7 +892,8 @@ if __name__ == '__main__':
     # prdnn_result = read_prdnn_result()
     # care_result = read_care_result()
     # aprnn_result = read_aprnn_result()
+    # pgd_result()
+    # generalizaiton_result()
 
-    pgd_result()
     # patch_repair_label_result = read_patchrepair_label_result()
-    # convert_dict_to_csv()
+    convert_dict_to_csv()

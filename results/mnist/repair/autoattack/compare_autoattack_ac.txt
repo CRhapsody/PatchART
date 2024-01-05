@@ -1,83 +1,250 @@
-For FNN_small 0.05 50 small: \  ori:50, patch:0, adv-train:36 \ 
-For FNN_small 0.05 50 big: \  ori:50, patch:0, adv-train:36 \ 
-For FNN_big 0.05 50 small: \  ori:50, patch:0, adv-train:21 \ 
-For FNN_big 0.05 50 big: \  ori:50, patch:0, adv-train:21 \ 
-For CNN_small 0.05 50 small: \  ori:50, patch:0, adv-train:1 \ 
-For CNN_small 0.05 50 big: \  ori:50, patch:0, adv-train:1 \ 
-For FNN_small 0.1 50 small: \  ori:50, patch:0, adv-train:50 \ 
-For FNN_small 0.1 50 big: \  ori:50, patch:0, adv-train:50 \ 
-For FNN_big 0.1 50 small: \  ori:50, patch:0, adv-train:47 \ 
-For FNN_big 0.1 50 big: \  ori:50, patch:0, adv-train:47 \ 
-For CNN_small 0.1 50 small: \  ori:50, patch:0, adv-train:12 \ 
-For CNN_small 0.1 50 big: \  ori:50, patch:0, adv-train:13 \ 
-For FNN_small 0.3 50 small: \  ori:50, patch:4, adv-train:50 \ 
-For FNN_small 0.3 50 big: \  ori:50, patch:4, adv-train:50 \ 
-For FNN_big 0.3 50 small: \  ori:50, patch:0, adv-train:50 \ 
-For FNN_big 0.3 50 big: \  ori:50, patch:0, adv-train:50 \ 
-For CNN_small 0.3 50 small: \  ori:50, patch:0, adv-train:50 \ 
-For CNN_small 0.3 50 big: \  ori:50, patch:0, adv-train:50 \ 
-For FNN_small 0.05 100 small: \  ori:100, patch:0, adv-train:68 \ 
-For FNN_small 0.05 100 big: \  ori:100, patch:0, adv-train:68 \ 
-For FNN_big 0.05 100 small: \  ori:100, patch:0, adv-train:42 \ 
-For FNN_big 0.05 100 big: \  ori:100, patch:0, adv-train:43 \ 
-For CNN_small 0.05 100 small: \  ori:100, patch:0, adv-train:0 \ 
-For CNN_small 0.05 100 big: \  ori:100, patch:0, adv-train:0 \ 
-For FNN_small 0.1 100 small: \  ori:100, patch:0, adv-train:97 \ 
-For FNN_small 0.1 100 big: \  ori:100, patch:0, adv-train:97 \ 
-For FNN_big 0.1 100 small: \  ori:100, patch:0, adv-train:98 \ 
-For FNN_big 0.1 100 big: \  ori:100, patch:0, adv-train:98 \ 
-For CNN_small 0.1 100 small: \  ori:100, patch:0, adv-train:25 \ 
-For CNN_small 0.1 100 big: \  ori:100, patch:0, adv-train:25 \ 
-For FNN_small 0.3 100 small: \  ori:100, patch:0, adv-train:100 \ 
-For FNN_small 0.3 100 big: \  ori:100, patch:1, adv-train:100 \ 
-For FNN_big 0.3 100 small: \  ori:100, patch:0, adv-train:100 \ 
-For FNN_big 0.3 100 big: \  ori:100, patch:0, adv-train:100 \ 
-For CNN_small 0.3 100 small: \  ori:100, patch:0, adv-train:100 \ 
-For CNN_small 0.3 100 big: \  ori:100, patch:0, adv-train:100 \ 
-For FNN_small 0.05 200 small: \  ori:200, patch:0, adv-train:163 \ 
-For FNN_small 0.05 200 big: \  ori:200, patch:0, adv-train:164 \ 
-For FNN_big 0.05 200 small: \  ori:200, patch:0, adv-train:114 \ 
-For FNN_big 0.05 200 big: \  ori:200, patch:0, adv-train:114 \ 
-For CNN_small 0.05 200 small: \  ori:200, patch:0, adv-train:25 \ 
-For CNN_small 0.05 200 big: \  ori:200, patch:0, adv-train:25 \ 
-For FNN_small 0.1 200 small: \  ori:200, patch:0, adv-train:199 \ 
-For FNN_small 0.1 200 big: \  ori:200, patch:0, adv-train:199 \ 
-For FNN_big 0.1 200 small: \  ori:200, patch:0, adv-train:185 \ 
-For FNN_big 0.1 200 big: \  ori:200, patch:0, adv-train:185 \ 
-For CNN_small 0.1 200 small: \  ori:200, patch:0, adv-train:157 \ 
-For CNN_small 0.1 200 big: \  ori:200, patch:1, adv-train:158 \ 
-For FNN_small 0.3 200 small: \  ori:200, patch:0, adv-train:200 \ 
-For FNN_small 0.3 200 big: \  ori:200, patch:2, adv-train:200 \ 
-For FNN_big 0.3 200 small: \  ori:200, patch:0, adv-train:200 \ 
-For FNN_big 0.3 200 big: \  ori:200, patch:0, adv-train:200 \ 
-For CNN_small 0.3 200 small: \  ori:200, patch:0, adv-train:200 \ 
-For CNN_small 0.3 200 big: \  ori:200, patch:0, adv-train:200 \ 
-For FNN_small 0.05 500 small: \  ori:500, patch:0, adv-train:420 \ 
-For FNN_small 0.05 500 big: \  ori:500, patch:0, adv-train:421 \ 
-For FNN_big 0.05 500 small: \  ori:500, patch:0, adv-train:394 \ 
-For FNN_big 0.05 500 big: \  ori:500, patch:0, adv-train:394 \ 
-For CNN_small 0.05 500 small: \  ori:500, patch:0, adv-train:348 \ 
-For CNN_small 0.05 500 big: \  ori:500, patch:0, adv-train:348 \ 
-For FNN_small 0.1 500 small: \  ori:500, patch:0, adv-train:499 \ 
-For FNN_small 0.1 500 big: \  ori:500, patch:0, adv-train:499 \ 
-For FNN_big 0.1 500 small: \  ori:500, patch:0, adv-train:495 \ 
-For FNN_big 0.1 500 big: \  ori:500, patch:0, adv-train:495 \ 
-For CNN_small 0.1 500 small: \  ori:500, patch:1, adv-train:467 \ 
-For CNN_small 0.1 500 big: \  ori:500, patch:1, adv-train:465 \ 
-For FNN_small 0.3 500 small: \  ori:500, patch:1, adv-train:500 \ 
-For FNN_small 0.3 500 big: \  ori:500, patch:2, adv-train:500 \ 
-For FNN_big 0.3 500 small: \  ori:500, patch:0, adv-train:500 \ 
-For FNN_big 0.3 500 big: \  ori:500, patch:0, adv-train:500 \ 
-For CNN_small 0.3 500 small: \  ori:500, patch:0, adv-train:500 \ 
-For CNN_small 0.3 500 big: \  ori:500, patch:0, adv-train:500 \ 
-For FNN_small 0.05 1000 small: \  ori:1000, patch:0, adv-train:923 \ 
-For FNN_small 0.05 1000 big: \  ori:1000, patch:0, adv-train:923 \ 
-For FNN_big 0.05 1000 small: \  ori:1000, patch:0, adv-train:913 \ 
-For FNN_big 0.05 1000 big: \  ori:1000, patch:0, adv-train:913 \ 
-For CNN_small 0.05 1000 small: \  ori:1000, patch:0, adv-train:957 \ 
-For CNN_small 0.05 1000 big: \  ori:1000, patch:0, adv-train:957 \ 
-For FNN_small 0.1 1000 small: \  ori:1000, patch:0, adv-train:1000 \ 
-For FNN_small 0.1 1000 big: \  ori:1000, patch:0, adv-train:1000 \ 
-For FNN_big 0.1 1000 small: \  ori:1000, patch:0, adv-train:996 \ 
-For FNN_big 0.1 1000 big: \  ori:1000, patch:0, adv-train:996 \ 
-For CNN_small 0.1 1000 small: \  ori:1000, patch:1, adv-train:989 \ 
+For FNN_small 0.05 50 : ori:50, small:0, big:0, adv-train:36
+For FNN_big 0.05 50 : ori:50, small:0, big:0, adv-train:21
+For CNN_small 0.05 50 : ori:50, small:0, big:0, adv-train:1
+For FNN_small 0.1 50 : ori:50, small:0, big:0, adv-train:50
+For FNN_big 0.1 50 : ori:50, small:0, big:0, adv-train:47
+For CNN_small 0.1 50 : ori:50, small:0, big:0, adv-train:12
+For FNN_small 0.3 50 : ori:50, small:4, big:4, adv-train:50
+For FNN_big 0.3 50 : ori:50, small:0, big:0, adv-train:50
+
+For CNN_small 0.3 50 : ori:50, small:0, big:0, adv-train:50
+
+For FNN_small 0.05 100 : ori:100, small:0, big:0, adv-train:68
+
+For FNN_big 0.05 100 : ori:100, small:0, big:0, adv-train:42
+
+For CNN_small 0.05 100 : ori:100, small:0, big:0, adv-train:0
+
+For FNN_small 0.1 100 : ori:100, small:0, big:0, adv-train:97
+
+For FNN_big 0.1 100 : ori:100, small:0, big:0, adv-train:98
+
+For CNN_small 0.1 100 : ori:100, small:0, big:0, adv-train:25
+
+For FNN_small 0.3 100 : ori:100, small:0, big:1, adv-train:100
+
+For FNN_big 0.3 100 : ori:100, small:0, big:0, adv-train:100
+
+For CNN_small 0.3 100 : ori:100, small:0, big:0, adv-train:100
+
+For FNN_small 0.05 200 : ori:200, small:0, big:0, adv-train:163
+
+For FNN_big 0.05 200 : ori:200, small:0, big:0, adv-train:114
+
+For CNN_small 0.05 200 : ori:200, small:0, big:0, adv-train:25
+
+For FNN_small 0.1 200 : ori:200, small:0, big:0, adv-train:199
+
+For FNN_big 0.1 200 : ori:200, small:0, big:0, adv-train:185
+
+For CNN_small 0.1 200 : ori:200, small:0, big:1, adv-train:157
+
+For FNN_small 0.3 200 : ori:200, small:0, big:2, adv-train:200
+
+For FNN_big 0.3 200 : ori:200, small:0, big:0, adv-train:200
+
+For CNN_small 0.3 200 : ori:200, small:0, big:0, adv-train:200
+
+For FNN_small 0.05 500 : ori:500, small:0, big:0, adv-train:420
+
+For FNN_big 0.05 500 : ori:500, small:0, big:0, adv-train:394
+
+For CNN_small 0.05 500 : ori:500, small:0, big:0, adv-train:348
+
+For FNN_small 0.1 500 : ori:500, small:0, big:0, adv-train:499
+
+For FNN_big 0.1 500 : ori:500, small:0, big:0, adv-train:495
+
+For CNN_small 0.1 500 : ori:500, small:1, big:1, adv-train:467
+
+For FNN_small 0.3 500 : ori:500, small:1, big:2, adv-train:500
+
+For FNN_big 0.3 500 : ori:500, small:0, big:0, adv-train:500
+
+For CNN_small 0.3 500 : ori:500, small:0, big:0, adv-train:500
+
+For FNN_small 0.05 1000 : ori:1000, small:0, big:0, adv-train:923
+
+For FNN_big 0.05 1000 : ori:1000, small:0, big:0, adv-train:913
+
+For CNN_small 0.05 1000 : ori:1000, small:0, big:0, adv-train:957
+
+For FNN_small 0.1 1000 : ori:1000, small:0, big:0, adv-train:1000
+
+For FNN_big 0.1 1000 : ori:1000, small:0, big:0, adv-train:996
+
+For CNN_small 0.1 1000 : ori:1000, small:1, big:2, adv-train:989
+
+For FNN_small 0.3 1000 : ori:1000, small:3, big:4, adv-train:1000
+
+For FNN_big 0.3 1000 : ori:1000, small:1, big:1, adv-train:1000
+
+For CNN_small 0.3 1000 : ori:1000, small:0, big:0, adv-train:1000
+For FNN_small 0.05 50 : prdnn:50, care:50, art:47 
+For FNN_small 0.1 50 : prdnn:50, care:50, art:46 
+For FNN_small 0.3 50 : prdnn:50, care:50, art:46 
+For FNN_small 0.05 100 : prdnn:100, care:99, art:80 
+For FNN_small 0.1 100 : prdnn:100, care:100, art:91 
+For FNN_small 0.3 100 : prdnn:100, care:100, art:89 
+For FNN_small 0.05 200 : prdnn:200, care:196, art:180 
+For FNN_small 0.1 200 : prdnn:200, care:200, art:177 
+For FNN_small 0.3 200 : prdnn:200, care:200, art:181 
+For FNN_small 0.05 500 : prdnn:500, care:493, art:452 
+For FNN_small 0.1 500 : prdnn:500, care:500, art:450 
+For FNN_small 0.3 500 : prdnn:500, care:500, art:448 
+For FNN_small 0.05 1000 : prdnn:1000, care:977, art:856 
+For FNN_small 0.1 1000 : prdnn:1000, care:1000, art:900 
+For FNN_small 0.3 1000 : prdnn:1000, care:1000, art:902 
+For FNN_big 0.05 50 : prdnn:49, care:49, art:38 
+For FNN_big 0.1 50 : prdnn:50, care:49, art:46 
+For FNN_big 0.3 50 : prdnn:50, care:50, art:43 
+For FNN_big 0.05 100 : prdnn:99, care:93, art:91 
+For FNN_big 0.1 100 : prdnn:100, care:100, art:89 
+For FNN_big 0.3 100 : prdnn:100, care:100, art:86 
+For FNN_big 0.05 200 : prdnn:195, care:191, art:190 
+For FNN_big 0.1 200 : prdnn:200, care:197, art:179 
+For FNN_big 0.3 200 : prdnn:200, care:200, art:180 
+For FNN_big 0.05 500 : prdnn:497, care:476, art:463 
+For FNN_big 0.1 500 : prdnn:499, care:500, art:455 
+For FNN_big 0.3 500 : prdnn:500, care:500, art:449 
+For FNN_big 0.05 1000 : prdnn:996, care:929, art:808 
+For FNN_big 0.1 1000 : prdnn:1000, care:1000, art:895 
+For FNN_big 0.3 1000 : prdnn:1000, care:1000, art:882 
+For CNN_small 0.05 50 : prdnn:50, care:50, art:41 
+For CNN_small 0.1 50 : prdnn:50, care:49, art:46 
+For CNN_small 0.3 50 : prdnn:50, care:50, art:44 
+For CNN_small 0.05 100 : prdnn:100, care:99, art:73 
+For CNN_small 0.1 100 : prdnn:100, care:99, art:89 
+For CNN_small 0.3 100 : prdnn:100, care:100, art:93 
+For CNN_small 0.05 200 : prdnn:200, care:198, art:159 
+For CNN_small 0.1 200 : prdnn:200, care:199, art:178 
+For CNN_small 0.3 200 : prdnn:200, care:200, art:186 
+For FNN_small 0.05 50 : reassure:50 
+For FNN_small 0.1 50 : reassure:50 
+For FNN_small 0.3 50 : reassure:50 
+For FNN_small 0.05 100 : reassure:100 
+For FNN_small 0.1 100 : reassure:100 
+For FNN_small 0.3 100 : reassure:100 
+For FNN_small 0.05 200 : reassure:200 
+For FNN_small 0.1 200 : reassure:200 
+For FNN_small 0.3 200 : reassure:200 
+For FNN_small 0.05 500 : reassure:500
+For FNN_small 0.1 500 : reassure:500
+For FNN_small 0.3 500 : reassure:500
+For FNN_big 0.05 50 : reassure:50
+For FNN_big 0.1 50 : reassure:50
+For FNN_big 0.3 50 : reassure:50
+For FNN_big 0.05 100 : reassure:100
+For FNN_big 0.1 100 : reassure:100
+For FNN_big 0.3 100 : reassure:100
+For FNN_big 0.05 200 : reassure:200
+For FNN_big 0.1 200 : reassure:200
+For FNN_big 0.3 200 : reassure:200
+For CNN_small 0.05 50 : reassure:50
+For CNN_small 0.1 50 : reassure:50
+For CNN_small 0.3 50 : reassure:50
+For CNN_small 0.05 100 : reassure:100
+For CNN_small 0.1 100 : reassure:100
+For CNN_small 0.3 100 : reassure:100
+For CNN_small 0.05 200 : reassure:200
+For CNN_small 0.1 200 : reassure:200
+For CNN_small 0.3 200 : reassure:200
+
+
+For CNN_small 0.05 500 : prdnn:500, care:493
+For CNN_small 0.1 500 : prdnn:500, care:499
+For CNN_small 0.3 500 : prdnn:500, care:500
+For CNN_small 0.05 1000 : prdnn:1000, care:985
+For CNN_small 0.1 1000 : prdnn:1000, care:994
+For CNN_small 0.3 1000 : prdnn:1000, care:1000
+
+For FNN_small 0.05 50 : small_label:0
+For FNN_small 0.05 50 : big_label:0
+For FNN_big 0.05 50 : small_label:0
+For FNN_big 0.05 50 : big_label:0
+For CNN_small 0.05 50 : small_label:0
+For CNN_small 0.05 50 : big_label:0
+For FNN_small 0.1 50 : small_label:0
+For FNN_small 0.1 50 : big_label:0
+For FNN_big 0.1 50 : small_label:0
+For FNN_big 0.1 50 : big_label:0
+For CNN_small 0.1 50 : small_label:0
+For CNN_small 0.1 50 : big_label:0
+For FNN_small 0.3 50 : small_label:4
+For FNN_small 0.3 50 : big_label:4
+For FNN_big 0.3 50 : small_label:0
+For FNN_big 0.3 50 : big_label:0
+For CNN_small 0.3 50 : small_label:0
+For CNN_small 0.3 50 : big_label:0
+For FNN_small 0.05 100 : small_label:0
+For FNN_small 0.05 100 : big_label:0
+For FNN_big 0.05 100 : small_label:0
+For FNN_big 0.05 100 : big_label:0
+For CNN_small 0.05 100 : small_label:0
+For CNN_small 0.05 100 : big_label:0
+For FNN_small 0.1 100 : small_label:0
+For FNN_small 0.1 100 : big_label:0
+For FNN_big 0.1 100 : small_label:0
+For FNN_big 0.1 100 : big_label:0
+For CNN_small 0.1 100 : small_label:0
+For CNN_small 0.1 100 : big_label:0
+For FNN_small 0.3 100 : small_label:0
+For FNN_small 0.3 100 : big_label:1
+For FNN_big 0.3 100 : small_label:0
+For FNN_big 0.3 100 : big_label:0
+For CNN_small 0.3 100 : small_label:0
+For CNN_small 0.3 100 : big_label:0
+For FNN_small 0.05 200 : small_label:0
+For FNN_small 0.05 200 : big_label:0
+For FNN_big 0.05 200 : small_label:0
+For FNN_big 0.05 200 : big_label:0
+For CNN_small 0.05 200 : small_label:0
+For CNN_small 0.05 200 : big_label:0
+For FNN_small 0.1 200 : small_label:0
+For FNN_small 0.1 200 : big_label:0
+For FNN_big 0.1 200 : small_label:0
+For FNN_big 0.1 200 : big_label:0
+For CNN_small 0.1 200 : small_label:1
+For CNN_small 0.1 200 : big_label:1
+For FNN_small 0.3 200 : small_label:4
+For FNN_small 0.3 200 : big_label:5
+For FNN_big 0.3 200 : small_label:0
+For FNN_big 0.3 200 : big_label:0
+For CNN_small 0.3 200 : small_label:0
+For CNN_small 0.3 200 : big_label:0
+For FNN_small 0.05 500 : small_label:0
+For FNN_small 0.05 500 : big_label:0
+For FNN_big 0.05 500 : small_label:0
+For FNN_big 0.05 500 : big_label:0
+For CNN_small 0.05 500 : small_label:0
+For CNN_small 0.05 500 : big_label:0
+For FNN_small 0.1 500 : small_label:0
+For FNN_small 0.1 500 : big_label:0
+For FNN_big 0.1 500 : small_label:0
+For FNN_big 0.1 500 : big_label:0
+For CNN_small 0.1 500 : small_label:1
+For CNN_small 0.1 500 : big_label:1
+For FNN_small 0.3 500 : small_label:0
+For FNN_small 0.3 500 : big_label:0
+For FNN_big 0.3 500 : small_label:0
+For FNN_big 0.3 500 : big_label:0
+For CNN_small 0.3 500 : small_label:0
+For CNN_small 0.3 500 : big_label:0
+For FNN_small 0.05 1000 : small_label:0
+For FNN_small 0.05 1000 : big_label:0
+For FNN_big 0.05 1000 : small_label:0
+For FNN_big 0.05 1000 : big_label:0
+For CNN_small 0.05 1000 : small_label:0
+For CNN_small 0.05 1000 : big_label:0
+For FNN_small 0.1 1000 : small_label:0
+For FNN_small 0.1 1000 : big_label:0
+For FNN_big 0.1 1000 : small_label:0
+For FNN_big 0.1 1000 : big_label:0
+For CNN_small 0.1 1000 : small_label:2
+For CNN_small 0.1 1000 : big_label:2
+For FNN_small 0.3 1000 : small_label:0
+For FNN_small 0.3 1000 : big_label:0
+For FNN_big 0.3 1000 : small_label:0
+For FNN_big 0.3 1000 : big_label:0
+For CNN_small 0.3 1000 : small_label:0
+For CNN_small 0.3 1000 : big_label:0
