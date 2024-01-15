@@ -190,20 +190,17 @@ class Netsum(nn.Module):
             index_clone = index.clone().unsqueeze_(1).expand(index.shape[0], len(self.patch_nets), index.shape[-1])
 
             is_in = torch.eq(index_clone,self.repair_direction_dict).all(dim = -1)
-            # is_in 是一个bool矩阵（input_num, patch_num），表示每个输入是否在repair_direction_dict中，并且和哪几项相同
-            # 将 bool 矩阵转化为int矩阵
-            # is_in = is_in.int()
-            # 检查 is_in中的零行向量，如果有，说明这个输入不在任何一个patch中
+
             is_in_test_zero = is_in.sum(dim = -1) == 0
-            # 记录其行索引
+
             is_in_test_zero_index = is_in_test_zero.nonzero(as_tuple=True)[0]
-            # 从index中把这些行选出来
+
             is_in_zero_assign = index[is_in_test_zero_index][...,0].unsqueeze_(1).expand(-1, self.repair_direction_dict.shape[0])
-            # 将所有修复标签相同的patch拿来修复
+
             is_in_zero_assign_map = torch.eq(is_in_zero_assign, self.repair_direction_dict[...,0])
             is_in[is_in_test_zero] = is_in_zero_assign_map
             is_in = is_in.to(torch.uint8)
-            self.bitmap = is_in # 这里是直接将对应patch的结果都加了起来
+            self.bitmap = is_in 
         return self.bitmap
             
 
@@ -218,28 +215,7 @@ class Netsum(nn.Module):
 
 
 
-
-            # max_index = index[...,0]
-            # runnerup_index = index[...,1]
-            # match with repair_direction_dict : (,2)
-            # index_clone = index.clone().unsqueeze_(1).expand(index.shape[0],self.repair_direction_dict.shape[0], index.shape[-1])
-            # index_clone = index.clone().unsqueeze_(1).expand(index.shape[0], len(self.patch_nets))
-            # self.repair_direction_dict = torch.arange(0, len(self.patch_nets)).to(index_clone.device)
-            # is_in = torch.eq(index_clone, self.repair_direction_dict).all(dim = -1)
-            # # is_in 是一个bool矩阵（input_num, patch_num），表示每个输入是否在repair_direction_dict中，并且和哪几项相同
-            # # 将 bool 矩阵转化为int矩阵
-            # # is_in = is_in.int()
-            # # 检查 is_in中的零行向量，如果有，说明这个输入不在任何一个patch中
-            # is_in_test_zero = is_in.sum(dim = -1) == 0
-            # # 记录其行索引
-            # is_in_test_zero_index = is_in_test_zero.nonzero(as_tuple=True)[0]
-            # # 从index中把这些行选出来
-            # is_in_zero_assign = index[is_in_test_zero_index][...,0].unsqueeze_(1).expand(-1, self.repair_direction_dict.shape[0])
-            # # 将所有修复标签相同的patch拿来修复
-            # is_in_zero_assign_map = torch.eq(is_in_zero_assign, self.repair_direction_dict[...,0])
-            # is_in[is_in_test_zero] = is_in_zero_assign_map
-            # is_in = is_in.to(torch.uint8)
-            self.bitmap = is_in # 这里是直接将对应patch的结果都加了起来
+            self.bitmap = is_in 
         return self.bitmap
     def forward(self, x, in_bitmap = None, out = None):
         if out == None:
@@ -315,95 +291,81 @@ class Netsum(nn.Module):
 #         return out
 #         pass
 
-class NetFeatureSum(nn.Module):
-    '''
-    This class is to add the patch net to target net:
+# class NetFeatureSum(nn.Module):
+#     '''
+#     This class is to add the patch net to target net:
     
-    '''
-    def __init__(self, dom: AbsDom, target_net, patch_nets: List[nn.Module], device = None,):
-        '''
-        :params 
-        '''
-        super().__init__()
-        self.target_net = target_net
-        # self.support_net = support_nets
+#     '''
+#     def __init__(self, dom: AbsDom, target_net, patch_nets: List[nn.Module], device = None,):
+#         '''
+#         :params 
+#         '''
+#         super().__init__()
+#         self.target_net = target_net
+
+#         self.patch_nets = patch_nets
+#         self.acti = dom.ReLU()
+#         self.len_patch_lists = len(self.patch_nets)
+
+#         if device is not None:
+#             for i,patch in enumerate(self.patch_nets):
+#                 self.add_module(f'patch{i}',patch)
+#                 patch.to(device)
+
+
+
+#     def forward(self, x):
+#         # split the target net to two parts, 1st part is the feature extractor, 2nd part is the classifier without sigmoid
+#         self.model1,self.model2 = self.target_net.split()
+#         feature = self.model1(x)
+#         out = self.model2(feature)
+
+#         classes_score = self.support_net(feature) # batchsize * repair_num_propertys
         
-        # for support, patch in zip(support_nets, patch_nets):
-        #     assert(support.name == patch.name), 'support and patch net is one-to-one'
-
-        # self.support_nets = support_nets
-        self.patch_nets = patch_nets
-        self.acti = dom.ReLU()
-        self.len_patch_lists = len(self.patch_nets)
-
-        if device is not None:
-            for i,patch in enumerate(self.patch_nets):
-                self.add_module(f'patch{i}',patch)
-                patch.to(device)
-        # self.sigmoid = dom.Sigmoid()
-        
-        # self.connect_layers = []
-        # self.A = A
 
 
-    def forward(self, x):
-        # split the target net to two parts, 1st part is the feature extractor, 2nd part is the classifier without sigmoid
-        self.model1,self.model2 = self.target_net.split()
-        feature = self.model1(x)
-        out = self.model2(feature)
-
-        classes_score = self.support_net(feature) # batchsize * repair_num_propertys
-        
-        
-        # we should make sure that the violate_score is not trainable, otherwise the net will not linear
-        # violate_score.requires_grad_(False)
-
-        # compute the K in reassure
-        # norms = torch.norm(classes_score, p=float('inf'), dim=1)
-        # norms.requires_grad_(False)
-
-        for i,patch in enumerate(self.patch_nets):
-            # violate_score[...,0] is the score of safe, violate_score[...,1] is the score of violate
-            # we repair the property according to the violate score
-            pa = patch(feature)
-            if isinstance(pa, Tensor):
-                K = pa.norm(p = float('inf'),dim = -1).view(-1,1)
-                K = K.detach()
-                bar = (K * classes_score[:,i].view(-1,1))
-                out += self.acti(pa + bar - self.A*K)\
-                    + -1*self.acti(-1*pa + bar -self.A*K )
+#         for i,patch in enumerate(self.patch_nets):
+#             # violate_score[...,0] is the score of safe, violate_score[...,1] is the score of violate
+#             # we repair the property according to the violate score
+#             pa = patch(feature)
+#             if isinstance(pa, Tensor):
+#                 K = pa.norm(p = float('inf'),dim = -1).view(-1,1)
+#                 K = K.detach()
+#                 bar = (K * classes_score[:,i].view(-1,1))
+#                 out += self.acti(pa + bar - self.A*K)\
+#                     + -1*self.acti(-1*pa + bar -self.A*K )
                 
 
 
-            else:
-                K = pa.ub().norm(p = float('inf'),dim = -1).view(-1,1)
+#             else:
+#                 K = pa.ub().norm(p = float('inf'),dim = -1).view(-1,1)
 
-                # avoid multiply grad
-                # K.requires_grad_(False)
-                K = K.detach()
+#                 # avoid multiply grad
+#                 # K.requires_grad_(False)
+#                 K = K.detach()
 
-                bar = (K * classes_score[:,:,i])
-                bar = bar.unsqueeze(dim = 2).expand_as(pa)
-                # using the upper bound of the patch net to instead of the inf norm of patch net
-                out += self.acti(pa + bar + (-self.A*K.unsqueeze(-1).expand_as(pa._lcnst)) )\
-                    + -1*self.acti(-1*pa + bar + (-self.A*K.unsqueeze(-1).expand_as(pa._lcnst)))
+#                 bar = (K * classes_score[:,:,i])
+#                 bar = bar.unsqueeze(dim = 2).expand_as(pa)
+#                 # using the upper bound of the patch net to instead of the inf norm of patch net
+#                 out += self.acti(pa + bar + (-self.A*K.unsqueeze(-1).expand_as(pa._lcnst)) )\
+#                     + -1*self.acti(-1*pa + bar + (-self.A*K.unsqueeze(-1).expand_as(pa._lcnst)))
                 
-        # origin add patch repair, then sigmoid
-        # out = self.sigmoid(origin_before_sigmoid)
-        return out
+#         # origin add patch repair, then sigmoid
+#         # out = self.sigmoid(origin_before_sigmoid)
+#         return out
     
-    def __str__(self):
-        """ Just print everything for information. """
-        # TODO information for each support and patch net as components
-        ss = [
-            '--- FeatureNetSum ---',
-            'Num net: support %d , patch %d' % (len(self.support_nets),len(self.patch_nets)),
-            'Input size: %d' % self.target_net.input_size,
-            'Output size: %d' % self.target_net.output_size,
-            'Threshold value: %d' % self.k,
-            '--- End of IntersectionNetSum ---'
-        ]
-        return '\n'.join(ss)
+#     def __str__(self):
+#         """ Just print everything for information. """
+#         # TODO information for each support and patch net as components
+#         ss = [
+#             '--- FeatureNetSum ---',
+#             'Num net: support %d , patch %d' % (len(self.support_nets),len(self.patch_nets)),
+#             'Input size: %d' % self.target_net.input_size,
+#             'Output size: %d' % self.target_net.output_size,
+#             'Threshold value: %d' % self.k,
+#             '--- End of IntersectionNetSum ---'
+#         ]
+#         return '\n'.join(ss)
 
 class NetFeatureSumPatch(nn.Module):
     def __init__(self, feature_extractor ,feature_sumnet: Netsum):
@@ -616,3 +578,41 @@ class ConnectionNetSum(nn.Module):
                 
 #         # out = self.sigmoid(out)
 #         return out
+
+def get_bitmap(in_lb: Tensor, in_ub: Tensor, in_bitmap: Tensor, batch_inputs: Tensor,device = 'cuda'):
+    '''
+    in_lb: n_prop * input
+    in_ub: n_prop * input
+    batch_inputs: batch * input
+    '''
+    with torch.no_grad():
+    
+        batch_inputs_clone = batch_inputs.clone().unsqueeze_(1)
+        # distingush the photo and the property
+        if len(in_lb.shape) == 2:
+            batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1])
+            is_in = (batch_inputs_clone >= in_lb) & (batch_inputs_clone <= in_ub)
+            is_in = is_in.all(dim=-1) # every input is in the region of property, batch * n_prop
+        elif len(in_lb.shape) == 4:
+            if in_lb.shape[0] > 600:
+                is_in_list = []
+                for i in range(batch_inputs_clone.shape[0]):
+                    batch_inputs_compare_datai = batch_inputs_clone[i].clone().expand(in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
+                    is_in_datai = (batch_inputs_compare_datai >= in_lb) & (batch_inputs_compare_datai <= in_ub)
+                    is_in_datai = is_in_datai.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
+                    is_in_list.append(is_in_datai)
+                is_in = torch.stack(is_in_list, dim=0)
+            else:
+                batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
+                is_in = (batch_inputs_clone >= in_lb) & (batch_inputs_clone <= in_ub)
+                is_in = is_in.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
+        # convert to bitmap
+        bitmap = torch.zeros((batch_inputs.shape[0], in_bitmap.shape[1]), device = device).to(torch.uint8)
+        bitmap_i, inbitmap_j =  is_in.nonzero(as_tuple=True)
+        if bitmap_i.shape[0] != 0:
+            bitmap[bitmap_i, :] = in_bitmap[inbitmap_j, :]
+        else:
+            pass
+
+
+        return bitmap

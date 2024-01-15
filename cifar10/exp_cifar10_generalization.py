@@ -81,10 +81,6 @@ class CifarArgParser(exp.ExpArgParser):
         self.add_argument('--divided_repair', type=int, default=1, help='batch size for training')
         self.add_argument('--accuracy_loss', type=str, choices=['L1', 'SmoothL1', 'MSE', 'CE'], default='CE',
                           help='canonical loss function for concrete points training')
-        self.add_argument('--support_loss', type=str, choices=['CE','L2','SmoothL1'], default='L2',
-                          help= 'canonical loss function for patch net training')
-        self.add_argument('--sample_amount', type=int, default=5000,
-                          help='specifically for data points sampling from spec')
         self.add_argument('--reset_params', type=literal_eval, default=False,
                           help='start with random weights or provided trained weights when available')
         self.add_argument('--train_datasize', type=int, default=10000, 
@@ -115,15 +111,6 @@ class CifarArgParser(exp.ExpArgParser):
             'CE': ce_loss
         }[args.accuracy_loss]
 
-        args.support_loss = {
-            'BCE' : Bce_loss,
-            'L2': nn.MSELoss(),
-            'L1': nn.L1Loss(),
-            'CE': nn.CrossEntropyLoss(),
-            'SmoothL1': nn.SmoothL1Loss(),
-
-
-        }[args.support_loss]
         return
     pass
 
@@ -140,15 +127,6 @@ class CifarPoints(exp.ConcIns):
             is_attack_testset_repaired = False, 
             is_attack_repaired = False,
             is_origin_data = False):
-        '''
-        trainnumber: 训练集数据量
-        testnumber: 测试集数据量
-        radius: 修复数据的半径
-        is_test_accuracy: if True, 检测一般测试集的准确率
-        is_attack_testset_repaired: if True, 检测一般被攻击测试集的准确率
-        is_attack_repaired: if True, 检测被攻击数据的修复率
-        三个参数只有一个为True
-        '''
         #_attack_data_full
         suffix = 'train' if train else 'test'
         if train:
@@ -402,8 +380,7 @@ def test_repaired(args: Namespace) -> float:
             # for images, labels in buggy_loader:
             #     images, labels = images.to(device), labels.to(device)
             for (buggy_images, buggy_labels), (test_images, test_labels) in zip(buggy_loader, train_loader):
-                
-                # 对抗训练样本和原始样本同时作为训练集进行训练                
+                          
                 # net.eval()
                 # adv_images = PGD_attack(test_images, test_labels)      
                 # print(adv_images[0])   
@@ -416,6 +393,7 @@ def test_repaired(args: Namespace) -> float:
                            x_natural=buggy_images,
                            y=buggy_labels,
                            optimizer=optimizer,
+                           epsilon=args.repair_radius,
                         #    step_size=args.step_size,
                         #    epsilon=args.epsilon,
                         #    perturb_steps=args.num_steps,

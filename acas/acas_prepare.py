@@ -1,24 +1,25 @@
-""" Since the training dataset for ACAS Xu is not publicly available,
-    we uniformly generate and inspect the training/test set here.
-"""
+
 
 import sys
 from pathlib import Path
 from typing import List
 
 import torch
-
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+root = Path(__file__).resolve().parent.parent
+# sys.path.append(str(root))
 from DiffAbs.DiffAbs import AbsDom, DeeppolyDom
 
 from art.prop import AndProp
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 
 from acas.acas_utils import ACAS_DIR, AcasNetID, AcasNet, AcasOut
 from art.utils import sample_points
 
 
-def sample_original_data(dom: AbsDom, trainsize: int = 10000, testsize: int = 5000, dir: str = ACAS_DIR):
+def sample_original_data(dom: AbsDom, trainsize: int = 10000, testsize: int = 5000, dir: str = ACAS_DIR,
+                         device = 'cuda'):
     """ Sample the data from every trained network. Serve as training and test set.
     :param dom: the data preparation do not use abstraction domains, although the AcasNet constructor requires it.
     """
@@ -53,13 +54,8 @@ def sample_original_data(dom: AbsDom, trainsize: int = 10000, testsize: int = 50
     return
 
 
-def sample_balanced_data(dom: AbsDom, trainsize: int = 10000, testsize: int = 5000, dir: str = ACAS_DIR):
-    """ Sample the data from every trained network. Serve as training and test set.
-        Note that the default original dataset is very imbalanced, we instead sample a balanced dataset
-        where every category has exactly the same amount of data.
-        Note that this applies to N_{1,1} ~ N_{1,6} only. Other networks all lack of data for certain categories.
-        Some categories are having data < 0.1% of all sampled points.
-    """
+def sample_balanced_data(dom: AbsDom, trainsize: int = 10000, testsize: int = 5000, dir: str = ACAS_DIR,
+                         device = 'cuda'):
     assert trainsize % len(AcasOut) == 0 and testsize % len(AcasOut) == 0
 
     for nid in AcasNetID.balanced_ids():
@@ -126,7 +122,8 @@ def sample_balanced_data(dom: AbsDom, trainsize: int = 10000, testsize: int = 50
 
 
 def sample_balanced_data_for(dom: AbsDom, nid: AcasNetID, ignore_idxs: List[int],
-                             trainsize: int = 10000, testsize: int = 5000, dir: str = ACAS_DIR):
+                             trainsize: int = 10000, testsize: int = 5000, dir: str = ACAS_DIR,
+                             device = 'cuda'):
     """ Some networks' original data is soooooo imbalanced.. Some categories are ignored. """
     assert len(ignore_idxs) != 0, 'Go to the other function.'
     assert all([0 <= i < len(AcasOut) for i in ignore_idxs])
@@ -215,7 +212,8 @@ def sample_balanced_data_for(dom: AbsDom, nid: AcasNetID, ignore_idxs: List[int]
     return
 
 
-def inspect_data_for(dom: AbsDom, nid: AcasNetID, dir: str = ACAS_DIR, normed: bool = True):
+def inspect_data_for(dom: AbsDom, nid: AcasNetID, dir: str = ACAS_DIR, normed: bool = True,
+                     device = 'cuda'):
     """ Inspect the sampled data from every trained network. To serve as training and test set. """
     fpath = nid.fpath()
     print('Loading sampled data for network', nid, 'picked nnet file:', fpath)
@@ -243,24 +241,34 @@ def inspect_data_for(dom: AbsDom, nid: AcasNetID, dir: str = ACAS_DIR, normed: b
         assert torch.equal(test_labels, (net(test_inputs) * -1).argmax(dim=-1))
     return
 
+def test_p2(predict):
+    predict_max_index = predict.argmax(dim=-1)
+    # judge if the predict is in the range of [1, 4]
+    judge = (predict_max_index >= 1) & (predict_max_index <= 4)
+    acc = judge.sum().item()/len(judge)
+    return acc
+
+def test(net, device):
+    from art.repair_moudle import PatchNet, Netsum
+    from DiffAbs.DiffAbs import deeppoly
+    model_path = root / 'model' / 'acasxu' / f'AcasNetID_{net}_repaired.pt'
+    repair_data_path = root / 'data' / 'acas' / 'acasxu_data_repair' / f'n{net[0]}{net[2]}_counterexample.pt'
+    gene_data_path = root / 'data' / 'acas' / 'acasxu_data_gene' / f'n{net[0]}{net[2]}_counterexample_test.pt'
+    model = torch.load(model_path, map_location=device)
+    repair_data = torch.load(repair_data_path, map_location=device)
+    gene_data = torch.load(gene_data_path, map_location=device)
+    # tranverse
+    # gene_data = gene_data.transpose(1,0)
+    repair_bitmap = [[1] for _ in range(len(repair_data))]
+    gene_bitmap = [[1] for _ in range(len(gene_data))]
+    repair_bitmap = torch.tensor(repair_bitmap, dtype=torch.int8, device=device)
+    gene_bitmap = torch.tensor(gene_bitmap, dtype=torch.int8, device=device)
+    # model = AcasNet()
+    repair_acc = test_p2(model(repair_data,repair_bitmap))
+    gene_acc = test_p2(model(gene_data,gene_bitmap))
+    print(f'net {net} repair_acc {repair_acc} gene_acc {gene_acc}')
 
 if __name__ == '__main__':
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    dom = DeeppolyDom()
-
-    # sample_original_data(dom)
-    # sample_balanced_data(dom)
-
-    # # Ignore idxs are inspected from load_sampled_data(). Network <1, 1> and <1, 2> are already done.
-    # sample_balanced_data_for(dom, AcasNetID(1, 7), [3, 4])
-    # sample_balanced_data_for(dom, AcasNetID(1, 9), [1, 2, 3, 4])
-    # sample_balanced_data_for(dom, AcasNetID(2, 1), [2])
-    # sample_balanced_data_for(dom, AcasNetID(2, 9), [2, 3, 4])
-    # sample_balanced_data_for(dom, AcasNetID(3, 3), [1])
-    # sample_balanced_data_for(dom, AcasNetID(4, 5), [2, 4])
-
-    print(len(AcasNetID.all_ids()))
-    for nid in AcasNetID.all_ids():
-        inspect_data_for(dom, nid, normed=False)
-    print('All prepared ACAS dataset loaded and validated.')
-    pass
+    net_list = [f'{i}_{j}' for i in range(2, 6) for j in range(1,10) ]
+    for net in net_list:
+        test(net, device = 'cuda:2')

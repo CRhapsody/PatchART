@@ -12,7 +12,7 @@ import os
 import numpy as np
 from pathlib import Path
 
-py_file_location = "/home/chizm/PatchART/pgd"
+py_file_location = "./pgd"
 sys.path.append(os.path.abspath(py_file_location))
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
@@ -112,29 +112,6 @@ class CNN_small_NeuralNet(nn.Module):
         x = self.fc2(x)
         return x
     
-    # split the model into two parts, first part is the feature extractor until fc1, second part is the classifier
-    # def split(self):
-    #     return nn.Sequential(
-    #         self.conv1,
-    #         self.maxpool,
-    #         self.relu,
-    #         self.conv2,
-    #         self.maxpool,
-    #         self.relu,
-    #         # torch.flatten(x, 1),
-    #         nn.Flatten(),
-    #         self.fc1,
-    #         self.relu
-    #     ), nn.Sequential(
-            
-    #         self.fc2
-    #         # nn.Sigmoid()
-    #     )
-    
-    # # use the self.split() to get the feature extractor until fc1
-    # def get_the_feature(self,x):
-    #     x = self.split()[0](x)
-    #     return x
 
 class PGD():
     def __init__(self,model,eps=0.3,alpha=3/255,steps=40,random_start=True):
@@ -322,7 +299,7 @@ def train(net: str, device, epoch_num = 50):
     return model
 
 
-def test(net: str):
+def test(net: str,device):
     # test
     test = datasets.MNIST('./data/', train=False,
                       transform=transforms.Compose([transforms.ToTensor(),]),
@@ -347,14 +324,14 @@ def test(net: str):
         correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
 
-def pgd_attack(net: str):
+def pgd_attack(net: str,device):
     if net == 'CNN_small':
         model = CNN_small_NeuralNet().to(device)
     elif net == 'FNN_big':
         model = FNN_big_NeuralNet().to(device)
     elif net == 'FNN_small':
         model = FNN_small_NeuralNet().to(device)
-    model.load_state_dict(torch.load(f"/home/chizm/PatchART/model/mnist_{net}.pth"))
+    model.load_state_dict(torch.load(f"./model/mnist_{net}.pth"))
     model.eval()
 
     train = datasets.MNIST('./data/', train=True,
@@ -486,7 +463,7 @@ def pgd_get_data(net, radius = 0.1, multi_number = 10, data_num = 200, general =
         model = FNN_big_NeuralNet().to(device)
     elif net == 'FNN_small':
         model = FNN_small_NeuralNet().to(device)
-    model.load_state_dict(torch.load(f"/home/chizm/PatchART/model/mnist/mnist_{net}.pth"))
+    model.load_state_dict(torch.load(f"./model/mnist/mnist_{net}.pth"))
     model.eval()
     # pgd attack
     train = datasets.MNIST('./data/', train=True,
@@ -568,7 +545,7 @@ def grad_none(net, radius):
 def get_trainset_norm00():
     from torch.utils.data import DataLoader
     from torchvision import datasets, transforms
-    train = datasets.MNIST('/home/chizm/PatchART/data/', train=True,
+    train = datasets.MNIST('./data/', train=True,
                         transform=transforms.Compose([transforms.ToTensor(),]),
                         download=True)
     train_loader = DataLoader(train, batch_size=128)
@@ -584,8 +561,8 @@ def get_trainset_norm00():
     trainset_labels = torch.cat(trainset_labels)
     trainset_inputs.requires_grad = False
     trainset_labels.requires_grad = False
-    torch.save((trainset_inputs[:10000],trainset_labels[:10000]),'/home/chizm/PatchART/data/MNIST/processed/train_norm00.pt')
-    # torch.save((trainset_inputs,trainset_labels),'/home/chizm/PatchART/data/MNIST/processed/train_norm00_full.pt')
+    torch.save((trainset_inputs[:10000],trainset_labels[:10000]),'./data/MNIST/processed/train_norm00.pt')
+    # torch.save((trainset_inputs,trainset_labels),'./data/MNIST/processed/train_norm00_full.pt')
     # 但它太大了，有180M
 
 def adv_training(net, radius, data_num, device):
@@ -597,7 +574,7 @@ def adv_training(net, radius, data_num, device):
         model = FNN_big_NeuralNet().to(device)
     elif net == 'FNN_small':
         model = FNN_small_NeuralNet().to(device)
-    model.load_state_dict(torch.load(f"/home/chizm/PatchART/model/mnist/mnist_{net}.pth"))
+    model.load_state_dict(torch.load(f"./model/mnist/mnist_{net}.pth"))
     train_attack_data,train_attack_labels = torch.load(f'./data/MNIST/processed/train_attack_data_full_{net}_{radius}.pt',map_location=device)
     train_attack_data = train_attack_data[:data_num]
     train_attack_labels = train_attack_labels[:data_num]
@@ -635,8 +612,7 @@ def adv_training(net, radius, data_num, device):
     
     return model.eval()
 
-def adv_training_test(net, radius,device):
-    # load net
+def adv_training_test_pgd(net, radius,device,epoch_n = 200, data_num = 10000):
     print(f'Using {device} device')
     if net == 'CNN_small':
         model = CNN_small_NeuralNet().to(device)
@@ -644,94 +620,88 @@ def adv_training_test(net, radius,device):
         model = FNN_big_NeuralNet().to(device)
     elif net == 'FNN_small':
         model = FNN_small_NeuralNet().to(device)
-    model.load_state_dict(torch.load(f"/home/chizm/PatchART/model/mnist/mnist_{net}.pth"))
+    model.load_state_dict(torch.load(f"./model/mnist/mnist_{net}.pth",map_location=device))
 
-    # load attack data
-    train_attack_data,train_attack_labels = torch.load(f'./data/MNIST/processed/train_attack_data_full_{net}_{radius}.pt')
-    test_attack_data,test_attack_labels = torch.load(f'./data/MNIST/processed/test_attack_data_full_{net}_{radius}.pt')
-    test_data, test_labels = torch.load('/home/chizm/PatchART/data/MNIST/processed/test_norm00.pt')
-    # train_data,train_labels = torch.load('/home/chizm/PatchART/data/MNIST/processed/train_norm00.pt')
-    train_data,train_labels = torch.load(f'/home/chizm/PatchART/data/MNIST/processed/origin_data_{net}_{radius}.pt')
-    print(torch.cuda.max_memory_allocated() / 1e9, "GB")
+    # load data
+    repair_data,repair_label = torch.load(f'./data/MNIST/processed/train_attack_data_full_{net}_{radius}.pt',map_location=device)
+    attack_data,attack_label = torch.load(f'./data/MNIST/processed/test_attack_data_full_{net}_{radius}.pt',map_location=device)
+    test_data, test_label = torch.load('./data/MNIST/processed/test_norm00.pt',map_location=device)
+    origin_data,origin_label = torch.load(f'./data/MNIST/processed/origin_data_{net}_{radius}.pt',map_location=device)
+
+    origin_data,origin_label = origin_data[:data_num],origin_label[:data_num]
+    repair_data,repair_label = repair_data[:data_num],repair_label[:data_num]
+    attack_data,attack_label = attack_data[:data_num],attack_label[:data_num]
+
     # dataset
-    train_attack_dataset = torch.utils.data.TensorDataset(train_attack_data,train_attack_labels)
-    test_attack_dataset = torch.utils.data.TensorDataset(test_attack_data,test_attack_labels)
-    train_dataset = torch.utils.data.TensorDataset(train_data,train_labels)
-    test_dataset = torch.utils.data.TensorDataset(test_data,test_labels)
-    # data loader
-    train_attack_loader = DataLoader(train_attack_dataset, batch_size=50)
-    test_attack_loader = DataLoader(test_attack_dataset, batch_size=128)
-    train_loader = DataLoader(train_dataset, batch_size=128)
-    test_loader = DataLoader(test_dataset, batch_size=128)
-    # train
+    origin_dataset = torch.utils.data.TensorDataset(origin_data,origin_label)
+    
+    # dataloader
+    origin_loader = DataLoader(origin_dataset, batch_size=32)
+
+    #train
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.01)
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50)
+    optimizer = optim.SGD(model.parameters(), lr=0.001)
     model.train()
+    loss_sum_best = 100
+
+    import time
+    start = time.time()
     from torchattacks import PGD
-    pgd_attack = PGD(model, eps=radius, alpha=0.1, steps=10, random_start=True)
-    for epoch in range(10):
-        print(f"epoch {epoch}")
-        # epoch_loss = 0
-        correct, total = 0,0
-        for inputs,labels in train_attack_loader:
-        # for inputs,labels in train_loader:
-            inputs = inputs.to(device)
-            labels = labels.to(device)
+    pgd_attack = PGD(model, eps=radius, alpha=radius/4, steps=10, random_start=True)
+    
+    for epoch in range(epoch_n):
+        print(f"adv-training epoch {epoch}")
+        loss_sum = 0
+        for inputs,labels in origin_loader:
+            inputs,labels = inputs.to(device),labels.to(device)
             optimizer.zero_grad()
 
-            # attack_in = pgd_attack(inputs, labels)
-            outputs = model(inputs)
+            
 
-            # outputs = model(attack_in)
-            loss = criterion(outputs, labels)
+
+            attack_in = pgd_attack(inputs, labels)
+            outputs = model(attack_in)
+            loss1 = criterion(outputs, labels)
+
+
+            outputs = model(inputs)
+            loss2 = criterion(outputs, labels)
+            loss = loss1 + loss2
             loss.backward()
             optimizer.step()
-        scheduler.step()
+            loss_sum += loss.item()
+        if epoch % 1 == 0:
+            print(f'Epoch [{epoch+1}/{200}], Loss: {loss_sum/len(origin_loader):.4f}')
+            # save model
+            # judge the loss is nan
+
+            if loss_sum < loss_sum_best:
+                torch.save(model.state_dict(),f"./tools/mnist/trade-mnist/best_{net}_{radius}_{data_num}.pt")
+                loss_sum_best = loss_sum
+    model.load_state_dict(torch.load(f"./tools/mnist/trade-mnist/best_{net}_{radius}_{data_num}.pt",map_location=device))
         
     # test
     model.eval()
-    total = 0
-    train_attack_correct = 0
-    for data, target in train_attack_loader:
-        data, target = data.to(device), target.to(device)
-        output = model(data)
-        pred = output.argmax(dim=1, keepdim=True)
-        total += target.size(0)
-        train_attack_correct += pred.eq(target.view_as(pred)).sum().item()
-    print(f"train_attack_loader {train_attack_correct/total}")
-    
+    end = time.time()
+    train_time = end - start
     # test
-    model.eval()
-    total = 0
-    test_attack_correct = 0
-    for data, target in test_attack_loader:
-        data, target = data.to(device), target.to(device)
-        output = model(data)
-        pred = output.argmax(dim=1, keepdim=True)
-        total += target.size(0)
-        test_attack_correct += pred.eq(target.view_as(pred)).sum().item()
-    print(f"test_attack_loader {test_attack_correct/total}")
-    
-    train_correct = 0
-    total = 0
-    for data, target in train_loader:
-        data, target = data.to(device), target.to(device)
-        output = model(data)
-        pred = output.argmax(dim=1, keepdim=True)
-        total += target.size(0)
-        train_correct += pred.eq(target.view_as(pred)).sum().item()
-    print(f"train_loader {train_correct/total}")
-
-    test_correct = 0
-    total = 0
-    for data, target in test_loader:
-        data, target = data.to(device), target.to(device)
-        output = model(data)
-        pred = output.argmax(dim=1, keepdim=True)
-        total += target.size(0)
-        test_correct += pred.eq(target.view_as(pred)).sum().item()
-    print(f"test_loader {test_correct/total}")
+    rsr = 0
+    with torch.no_grad():
+        output = model(repair_data)
+        rsr = (output.argmax(dim=1) == repair_label).sum().item()
+        print(f"repair success rate {rsr/len(repair_data)}")
+        # attack
+        asr = 0
+        output = model(attack_data)
+        asr = (output.argmax(dim=1) == attack_label).sum().item()
+        print(f"attack success rate {asr/len(attack_data)}")
+        # test
+        tsr = 0
+        output = model(test_data)
+        tsr = (output.argmax(dim=1) == test_label).sum().item()
+        print(f"test success rate {tsr/len(test_data)}")
+    with open(f'./tools/mnist/trade-mnist/result.txt','a') as f:
+        f.write(f"For {net} {data_num} {radius} : repair:{rsr/len(repair_data)}, attack:{asr/len(attack_data)}, test:{tsr/len(test_data)}, time:{train_time}, epoch:{epoch_n} \n")
 
 # judge the batch_inputs is in which region of property
 from torch import Tensor
@@ -795,7 +765,7 @@ def compare_pgd_step_length(net, patch_format,
     elif net == 'FNN_small':
         model1 = FNN_small_NeuralNet().to(device)
         orinet = MnistNet_FNN_small(dom=deeppoly)
-    model1.load_state_dict(torch.load(f"/home/chizm/PatchART/model/mnist/mnist_{net}.pth"))
+    model1.load_state_dict(torch.load(f"./model/mnist/mnist_{net}.pth"))
 
   
 
@@ -811,13 +781,13 @@ def compare_pgd_step_length(net, patch_format,
         patch_net.to(device)
         patch_lists.append(patch_net)
     model2 =  Netsum(deeppoly, target_net = orinet, patch_nets= patch_lists, device=device)
-    model2.load_state_dict(torch.load(f"/home/chizm/PatchART/model/patch_format/Mnist-{net}-repair_number{repair_number}-rapair_radius{radius}-{patch_format}.pt",map_location=device))
+    model2.load_state_dict(torch.load(f"./model/patch_format/Mnist-{net}-repair_number{repair_number}-rapair_radius{radius}-{patch_format}.pt",map_location=device))
 
     model3 = adv_training(net,radius, data_num=repair_number, device=device)
 
 
     # load data
-    datas,labels = torch.load(f'/home/chizm/PatchART/data/MNIST/processed/origin_data_{net}_{radius}.pt',map_location=device)
+    datas,labels = torch.load(f'./data/MNIST/processed/origin_data_{net}_{radius}.pt',map_location=device)
     # return
     
     datas = datas[:repair_number]
@@ -901,7 +871,7 @@ def compare_autoattack(net, patch_format,
     elif net == 'FNN_small':
         model1 = FNN_small_NeuralNet().to(device)
         orinet = MnistNet_FNN_small(dom=deeppoly)
-    model1.load_state_dict(torch.load(f"/home/chizm/PatchART/model/mnist/mnist_{net}.pth"))
+    model1.load_state_dict(torch.load(f"./model/mnist/mnist_{net}.pth"))
 
   
 
@@ -917,13 +887,13 @@ def compare_autoattack(net, patch_format,
         patch_net.to(device)
         patch_lists.append(patch_net)
     model2 =  Netsum(deeppoly, target_net = orinet, patch_nets= patch_lists, device=device)
-    model2.load_state_dict(torch.load(f"/home/chizm/PatchART/model/patch_format/Mnist-{net}-repair_number{repair_number}-rapair_radius{radius}-{patch_format}.pt",map_location=device))
+    model2.load_state_dict(torch.load(f"./model/patch_format/Mnist-{net}-repair_number{repair_number}-rapair_radius{radius}-{patch_format}.pt",map_location=device))
 
     model3 = adv_training(net,radius, data_num=repair_number, device=device)
 
 
     # load data
-    datas,labels = torch.load(f'/home/chizm/PatchART/data/MNIST/processed/origin_data_{net}_{radius}.pt',map_location=device)
+    datas,labels = torch.load(f'./data/MNIST/processed/origin_data_{net}_{radius}.pt',map_location=device)
     # return
     
     datas = datas[:repair_number]
@@ -1000,8 +970,133 @@ def compare_autoattack(net, patch_format,
             
     
     # print(f"ori_step {ori_step}, repair_step {repair_step}, pgd_step {pgd_step} \\ ori:{p1}, patch:{p2}, adv-train:{p3}")
-    with open(f'/home/chizm/PatchART/results/mnist/repair/autoattack/compare_autoattack_ac.txt','a') as f:
+    with open(f'./results/mnist/repair/autoattack/compare_autoattack_ac.txt','a') as f:
         f.write(f"For {net} {radius} {data} {patch_format}: \\  ori:{p1}, patch:{p2}, adv-train:{p3} \\ \n")
+
+from TRADES.trades import trades_loss
+def adv_training_test(net, radius,data_num, device, epoch_n=200):
+    print(f'Using {device} device')
+    if net == 'CNN_small':
+        model = CNN_small_NeuralNet().to(device)
+    elif net == 'FNN_big':
+        model = FNN_big_NeuralNet().to(device)
+    elif net == 'FNN_small':
+        model = FNN_small_NeuralNet().to(device)
+    model.load_state_dict(torch.load(f"./model/mnist/mnist_{net}.pth",map_location=device))
+
+    # load data
+    repair_data,repair_label = torch.load(f'./data/MNIST/processed/train_attack_data_full_{net}_{radius}.pt',map_location=device)
+    attack_data,attack_label = torch.load(f'./data/MNIST/processed/test_attack_data_full_{net}_{radius}.pt',map_location=device)
+    test_data, test_label = torch.load('./data/MNIST/processed/test_norm00.pt',map_location=device)
+    origin_data,origin_label = torch.load(f'./data/MNIST/processed/origin_data_{net}_{radius}.pt',map_location=device)
+
+    origin_data,origin_label = origin_data[:data_num],origin_label[:data_num]
+    repair_data,repair_label = repair_data[:data_num],repair_label[:data_num]
+    attack_data,attack_label = attack_data[:data_num],attack_label[:data_num]
+
+    # dataset
+    origin_dataset = torch.utils.data.TensorDataset(origin_data,origin_label)
+    
+    # dataloader
+    origin_loader = DataLoader(origin_dataset, batch_size=32)
+
+    #train
+    # criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(model.parameters(), lr=0.001)
+    model.train()
+    loss_sum_best = 100
+    import time
+    start = time.time()
+    for epoch in range(epoch_n):
+        print(f"adv-training epoch {epoch}")
+        loss_sum = 0
+        for inputs,labels in origin_loader:
+            inputs,labels = inputs.to(device),labels.to(device)
+            optimizer.zero_grad()
+            loss = trades_loss(model=model,
+                            x_natural=inputs,
+                            y=labels,
+                            optimizer=optimizer,
+                            epsilon=radius,
+                            step_size=1,
+                            beta=0.001)
+            loss.backward()
+            optimizer.step()
+            loss_sum += loss.item()
+
+        if epoch % 1 == 0:
+            print(f'Epoch [{epoch+1}/{200}], Loss: {loss_sum/len(origin_loader):.4f}')
+            # save model
+            # judge the loss is nan
+
+            if loss_sum < loss_sum_best or (math.isnan(loss_sum)):
+                torch.save(model.state_dict(),f"./tools/mnist/trade-mnist/best_{net}_{radius}_{data_num}.pt")
+                loss_sum_best = loss_sum
+    model.load_state_dict(torch.load(f"./tools/mnist/trade-mnist/best_{net}_{radius}_{data_num}.pt",map_location=device))
+    model.eval()
+    end = time.time()
+    train_time = end - start
+    # te
+    rsr = 0
+    with torch.no_grad():
+        output = model(repair_data)
+        rsr = (output.argmax(dim=1) == repair_label).sum().item()
+        print(f"repair success rate {rsr/len(repair_data)}")
+        # attack
+        asr = 0
+        output = model(attack_data)
+        asr = (output.argmax(dim=1) == attack_label).sum().item()
+        print(f"attack success rate {asr/len(attack_data)}")
+        # test
+        tsr = 0
+        output = model(test_data)
+        tsr = (output.argmax(dim=1) == test_label).sum().item()
+        print(f"test success rate {tsr/len(test_data)}")
+    with open(f'./tools/mnist/trade-mnist/result.txt','a') as f:
+        f.write(f"For {net} {data_num} {radius} : repair:{rsr/len(repair_data)}, attack:{asr/len(attack_data)}, test:{tsr/len(test_data)}, time:{train_time}, epoch:{epoch_n} \n")
+
+
+
+
+def autoattack_adv_training(net, data_num, device,radius = 0.1):
+    
+    print(f'Using {device} device')
+    if net == 'CNN_small':
+        model1 = CNN_small_NeuralNet().to(device)
+    elif net == 'FNN_big':
+        model1 = FNN_big_NeuralNet().to(device)
+    elif net == 'FNN_small':
+        model1 = FNN_small_NeuralNet().to(device)
+    model1.load_state_dict(torch.load(f"./tools/mnist/trade-mnist/best_{net}_{radius}_{data_num}.pt",map_location=device))
+
+    # model1 = adv_training(net,radius, data_num=data_num, device=device, radius_bit=radius_bit)
+    model1.eval()
+    datas,labels = torch.load(f'./data/MNIST/processed/origin_data_{net}_{radius}.pt',map_location=device)
+    datas = datas[:data_num]
+    labels = labels[:data_num]
+    from torchattacks import AutoAttack
+    at1 = AutoAttack(model1, norm='Linf', eps=radius, version='standard', verbose=False)
+
+
+    p1 = 0
+    for ith, (image, label) in enumerate(zip(datas,labels)):
+        image = image.unsqueeze(0).to(device)
+        label = label.unsqueeze(0).to(device)
+
+        adv_images1 = at1(image, label)
+    
+        if model1(adv_images1).argmax(dim=1)!= label:
+            print("success1")
+            p1 += 1
+        else:
+            print("fail")
+    with open(f'./results/mnist/repair/autoattack/compare_autoattack_ac.txt','a') as f:
+        f.write(f"For {net} {data_num} {radius} : adv-train:{p1}\n")
+
+
+
+
+
 
 def patch_label_autoattack(net, patch_format, 
                             radius, repair_number, device):
@@ -1030,27 +1125,19 @@ def patch_label_autoattack(net, patch_format,
         patch_net.to(device)
         patch_lists.append(patch_net)
     model2 =  Netsum(deeppoly, target_net = orinet, patch_nets= patch_lists, device=device)
-    model2.load_state_dict(torch.load(f"/home/chizm/PatchART/model/mnist_label_format/Mnist-{net}-repair_number{repair_number}-rapair_radius{radius}-{patch_format}.pt",map_location=device))
+    model2.load_state_dict(torch.load(f"./model/mnist_label_format/Mnist-{net}-repair_number{repair_number}-rapair_radius{radius}-{patch_format}.pt",map_location=device))
 
-    datas,labels = torch.load(f'/home/chizm/PatchART/data/MNIST/processed/origin_data_{net}_{radius}.pt',map_location=device)
+    datas,labels = torch.load(f'./data/MNIST/processed/origin_data_{net}_{radius}.pt',map_location=device)
     # return
     
     datas = datas[:repair_number]
     labels = labels[:repair_number]
 
-    # pgd
-    # pgd1 = PGD(model=model1, eps=radius, alpha=2/255, steps=50, random_start=True)
-    # pgd2 = PGD(model=model2, eps=radius, alpha=2/255, steps=50, random_start=True)
-    # pgd3 = PGD(model=model3, eps=radius, alpha=2/255, steps=50, random_start=True)
+
     from torchattacks import AutoAttack
 
 
-    # attack
-    # ori_step = 0
-    # repair_step = 0
-    # pgd_step = 0
 
-    # get bitmap
     from art.prop import AndProp
     from art.bisecter import Bisecter
     repairlist = [(data[0],data[1]) for data in zip(datas, labels)]
@@ -1109,10 +1196,42 @@ def patch_label_autoattack(net, patch_format,
             
     
     # print(f"ori_step {ori_step}, repair_step {repair_step}, pgd_step {pgd_step} \\ ori:{p1}, patch:{p2}, adv-train:{p3}")
-    # with open(f'/home/chizm/PatchART/results/mnist/repair/autoattack/compare_autoattack_ac.txt','a') as f:
+    # with open(f'./results/mnist/repair/autoattack/compare_autoattack_ac.txt','a') as f:
     #     f.write(f"For {net} {radius} {data} {patch_format}: \\  ori:{p1}, patch:{p2}, adv-train:{p3} \\ \n")
-    with open(f'/home/chizm/PatchART/results/mnist/repair/autoattack/compare_autoattack_ac.txt','a') as f:
+    with open(f'./results/mnist/repair/autoattack/compare_autoattack_ac.txt','a') as f:
         f.write(f"For {net} {radius} {repair_number} : {patch_format}_label:{p2}\n")
+
+def trades_generalization(net, radius, data_num, device):
+    if net == 'CNN_small':
+        model = CNN_small_NeuralNet().to(device)
+    elif net == 'FNN_big':
+        model = FNN_big_NeuralNet().to(device)
+    elif net == 'FNN_small':
+        model = FNN_small_NeuralNet().to(device)
+    model.load_state_dict(torch.load(f"./tools/mnist/trade-mnist/best_{net}_{radius}_{data_num}.pt",map_location=device))
+
+    # load data
+    test_data, test_label = torch.load('./data/MNIST/processed/test_norm00.pt',map_location=device)
+    # origin_data,origin_label = torch.load(f'./data/MNIST/processed/origin_data_{net}_{radius}.pt',map_location=device)
+
+
+    # dataloader
+    test_dataset = torch.utils.data.TensorDataset(test_data,test_label)
+    test_loader = DataLoader(test_dataset, batch_size=32)
+    correct_sum = 0
+    from torchattacks import AutoAttack
+    attack = AutoAttack(model, norm='Linf', eps=radius, version='standard', verbose=False)
+    for test_data, test_label in test_loader:
+        test_data, test_label = test_data.to(device), test_label.to(device)
+        adv_images = attack(test_data, test_label)
+        outs = model(adv_images)
+        predicted = outs.argmax(dim=1)
+        correct = (predicted == test_label).sum().item()
+        correct_sum += correct
+        print(f"correct {correct}")
+    
+    with open(f'./results/mnist/repair/generalization/compare/compare_generalization.txt','a') as f:
+        f.write(f"For net: {net}, radius :{radius}, repair_number: {data_num}, adv_training:{correct_sum/len(test_dataset)}\n")
 
 
 if __name__ == "__main__":
@@ -1123,13 +1242,24 @@ if __name__ == "__main__":
     # compare_pgd_step_length(radius=0.3,repair_number=1000)
 
     # for data in [1000]:
-    for data in [50,100,200,500,1000]:
-        for radius in [0.05,0.1,0.3]:
+    # autoattack_adv_training(net='CNN_small', data_num=200, device='cuda:0',radius = 0.05)
+    for data in [50,100, 200, 500,1000]:
+        for radius in [0.05, 0.1, 0.3]:
             # for radius in [0.3]:
-                for net in ['FNN_small','FNN_big', 'CNN_small']:
-                # for net in [ 'CNN_small']:
-                    for patch_format in ['small', 'big']:
-                        patch_label_autoattack(net, patch_format, radius, data,device='cuda:0')
+            # if (data == 200 and radius == 0.05): # or (data == 200 and radius == 0.1):
+            #     continue    
+
+            for net in ['FNN_small','FNN_big', 'CNN_small']:
+            # for net in [ 'CNN_small']:
+                # for patch_format in ['small', 'big']:
+                #     patch_label_autoattack(net, patch_format, radius, data,device='cuda:0')
+                # adv_training_test(net, radius, data,device='cuda:0')
+                # for epoch in [200]:
+                    # adv_training_test_pgd(net, radius, data_num=data, device='cuda:0',epoch_n=epoch)
+                    # adv_training_test(net, radius, data_num=data, device='cuda:0',epoch_n=epoch)
+                trades_generalization(net, radius, data, device='cuda:2')
+            
+                # autoattack_adv_training(net, data,device='cuda:0',radius = radius)
                     # compare_pgd_step_length(net, patch_format, radius, data)
                     # compare_autoattack(net, patch_format, radius, data)
                     # adv_training_test(net, radius,device='cuda:0')

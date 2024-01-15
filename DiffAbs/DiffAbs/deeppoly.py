@@ -1500,7 +1500,7 @@ class Exponent(Exp_conc):
 
         denom = torch.where(lbub_same, torch.ones_like(lb), ub - lb)
         # Batch x Dims...
-        # 若 lb = ub，则 denom = 1，k_ub = 0; 若 lb != ub，则为简单的slope
+        # if lb = ub，then denom = 1，k_ub = 0; if lb != ub，then slope
         k_ub = (exp_ub - exp_lb) / denom  # the slope for LB-UB
         k_lb = exp_lb  # the slope for exp on LB, exp' = exp
 

@@ -2,152 +2,152 @@
     "vgg19": {
         "4": {
             "50": {
-                "drawdown": 0.14160000000000006,
-                "rs": 1.0,
-                "gene": 0.692,
-                "time": 188.94646146986634,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "14.2",
+                "rsr": "100.0",
+                "rgr": "69.2",
+                "time": "188.9",
+                "dsr": "0.0"
             },
             "100": {
-                "drawdown": 0.20020000000000004,
-                "rs": 1.0,
-                "gene": 0.689,
-                "time": 288.2202875316143,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "20.0",
+                "rsr": "100.0",
+                "rgr": "68.9",
+                "time": "288.2",
+                "dsr": "0.0"
             },
             "200": {
-                "drawdown": 0.29300000000000004,
-                "rs": 1.0,
-                "gene": 0.7085,
-                "time": 451.2824317244813,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "29.3",
+                "rsr": "100.0",
+                "rgr": "70.9",
+                "time": "451.3",
+                "dsr": "0.0"
             },
             "500": {
-                "drawdown": 0.48650000000000004,
-                "rs": 1.0,
-                "gene": 0.7554,
-                "time": 1645.639687676914,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "48.7",
+                "rsr": "100.0",
+                "rgr": "75.5",
+                "time": "1645.6",
+                "dsr": "0.0"
             },
             "1000": {
-                "drawdown": 0.46430000000000005,
-                "rs": 1.0,
-                "gene": 0.8039,
-                "time": 6211.421647501178,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "46.4",
+                "rsr": "100.0",
+                "rgr": "80.4",
+                "time": "6211.4",
+                "dsr": "0.0"
             }
         },
         "8": {
             "50": {
-                "drawdown": 0.23970000000000002,
-                "rs": 1.0,
-                "gene": 0.632,
-                "time": 209.2149113677442,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "24.0",
+                "rsr": "100.0",
+                "rgr": "63.2",
+                "time": "209.2",
+                "dsr": "0.0"
             },
             "100": {
-                "drawdown": 0.3951,
-                "rs": 1.0,
-                "gene": 0.652,
-                "time": 318.6265845578164,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "39.5",
+                "rsr": "100.0",
+                "rgr": "65.2",
+                "time": "318.6",
+                "dsr": "0.0"
             },
             "200": {
-                "drawdown": 0.6186,
-                "rs": 1.0,
-                "gene": 0.6815,
-                "time": 492.44103588629514,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "61.9",
+                "rsr": "100.0",
+                "rgr": "68.2",
+                "time": "492.4",
+                "dsr": "0.0"
             },
             "500": {
-                "drawdown": 0.7554000000000001,
-                "rs": 1.0,
-                "gene": 0.6614,
-                "time": 1750.4414049228653,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "75.5",
+                "rsr": "100.0",
+                "rgr": "66.1",
+                "time": "1750.4",
+                "dsr": "0.0"
             },
             "1000": {
-                "drawdown": 0.8209000000000001,
-                "rs": 1.0,
-                "gene": 0.7066,
-                "time": 7787.100646957755,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "82.1",
+                "rsr": "100.0",
+                "rgr": "70.7",
+                "time": "7787.1",
+                "dsr": "0.0"
             }
         }
     },
     "resnet18": {
         "4": {
             "50": {
-                "drawdown": 0.017799999999999927,
-                "rs": 1.0,
-                "gene": 0.706,
-                "time": 307.747873038,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "1.8",
+                "rsr": "100.0",
+                "rgr": "70.6",
+                "time": "307.7",
+                "dsr": "0.0"
             },
             "100": {
-                "drawdown": 0.01759999999999995,
-                "rs": 1.0,
-                "gene": 0.651,
-                "time": 746.090837042,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "1.8",
+                "rsr": "100.0",
+                "rgr": "65.1",
+                "time": "746.1",
+                "dsr": "0.0"
             },
             "200": {
-                "drawdown": 0.022499999999999964,
-                "rs": 1.0,
-                "gene": 0.62,
-                "time": 812.1510163070634,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "2.2",
+                "rsr": "100.0",
+                "rgr": "62.0",
+                "time": "812.2",
+                "dsr": "0.0"
             },
             "500": {
-                "drawdown": 0.031399999999999983,
-                "rs": 1.0,
-                "gene": 0.6272,
-                "time": 1338.1129021849483,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "3.1",
+                "rsr": "100.0",
+                "rgr": "62.7",
+                "time": "1338.1",
+                "dsr": "0.0"
             },
             "1000": {
-                "drawdown": 0.06099999999999994,
-                "rs": 1.0,
-                "gene": 0.6821,
-                "time": 1710.7776858740003,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "6.1",
+                "rsr": "100.0",
+                "rgr": "68.2",
+                "time": "1710.8",
+                "dsr": "0.0"
             }
         },
         "8": {
             "50": {
-                "drawdown": 0.05520000000000003,
-                "rs": 1.0,
-                "gene": 0.65,
-                "time": 580.9303465779999,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "5.5",
+                "rsr": "100.0",
+                "rgr": "65.0",
+                "time": "580.9",
+                "dsr": "0.0"
             },
             "100": {
-                "drawdown": 0.04249999999999998,
-                "rs": 1.0,
-                "gene": 0.556,
-                "time": 990.7643887970003,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "4.2",
+                "rsr": "100.0",
+                "rgr": "55.6",
+                "time": "990.8",
+                "dsr": "0.0"
             },
             "200": {
-                "drawdown": 0.07589999999999997,
-                "rs": 1.0,
-                "gene": 0.53,
-                "time": 863.1524560097605,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "7.6",
+                "rsr": "100.0",
+                "rgr": "53.0",
+                "time": "863.2",
+                "dsr": "0.0"
             },
             "500": {
-                "drawdown": 0.12729999999999997,
-                "rs": 1.0,
-                "gene": 0.4962,
-                "time": 1556.0457024881616,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "12.7",
+                "rsr": "100.0",
+                "rgr": "49.6",
+                "time": "1556.0",
+                "dsr": "0.0"
             },
             "1000": {
-                "drawdown": 0.19509999999999994,
-                "rs": 1.0,
-                "gene": 0.5903,
-                "time": 1988.3888117389997,
-                "defense success of apgd & apgdt": 0.0
+                "drawdown": "19.5",
+                "rsr": "100.0",
+                "rgr": "59.0",
+                "time": "1988.4",
+                "dsr": "0.0"
             }
         }
     }

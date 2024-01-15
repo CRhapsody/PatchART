@@ -3,396 +3,486 @@
         "0.05": {
             "50": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.72
+                "trades": {
+                    "dsr": "26.0"
                 },
                 "art": {
-                    "autoattack_success": 0.08
+                    "dsr": "6.0"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0.1
+                    "dsr": "0.0"
                 }
             },
             "100": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.68
+                "trades": {
+                    "dsr": "2.0"
                 },
                 "art": {
-                    "autoattack_success": 0.08
+                    "dsr": "20.0"
                 },
                 "care": {
-                    "autoattack_success": 0.99
+                    "dsr": "1.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0.1
+                    "dsr": "0.0"
                 }
             },
             "200": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.815
+                "trades": {
+                    "dsr": "3.5"
                 },
                 "art": {
-                    "autoattack_success": 0.09
+                    "dsr": "10.0"
                 },
                 "care": {
-                    "autoattack_success": 0.98
+                    "dsr": "2.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0.1
+                    "dsr": "0.0"
                 }
             },
             "500": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.84
+                "trades": {
+                    "dsr": "2.8"
                 },
                 "art": {
-                    "autoattack_success": 0.09
+                    "dsr": "9.6"
                 },
                 "care": {
-                    "autoattack_success": 0.986
+                    "dsr": "1.4"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "1000": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.923
+                "trades": {
+                    "dsr": "3.9"
                 },
                 "art": {
-                    "autoattack_success": 0.085
+                    "dsr": "14.4"
                 },
                 "care": {
-                    "autoattack_success": 0.977
+                    "dsr": "2.3"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 }
             }
         },
         "0.1": {
             "50": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "art": {
-                    "autoattack_success": 0.08
+                    "dsr": "8.0"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0.1
+                    "dsr": "0.0"
                 }
             },
             "100": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.97
+                "trades": {
+                    "dsr": "13.0"
                 },
                 "art": {
-                    "autoattack_success": 0.09
+                    "dsr": "9.0"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0.1
+                    "dsr": "0.0"
                 }
             },
             "200": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.995
+                "trades": {
+                    "dsr": "10.5"
                 },
                 "art": {
-                    "autoattack_success": 0.085
+                    "dsr": "11.5"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0.1
+                    "dsr": "0.0"
                 }
             },
             "500": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.998
+                "trades": {
+                    "dsr": "10.0"
                 },
                 "art": {
-                    "autoattack_success": 0.09
+                    "dsr": "10.0"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "1000": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "10.0"
                 },
                 "art": {
-                    "autoattack_success": 0.09
+                    "dsr": "10.0"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 }
             }
         },
         "0.3": {
             "50": {
                 "small": {
-                    "autoattack_success": 0.08
+                    "dsr": "92.0"
                 },
                 "big": {
-                    "autoattack_success": 0.08
+                    "dsr": "92.0"
+                },
+                "small_label": {
+                    "dsr": "92.0"
+                },
+                "big_label": {
+                    "dsr": "92.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "8.0"
                 },
                 "art": {
-                    "autoattack_success": 0.08
+                    "dsr": "8.0"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0.1
+                    "dsr": "0.0"
                 }
             },
             "100": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.01
+                    "dsr": "99.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "99.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "13.0"
                 },
                 "art": {
-                    "autoattack_success": 0.08
+                    "dsr": "11.0"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0.1
+                    "dsr": "0.0"
                 }
             },
             "200": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.01
+                    "dsr": "99.0"
+                },
+                "small_label": {
+                    "dsr": "98.0"
+                },
+                "big_label": {
+                    "dsr": "97.5"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "10.5"
                 },
                 "art": {
-                    "autoattack_success": 0.09
+                    "dsr": "9.5"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0.1
+                    "dsr": "0.0"
                 }
             },
             "500": {
                 "small": {
-                    "autoattack_success": 0.002
+                    "dsr": "99.8"
                 },
                 "big": {
-                    "autoattack_success": 0.004
+                    "dsr": "99.6"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "10.0"
                 },
                 "art": {
-                    "autoattack_success": 0.088
+                    "dsr": "10.4"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "1000": {
                 "small": {
-                    "autoattack_success": 0.003
+                    "dsr": "99.7"
                 },
                 "big": {
-                    "autoattack_success": 0.004
+                    "dsr": "99.6"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "9.8"
                 },
                 "art": {
-                    "autoattack_success": 0.09
+                    "dsr": "9.8"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 }
             }
         }
@@ -401,396 +491,486 @@
         "0.05": {
             "50": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.42
+                "trades": {
+                    "dsr": "82.0"
                 },
                 "art": {
-                    "autoattack_success": 0.06
+                    "dsr": "24.0"
                 },
                 "care": {
-                    "autoattack_success": 0.98
+                    "dsr": "2.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 0.98
+                    "dsr": "2.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "100": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.42
+                "trades": {
+                    "dsr": "60.0"
                 },
                 "art": {
-                    "autoattack_success": 0.09
+                    "dsr": "9.0"
                 },
                 "care": {
-                    "autoattack_success": 0.93
+                    "dsr": "7.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 0.99
+                    "dsr": "1.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "200": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.57
+                "trades": {
+                    "dsr": "54.5"
                 },
                 "art": {
-                    "autoattack_success": 0.095
+                    "dsr": "5.0"
                 },
                 "care": {
-                    "autoattack_success": 0.955
+                    "dsr": "4.5"
                 },
                 "prdnn": {
-                    "autoattack_success": 0.975
+                    "dsr": "2.5"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "500": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.788
+                "trades": {
+                    "dsr": "52.8"
                 },
                 "art": {
-                    "autoattack_success": 0.092
+                    "dsr": "7.4"
                 },
                 "care": {
-                    "autoattack_success": 0.952
+                    "dsr": "4.8"
                 },
                 "prdnn": {
-                    "autoattack_success": 0.994
+                    "dsr": "0.6"
                 },
                 "reassure": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 }
             },
             "1000": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.913
+                "trades": {
+                    "dsr": "56.1"
                 },
                 "art": {
-                    "autoattack_success": 0.08
+                    "dsr": "19.2"
                 },
                 "care": {
-                    "autoattack_success": 0.929
+                    "dsr": "7.1"
                 },
                 "prdnn": {
-                    "autoattack_success": 0.996
+                    "dsr": "0.4"
                 },
                 "reassure": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 }
             }
         },
         "0.1": {
             "50": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.94
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "art": {
-                    "autoattack_success": 0.08
+                    "dsr": "8.0"
                 },
                 "care": {
-                    "autoattack_success": 0.98
+                    "dsr": "2.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "100": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.98
+                "trades": {
+                    "dsr": "7.0"
                 },
                 "art": {
-                    "autoattack_success": 0.08
+                    "dsr": "11.0"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "200": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.925
+                "trades": {
+                    "dsr": "6.0"
                 },
                 "art": {
-                    "autoattack_success": 0.085
+                    "dsr": "10.5"
                 },
                 "care": {
-                    "autoattack_success": 0.985
+                    "dsr": "1.5"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "500": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.99
+                "trades": {
+                    "dsr": "2.8"
                 },
                 "art": {
-                    "autoattack_success": 0.09
+                    "dsr": "9.0"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 0.998
+                    "dsr": "0.2"
                 },
                 "reassure": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 }
             },
             "1000": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.996
+                "trades": {
+                    "dsr": "7.2"
                 },
                 "art": {
-                    "autoattack_success": 0.089
+                    "dsr": "10.5"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 }
             }
         },
         "0.3": {
             "50": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "art": {
-                    "autoattack_success": 0.08
+                    "dsr": "14.0"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "100": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "art": {
-                    "autoattack_success": 0.08
+                    "dsr": "14.0"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "200": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "art": {
-                    "autoattack_success": 0.09
+                    "dsr": "10.0"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "500": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "art": {
-                    "autoattack_success": 0.088
+                    "dsr": "10.2"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 }
             },
             "1000": {
                 "small": {
-                    "autoattack_success": 0.001
+                    "dsr": "99.9"
                 },
                 "big": {
-                    "autoattack_success": 0.001
+                    "dsr": "99.9"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "art": {
-                    "autoattack_success": 0.088
+                    "dsr": "11.8"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 }
             }
         }
@@ -799,396 +979,486 @@
         "0.05": {
             "50": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.02
+                "trades": {
+                    "dsr": "100.0"
                 },
                 "art": {
-                    "autoattack_success": 0.08
+                    "dsr": "18.0"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "100": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.0
+                "trades": {
+                    "dsr": "86.0"
                 },
                 "art": {
-                    "autoattack_success": 0.07
+                    "dsr": "27.0"
                 },
                 "care": {
-                    "autoattack_success": 0.99
+                    "dsr": "1.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "200": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.125
+                "trades": {
+                    "dsr": "84.0"
                 },
                 "art": {
-                    "autoattack_success": 0.075
+                    "dsr": "20.5"
                 },
                 "care": {
-                    "autoattack_success": 0.99
+                    "dsr": "1.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "500": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.696
+                "trades": {
+                    "dsr": "87.0"
                 },
                 "art": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 },
                 "care": {
-                    "autoattack_success": 0.986
+                    "dsr": "1.4"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 }
             },
             "1000": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.957
+                "trades": {
+                    "dsr": "86.8"
                 },
                 "art": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 },
                 "care": {
-                    "autoattack_success": 0.985
+                    "dsr": "1.5"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 }
             }
         },
         "0.1": {
             "50": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.24
+                "trades": {
+                    "dsr": "50.0"
                 },
                 "art": {
-                    "autoattack_success": 0.08
+                    "dsr": "8.0"
                 },
                 "care": {
-                    "autoattack_success": 0.98
+                    "dsr": "2.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "100": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.25
+                "trades": {
+                    "dsr": "57.0"
                 },
                 "art": {
-                    "autoattack_success": 0.08
+                    "dsr": "11.0"
                 },
                 "care": {
-                    "autoattack_success": 0.99
+                    "dsr": "1.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "200": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.005
+                    "dsr": "99.5"
+                },
+                "small_label": {
+                    "dsr": "99.5"
+                },
+                "big_label": {
+                    "dsr": "99.5"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.785
+                "trades": {
+                    "dsr": "62.0"
                 },
                 "art": {
-                    "autoattack_success": 0.085
+                    "dsr": "11.0"
                 },
                 "care": {
-                    "autoattack_success": 0.995
+                    "dsr": "0.5"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "500": {
                 "small": {
-                    "autoattack_success": 0.002
+                    "dsr": "99.8"
                 },
                 "big": {
-                    "autoattack_success": 0.002
+                    "dsr": "99.8"
+                },
+                "small_label": {
+                    "dsr": "99.8"
+                },
+                "big_label": {
+                    "dsr": "99.8"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.934
+                "trades": {
+                    "dsr": "66.6"
                 },
                 "art": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 },
                 "care": {
-                    "autoattack_success": 0.998
+                    "dsr": "0.2"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 }
             },
             "1000": {
                 "small": {
-                    "autoattack_success": 0.001
+                    "dsr": "99.9"
                 },
                 "big": {
-                    "autoattack_success": 0.002
+                    "dsr": "99.8"
+                },
+                "small_label": {
+                    "dsr": "99.8"
+                },
+                "big_label": {
+                    "dsr": "99.8"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 0.989
+                "trades": {
+                    "dsr": "70.1"
                 },
                 "art": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 },
                 "care": {
-                    "autoattack_success": 0.994
+                    "dsr": "0.6"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 }
             }
         },
         "0.3": {
             "50": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "art": {
-                    "autoattack_success": 0.08
+                    "dsr": "12.0"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "100": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "art": {
-                    "autoattack_success": 0.09
+                    "dsr": "7.0"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "200": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "art": {
-                    "autoattack_success": 0.09
+                    "dsr": "7.0"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 }
             },
             "500": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "art": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 },
                 "care": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 }
             },
             "1000": {
                 "small": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
                 },
                 "big": {
-                    "autoattack_success": 0.0
+                    "dsr": "100.0"
+                },
+                "small_label": {
+                    "dsr": "100.0"
+                },
+                "big_label": {
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
-                "adv-train": {
-                    "autoattack_success": 1.0
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "art": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 },
                 "care": {
-                    "autoattack_success": 0.1
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "autoattack_success": 1.0
+                    "dsr": "0.0"
                 },
                 "reassure": {
-                    "autoattack_success": 0
+                    "dsr": "--"
                 }
             }
         }

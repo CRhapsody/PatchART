@@ -2,152 +2,152 @@
     "vgg19": {
         "4": {
             "50": {
-                "drawdown": 0.1362,
-                "rs": 1.0,
-                "gene": 0.698,
-                "time": 1731.7964077251963,
-                "defense success of apgd & apgdt": 0
+                "drawdown": "13.6",
+                "rsr": "100.0",
+                "rgr": "69.8",
+                "time": "1731.8",
+                "dsr": "0.0"
             },
             "100": {
-                "drawdown": 0.24750000000000005,
-                "rs": 1.0,
-                "gene": 0.682,
-                "time": 2640.61558918003,
-                "defense success of apgd & apgdt": 0
+                "drawdown": "24.8",
+                "rsr": "100.0",
+                "rgr": "68.2",
+                "time": "2640.6",
+                "dsr": "0.0"
             },
             "200": {
-                "drawdown": 0.3034,
-                "rs": 1.0,
-                "gene": 0.6855,
-                "time": 6307.41489495663,
-                "defense success of apgd & apgdt": 0
+                "drawdown": "30.3",
+                "rsr": "100.0",
+                "rgr": "68.5",
+                "time": "6307.4",
+                "dsr": "0.0"
             },
             "500": {
-                "drawdown": "None",
-                "rs": "None",
-                "gene": "None",
-                "time": "TIMEOUT",
-                "defense success of apgd & apgdt": "None"
+                "drawdown": "--",
+                "rsr": "--",
+                "rgr": "--",
+                "time": "--",
+                "dsr": "0.0"
             },
             "1000": {
-                "drawdown": "None",
-                "rs": "None",
-                "gene": "None",
-                "time": "TIMEOUT",
-                "defense success of apgd & apgdt": "None"
+                "drawdown": "--",
+                "rsr": "--",
+                "rgr": "--",
+                "time": "--",
+                "dsr": "0.0"
             }
         },
         "8": {
             "50": {
-                "drawdown": 0.19830000000000003,
-                "rs": 1.0,
-                "gene": 0.58,
-                "time": 1160.4196723401546,
-                "defense success of apgd & apgdt": 0
+                "drawdown": "19.8",
+                "rsr": "100.0",
+                "rgr": "58.0",
+                "time": "1160.4",
+                "dsr": "0.0"
             },
             "100": {
-                "drawdown": 0.40460000000000007,
-                "rs": 1.0,
-                "gene": 0.666,
-                "time": 2210.157909342088,
-                "defense success of apgd & apgdt": 0
+                "drawdown": "40.5",
+                "rsr": "100.0",
+                "rgr": "66.6",
+                "time": "2210.2",
+                "dsr": "0.0"
             },
             "200": {
-                "drawdown": 0.502,
-                "rs": 1.0,
-                "gene": 0.6135,
-                "time": 5126.9015021878295,
-                "defense success of apgd & apgdt": 0
+                "drawdown": "50.2",
+                "rsr": "100.0",
+                "rgr": "61.4",
+                "time": "5126.9",
+                "dsr": "0.0"
             },
             "500": {
-                "drawdown": "None",
-                "rs": "None",
-                "gene": "None",
-                "time": "TIMEOUT",
-                "defense success of apgd & apgdt": "None"
+                "drawdown": "--",
+                "rsr": "--",
+                "rgr": "--",
+                "time": "--",
+                "dsr": "0.0"
             },
             "1000": {
-                "drawdown": "None",
-                "rs": "None",
-                "gene": "None",
-                "time": "TIMEOUT",
-                "defense success of apgd & apgdt": "None"
+                "drawdown": "--",
+                "rsr": "--",
+                "rgr": "--",
+                "time": "--",
+                "dsr": "0.0"
             }
         }
     },
     "resnet18": {
         "4": {
             "50": {
-                "drawdown": 0.021499999999999964,
-                "rs": 1.0,
-                "gene": 0.68,
-                "time": 731.8017101893201,
-                "defense success of apgd & apgdt": 0
+                "drawdown": "2.1",
+                "rsr": "100.0",
+                "rgr": "68.0",
+                "time": "731.8",
+                "dsr": "0.0"
             },
             "100": {
-                "drawdown": 0.02089999999999992,
-                "rs": 1.0,
-                "gene": 0.686,
-                "time": 1794.9141652132384,
-                "defense success of apgd & apgdt": 0
+                "drawdown": "2.1",
+                "rsr": "100.0",
+                "rgr": "68.6",
+                "time": "1794.9",
+                "dsr": "0.0"
             },
             "200": {
-                "drawdown": 0.01969999999999994,
-                "rs": 1.0,
-                "gene": 0.6715,
-                "time": 3307.5388688780367,
-                "defense success of apgd & apgdt": 0
+                "drawdown": "2.0",
+                "rsr": "100.0",
+                "rgr": "67.2",
+                "time": "3307.5",
+                "dsr": "0.0"
             },
             "500": {
-                "drawdown": "None",
-                "rs": "None",
-                "gene": "None",
-                "time": "TIMEOUT",
-                "defense success of apgd & apgdt": "None"
+                "drawdown": "--",
+                "rsr": "--",
+                "rgr": "--",
+                "time": "--",
+                "dsr": "0.0"
             },
             "1000": {
-                "drawdown": "None",
-                "rs": "None",
-                "gene": "None",
-                "time": "TIMEOUT",
-                "defense success of apgd & apgdt": "None"
+                "drawdown": "--",
+                "rsr": "--",
+                "rgr": "--",
+                "time": "--",
+                "dsr": "0.0"
             }
         },
         "8": {
             "50": {
-                "drawdown": 0.14,
-                "rs": 1.0,
-                "gene": 0.598,
-                "time": 715.3884794590995,
-                "defense success of apgd & apgdt": 0
+                "drawdown": "14.0",
+                "rsr": "100.0",
+                "rgr": "59.8",
+                "time": "715.4",
+                "dsr": "0.0"
             },
             "100": {
-                "drawdown": 0.13749999999999996,
-                "rs": 1.0,
-                "gene": 0.578,
-                "time": 1300.1511915526353,
-                "defense success of apgd & apgdt": 0
+                "drawdown": "13.7",
+                "rsr": "100.0",
+                "rgr": "57.8",
+                "time": "1300.2",
+                "dsr": "0.0"
             },
             "200": {
-                "drawdown": 0.12159999999999993,
-                "rs": 1.0,
-                "gene": 0.549,
-                "time": 5757.277619681787,
-                "defense success of apgd & apgdt": 0
+                "drawdown": "12.2",
+                "rsr": "100.0",
+                "rgr": "54.9",
+                "time": "5757.3",
+                "dsr": "0.0"
             },
             "500": {
-                "drawdown": "None",
-                "rs": "None",
-                "gene": "None",
-                "time": "TIMEOUT",
-                "defense success of apgd & apgdt": "None"
+                "drawdown": "--",
+                "rsr": "--",
+                "rgr": "--",
+                "time": "--",
+                "dsr": "0.0"
             },
             "1000": {
-                "drawdown": "None",
-                "rs": "None",
-                "gene": "None",
-                "time": "TIMEOUT",
-                "defense success of apgd & apgdt": "None"
+                "drawdown": "--",
+                "rsr": "--",
+                "rgr": "--",
+                "time": "--",
+                "dsr": "0.0"
             }
         }
     }

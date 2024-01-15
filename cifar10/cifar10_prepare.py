@@ -15,30 +15,24 @@ from cifar10_utils import Resnet_model
 import os
 from pathlib import Path
 import sys
-py_file_location = "/home/chizm/PatchART/pgd"
+root = Path(__file__).resolve().parent.parent
+py_file_location = root / 'PatchART'
 sys.path.append(os.path.abspath(py_file_location))
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-
+from TRADES.trades import trades_loss
+from torchvision.models import resnet18
 def training(model_type:str,device):
     '''
     model: str, the name of the model
     '''
     if model_type == 'vgg19':
         model = VGG('VGG19')
-        # model.classifier[6] = nn.Linear(4096, 10)
         model.to(device)
     elif model_type == 'resnet18':
-        model = ResNet18()
+        model = resnet18(num_classes=10)
         model.to(device)
 
 
-# split the last fc layer from vgg19
-# model_last_fc = nn.Sequential(*list(vgg19_model.children())[-1:])
-
-
-
-
-    # Load the CIFAR-10 dataset
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
@@ -96,28 +90,29 @@ def training(model_type:str,device):
     torch.save(model.state_dict(), './model/cifar10/cifar10_vgg19.pth')
 
 def trasfer_state_dict(model:str):
-        state = torch.load(f"/home/chizm/PatchART/model/cifar10/{model}.pth")
+        state = torch.load(f"./model/cifar10/{model}.pth")
         # need replace the module.xx to xx
         new_state_dict = OrderedDict()
         for key, value in state.items():
             new_key = key.replace('module.', '')
             new_state_dict[new_key] = value
-        torch.save(new_state_dict,f"/home/chizm/PatchART/model/cifar10/{model}.pth")
+        torch.save(new_state_dict,f"./model/cifar10/{model}.pth")
 
 
 def test_dataset(model_type:str, dataset_type:str, radius:int, device):
     if model_type == 'vgg19':
         model = VGG('VGG19')
         # model.classifier[6] = nn.Linear(4096, 10)
-        state = torch.load(f"/home/chizm/PatchART/model/cifar10/vgg19.pth")
+        Path(root / 'model/cifar10/vgg19.pth')
+        state = torch.load(Path(root / 'model/cifar10/vgg19.pth'))
         model.load_state_dict(state)
     elif model_type == 'resnet18':
         from torchvision.models import resnet18
         model = resnet18(num_classes=10)
-        state = torch.load(f"/home/chizm/PatchART/model/cifar10/resnet18.pth")
+        state = torch.load(Path(root / 'model/cifar10/resnet18.pth'))
         new_state_dict = OrderedDict()
         for key, value in state.items():
-            new_key = key.replace('module.', '')  # 去掉'module.'前缀
+            new_key = key.replace('module.', '')  
             new_state_dict[new_key] = value
         model.load_state_dict(new_state_dict)
 
@@ -125,15 +120,15 @@ def test_dataset(model_type:str, dataset_type:str, radius:int, device):
 
     # Load the CIFAR-10 dataset
     if dataset_type == 'repair':
-        dataset = torch.load(f'/home/chizm/PatchART/data/cifar10/train_attack_data_full_{model_type}_{radius}.pt')
+        dataset = torch.load(Path(root / f'model/cifar10/data/cifar10/train_attack_data_full_{model_type}_{radius}.pt'))
     elif dataset_type == 'origin':
-        dataset = torch.load(f'/home/chizm/PatchART/data/cifar10/origin_data_{model_type}_{radius}.pt')
+        dataset = torch.load(Path(root / f'model/cifar10/data/cifar10/origin_data_{model_type}_{radius}.pt'))
     elif dataset_type == 'attack_test':
-        dataset = torch.load(f'/home/chizm/PatchART/data/cifar10/test_attack_data_full_{model_type}_{radius}.pt')
+        dataset = torch.load(Path(root / f'model/cifar10/data/cifar10/test_attack_data_full_{model_type}_{radius}.pt'))
     elif dataset_type == 'test':
-        dataset = torch.load(f'/home/chizm/PatchART/data/cifar10/test_norm.pt')
+        dataset = torch.load(Path(root / f'model/cifar10/data/cifar10/test_norm.pt'))
     elif dataset_type == 'train':
-        dataset = torch.load(f'/home/chizm/PatchART/data/cifar10/train_norm.pt')
+        dataset = torch.load(Path(root / f'model/cifar10/data/cifar10/train_norm.pt'))
 
     data, label = dataset
 
@@ -142,18 +137,6 @@ def test_dataset(model_type:str, dataset_type:str, radius:int, device):
     data.to(device)
     label.to(device)
     with torch.no_grad():
-        # correct = 0
-        # total = 0
-        # for i in range(data.size(0)):
-        #     images = data[i].unsqueeze(0).to(device)
-        #     labels = label[i].unsqueeze(0).to(device)
-        #     outputs = model(images)
-        #     _, predicted = torch.max(outputs.data, 1)
-        #     total += labels.size(0)
-        #     correct += (predicted == labels).sum().item()
-
-        # accuracy = 100 * correct / total
-        # print(f'{dataset_type} Test Accuracy: {accuracy:.2f}%')
 
 
 
@@ -171,7 +154,7 @@ def get_dataset():
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
     ])
-    train = datasets.CIFAR10('/home/chizm/PatchART/data/', train=True,
+    train = datasets.CIFAR10('./data/', train=True,
                         transform=transform,
                         download=True)
 
@@ -191,9 +174,9 @@ def get_dataset():
     trainset_labels_split = trainset_labels[:10000]
     trainset_inputs_split.requires_grad = False
     trainset_labels_split.requires_grad = False
-    torch.save((trainset_inputs_split, trainset_labels_split),'/home/chizm/PatchART/data/cifar10/train.pt')
-    # torch.save((trainset_inputs,trainset_labels),'/home/chizm/PatchART/data/cifar10/train_norm00_full.pt')
-    test = datasets.CIFAR10('/home/chizm/PatchART/data/', train=False,
+    torch.save((trainset_inputs_split, trainset_labels_split),'./data/cifar10/train.pt')
+    # torch.save((trainset_inputs,trainset_labels),'./data/cifar10/train_norm00_full.pt')
+    test = datasets.CIFAR10('./data/', train=False,
                         transform=transform,
                         download=True)
     test_loader = DataLoader(test, batch_size=128)
@@ -210,7 +193,7 @@ def get_dataset():
     testset_labels = torch.cat(testset_labels)
     testset_inputs.requires_grad = False
     testset_labels.requires_grad = False
-    torch.save((testset_inputs,testset_labels),'/home/chizm/PatchART/data/cifar10/test.pt')
+    torch.save((testset_inputs,testset_labels),'./data/cifar10/test.pt')
 
 class PGD():
     def __init__(self,model,eps=0.3,alpha=3/255,steps=40,random_start=True):
@@ -365,13 +348,13 @@ def pgd_get_data(net, radius = 2, multi_number = 10, data_num = 200, general = F
     device = 'cuda:1' if torch.cuda.is_available() else 'cpu'
     if net == 'vgg19':
         model = VGG('VGG19').to(device)
-        state = torch.load(f"/home/chizm/PatchART/model/cifar10/vgg19.pth")['net']
+        state = torch.load(Path(root / 'model/cifar10/data/cifar10/vgg19.pth'))['net']
         # need replace the module.xx to xx
         new_state_dict = OrderedDict()
         for key, value in state.items():
-            new_key = key.replace('module.', '')  # 去掉'module.'前缀
+            new_key = key.replace('module.', '') 
             new_state_dict[new_key] = value
-        torch.save(new_state_dict,f"/home/chizm/PatchART/model/cifar10/vgg19.pth")
+        torch.save(new_state_dict,Path(root / 'model/cifar10/data/cifar10/vgg19.pth'))
 
         model.load_state_dict(new_state_dict)
 
@@ -379,13 +362,13 @@ def pgd_get_data(net, radius = 2, multi_number = 10, data_num = 200, general = F
         model = resnet18(num_classes=10).to(device)
         # from resnet import ResNet18
         # model = ResNet18().to(device)
-        state = torch.load(f"/home/chizm/PatchART/model/cifar10/resnet18.pth")
+        state = torch.load(Path(root / 'model/cifar10/data/cifar10/resnet18.pth'))
         # need replace the module.xx to xx
         new_state_dict = OrderedDict()
         for key, value in state.items():
             new_key = key.replace('module.', '')
             new_state_dict[new_key] = value
-        # torch.save(new_state_dict,f"/home/chizm/PatchART/model/cifar10/resnet18.pth")
+        # torch.save(new_state_dict,f"./model/cifar10/resnet18.pth")
         model.load_state_dict(new_state_dict)
     model.eval()
 
@@ -471,11 +454,11 @@ def adv_training(net, radius, data_num, device,radius_bit = 8):
     print(f'Using {device} device')
     if net == 'vgg19':
         model = VGG('VGG19').to(device)
-        state = torch.load(f"/home/chizm/PatchART/model/cifar10/vgg19.pth")
+        state = torch.load(f"./model/cifar10/vgg19.pth")
         model.load_state_dict(state)
     elif net == 'resnet18':
         model = resnet18(num_classes=10).to(device)
-        state = torch.load(f"/home/chizm/PatchART/model/cifar10/resnet18.pth")
+        state = torch.load(f"./model/cifar10/resnet18.pth")
         model.load_state_dict(state)
 
 
@@ -499,7 +482,7 @@ def adv_training(net, radius, data_num, device,radius_bit = 8):
     # test_attack_loader = DataLoader(test_attack_dataset, batch_size=128)
     # train
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.1)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50)
     model.train()
     for epoch in range(200):
@@ -508,22 +491,37 @@ def adv_training(net, radius, data_num, device,radius_bit = 8):
         # correct, total = 0,0
         # for inputs,labels in train_attack_loader:
         loss_sum = 0
-        for (repair_input, repair_label), (origin_input, origin_label) in zip(train_attack_loader, train_loader):
-            # inputs,labels = inputs.to(device),labels.to(device)
-            repair_input = repair_input.to(device)
-            repair_label = repair_label.to(device)
-            origin_input = origin_input.to(device)
-            origin_label = origin_label.to(device)
+        # for (repair_input, repair_label), (origin_input, origin_label) in zip(train_attack_loader, train_loader):
+        #     # inputs,labels = inputs.to(device),labels.to(device)
+        #     repair_input = repair_input.to(device)
+        #     repair_label = repair_label.to(device)
+        #     origin_input = origin_input.to(device)
+        #     origin_label = origin_label.to(device)
+        #     optimizer.zero_grad()
+        #     repair_output = model(repair_input)
+        #     loss = criterion(repair_output, repair_label)
+        #     loss.backward()
+        #     optimizer.step()    
+        #     loss_sum += loss.item()
+        #     origin_output = model(origin_input)
+        #     loss = criterion(origin_output, origin_label)
+        #     loss.backward()
+        #     optimizer.step()
+
+        for inputs,labels in train_loader:
+            inputs,labels = inputs.to(device),labels.to(device)
             optimizer.zero_grad()
-            repair_output = model(repair_input)
-            loss = criterion(repair_output, repair_label)
-            loss.backward()
-            optimizer.step()    
-            loss_sum += loss.item()
-            origin_output = model(origin_input)
-            loss = criterion(origin_output, origin_label)
+            loss = trades_loss(model=model,
+                            x_natural=inputs,
+                            y=labels,
+                            optimizer=optimizer,
+                            step_size=0.007,
+                            epsilon=radius_bit/255,
+                            perturb_steps=10,
+                            beta=1.0)
             loss.backward()
             optimizer.step()
+            loss_sum += loss.item()
 
         if epoch % 10 == 0:
             print(f'Epoch [{epoch+1}/{200}], Loss: {loss_sum/len(train_attack_loader):.4f}')
@@ -616,11 +614,11 @@ def get_bitmap(in_lb: Tensor, in_ub: Tensor, in_bitmap: Tensor, batch_inputs: Te
 #     print(f'Using {device} device')
 #     if net == 'vgg19':
 #         model1 = VGG('VGG19').to(device)
-#         state = torch.load(f"/home/chizm/PatchART/model/cifar10/vgg19.pth")
+#         state = torch.load(f"./model/cifar10/vgg19.pth")
 #         model1.load_state_dict(state)
 #     elif net == 'resnet18':
 #         model1 = ResNet18().to(device)
-#         state = torch.load(f"/home/chizm/PatchART/model/cifar10/resnet18.pth")
+#         state = torch.load(f"./model/cifar10/resnet18.pth")
 #         model1.load_state_dict(state)
 
   
@@ -637,13 +635,13 @@ def get_bitmap(in_lb: Tensor, in_ub: Tensor, in_bitmap: Tensor, batch_inputs: Te
 #         patch_net.to(device)
 #         patch_lists.append(patch_net)
 #     model2 =  Netsum(deeppoly, target_net = model1, patch_nets= patch_lists, device=device)
-#     model2.load_state_dict(torch.load(f"/home/chizm/PatchART/model/patch_format/Mnist-{net}-repair_number{repair_number}-rapair_radius{radius}-{patch_format}.pt",map_location=device))
+#     model2.load_state_dict(torch.load(f"./model/patch_format/Mnist-{net}-repair_number{repair_number}-rapair_radius{radius}-{patch_format}.pt",map_location=device))
 
 #     model3 = adv_training(net,radius, data_num=repair_number, device=device)
 
 
 #     # load data
-#     datas,labels = torch.load(f'/home/chizm/PatchART/data/MNIST/processed/origin_data_{net}_{radius}.pt',map_location=device)
+#     datas,labels = torch.load(f'./data/MNIST/processed/origin_data_{net}_{radius}.pt',map_location=device)
 #     # return
     
 #     datas = datas[:repair_number]
@@ -721,11 +719,11 @@ def compare_autoattack(net,
     print(f'Using {device} device')
     if net == 'vgg19':
         model1 = VGG('VGG19').to(device)
-        state = torch.load(f"/home/chizm/PatchART/model/cifar10/vgg19.pth")
+        state = torch.load(f"./model/cifar10/vgg19.pth")
         model1.load_state_dict(state)
     elif net == 'resnet18':
         model1 = resnet18(num_classes=10).to(device)
-        state = torch.load(f"/home/chizm/PatchART/model/cifar10/resnet18.pth")
+        state = torch.load(f"./model/cifar10/resnet18.pth")
         model1.load_state_dict(state)
     model1.to(device)
     model1.eval()
@@ -733,11 +731,11 @@ def compare_autoattack(net,
 
     if net == 'vgg19':
         frontier = VGG('VGG19').to(device)
-        frontier_state = torch.load(f"/home/chizm/PatchART/model/cifar10/vgg19.pth")
+        frontier_state = torch.load(f"./model/cifar10/vgg19.pth")
         frontier.load_state_dict(frontier_state)
     elif net == 'resnet18':
         frontier = Resnet_model(dom= deeppoly).to(device)
-        frontier_state = torch.load(f"/home/chizm/PatchART/model/cifar10/resnet18.pth")
+        frontier_state = torch.load(f"./model/cifar10/resnet18.pth")
         frontier.load_state_dict(frontier_state)
     frontier.to(device)
 
@@ -753,16 +751,16 @@ def compare_autoattack(net,
         patch_lists.append(patch_net)
     rear =  Netsum(deeppoly, target_net = rear, patch_nets= patch_lists, device=device)
 
-    rear.load_state_dict(torch.load(f"/home/chizm/PatchART/model/cifar10_patch_format/Cifar-{net}-feature-repair_number{repair_number}-rapair_radius{radius_bit}.pt",map_location=device))
+    rear.load_state_dict(torch.load(f"./model/cifar10_patch_format/Cifar-{net}-feature-repair_number{repair_number}-rapair_radius{radius_bit}.pt",map_location=device))
     model2 = NetFeatureSumPatch(feature_sumnet=rear, feature_extractor=frontier)
-    torch.save(model2.state_dict(),f"/home/chizm/PatchART/model/cifar10_patch_format/Cifar-{net}-full-repair_number{repair_number}-rapair_radius{radius_bit}-feature_sumnet.pt")
+    torch.save(model2.state_dict(),f"./model/cifar10_patch_format/Cifar-{net}-full-repair_number{repair_number}-rapair_radius{radius_bit}-feature_sumnet.pt")
     model2.eval()
 
     model3 = adv_training(net,radius, data_num=repair_number, device=device, radius_bit=radius_bit)
 
 
     # load data
-    datas,labels = torch.load(f'/home/chizm/PatchART/data/cifar10/origin_data_{net}_{radius_bit}.pt',map_location=device)
+    datas,labels = torch.load(f'./data/cifar10/origin_data_{net}_{radius_bit}.pt',map_location=device)
     # return
     
     datas = datas[:repair_number]
@@ -839,8 +837,179 @@ def compare_autoattack(net,
             
     
     # print(f"ori_step {ori_step}, repair_step {repair_step}, pgd_step {pgd_step} \\ ori:{p1}, patch:{p2}, adv-train:{p3}")
-    with open(f'/home/chizm/PatchART/results/cifar10/repair/autoattack/compare_autoattack_ac.txt','a') as f:
+    with open(f'./results/cifar10/repair/autoattack/compare_autoattack_ac.txt','a') as f:
         f.write(f"For {net} {repair_number} {radius} : \\  ori:{p1}, patch:{p2}, adv-train:{p3} \\ \n")
+
+# def adv_training(net, radius, data_num, device,radius_bit = 8):
+
+
+def autoattack_adv_training(net, data_num, device,radius_bit = 8):
+    
+    print(f'Using {device} device')
+    if net == 'vgg19':
+        model1 = VGG('VGG19').to(device)
+        state = torch.load(f"./tools/cifar/trade-cifar/best_{net}_{radius}_{data_num}.pt")
+        model1.load_state_dict(state)
+    elif net == 'resnet18':
+        model1 = resnet18(num_classes=10).to(device)
+        state = torch.load(f"./tools/cifar/trade-cifar/best_{net}_{radius}_{data_num}.pt")
+        model1.load_state_dict(state)
+
+    # model1 = adv_training(net,radius, data_num=data_num, device=device, radius_bit=radius_bit)
+    model1.eval()
+    datas,labels = torch.load(f'./data/cifar10/origin_data_{net}_{radius_bit}.pt',map_location=device)
+    datas = datas[:data_num]
+    labels = labels[:data_num]
+    from torchattacks import AutoAttack
+    at1 = AutoAttack(model1, norm='Linf', eps=radius, version='standard', verbose=False)
+
+
+    p1 = 0
+    for ith, (image, label) in enumerate(zip(datas,labels)):
+        image = image.unsqueeze(0).to(device)
+        label = label.unsqueeze(0).to(device)
+
+        adv_images1 = at1(image, label)
+    
+        if model1(adv_images1).argmax(dim=1)!= label:
+            print("success1")
+            p1 += 1
+        else:
+            print("fail")
+    with open(f'./results/cifar10/repair/autoattack/compare_autoattack_ac.txt','a') as f:
+        f.write(f"For {net} {data_num} {radius} : adv-train:{p1}\n")
+
+
+def adv_training_test(net, radius, data_num, device,radius_bit = 8,epoch_n = 200):
+    print(f'Using {device} device')
+    if net == 'vgg19':
+        model = VGG('VGG19').to(device)
+        state = torch.load(f"./model/cifar10/vgg19.pth")
+        model.load_state_dict(state)
+    elif net == 'resnet18':
+        model = resnet18(num_classes=10).to(device)
+        state = torch.load(f"./model/cifar10/resnet18.pth")
+        model.load_state_dict(state)
+    
+
+    # load dataset
+    # train_data, train_label = torch.load(f'./data/cifar10/train_norm.pt',map_location=device)
+    origin_data,origin_label = torch.load(f'./data/cifar10/origin_data_{net}_{radius_bit}.pt',map_location=device)
+    repair_data, repair_label = torch.load(f'./data/cifar10/train_attack_data_full_{net}_{radius_bit}.pt',map_location=device)
+    attack_data, attack_label = torch.load(f'./data/cifar10/test_attack_data_full_{net}_{radius_bit}.pt',map_location=device)
+    test_data, test_label = torch.load(f'./data/cifar10/test_attack_data_full_{net}_{radius_bit}.pt',map_location=device)
+
+    origin_data,origin_label = origin_data[:data_num],origin_label[:data_num]
+    repair_data, repair_label = repair_data[:data_num],repair_label[:data_num]
+    attack_data, attack_label = attack_data[:data_num],attack_label[:data_num]
+
+    # dataset
+    origin_dataset = torch.utils.data.TensorDataset(origin_data,origin_label)
+    
+    # dataloader
+    origin_loader = DataLoader(origin_dataset, batch_size=32)
+
+    #train
+    # criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.1)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50)
+    model.train()
+    loss_sum_best = 100
+    import time
+    start = time.time()
+    for epoch in range(epoch_n):
+        print(f"adv-training epoch {epoch}")
+        loss_sum = 0
+        for inputs,labels in origin_loader:
+            inputs,labels = inputs.to(device),labels.to(device)
+            optimizer.zero_grad()
+            loss = trades_loss(model=model,
+                            x_natural=inputs,
+                            y=labels,
+                            optimizer=optimizer,
+                            epsilon=radius_bit/255,
+                            perturb_steps=10,
+                            beta=1.0)
+            loss.backward()
+            optimizer.step()
+            loss_sum += loss.item()
+
+        if epoch % 1 == 0:
+            print(f'Epoch [{epoch+1}/{200}], Loss: {loss_sum/len(origin_loader):.4f}')
+            # save model
+            if loss_sum < loss_sum_best:
+                torch.save(model.state_dict(),f"./tools/cifar/trade-cifar/best_{net}_{radius_bit}_{data_num}.pt")
+                loss_sum_best = loss_sum
+        scheduler.step()
+    model.load_state_dict(torch.load(f"./tools/cifar/trade-cifar/best_{net}_{radius_bit}_{data_num}.pt",map_location=device))
+    model.eval()
+    end = time.time()
+    train_time = end - start
+    # test
+    rsr = 0
+    with torch.no_grad():
+        output = model(repair_data)
+        rsr = (output.argmax(dim=1) == repair_label).sum().item()
+        print(f"repair success rate {rsr/len(repair_data)}")
+        # attack
+        asr = 0
+        output = model(attack_data)
+        asr = (output.argmax(dim=1) == attack_label).sum().item()
+        print(f"attack success rate {asr/len(attack_data)}")
+        # test
+        tsr = 0
+        output = model(test_data)
+        tsr = (output.argmax(dim=1) == test_label).sum().item()
+        print(f"test success rate {tsr/len(test_data)}")
+    with open(f'./tools/cifar/trade-cifar/result.txt','a') as f:
+        f.write(f"For {net} {data_num} {radius} : repair:{rsr/len(repair_data)}, attack:{asr/len(attack_data)}, test:{tsr/len(test_data)}, time:{train_time}, epoch:{epoch_n}\n")
+
+
+# def get_attack_data(net, radius_bit, data_num, device):
+#     if net == 'vgg19':
+#         model = VGG('VGG19').to(device)
+#         state = torch.load(f"./model/cifar10/vgg19.pth")
+#         model.load_state_dict(state)
+#     elif net == 'resnet18':
+#         model = resnet18(num_classes=10).to(device)
+#         state = torch.load(f"./model/cifar10/resnet18.pth")
+#         model.load_state_dict(state)
+
+#     origin_data,origin_label = torch.load(f'./data/cifar10/origin_data_{net}_{radius_bit}.pt',map_location=device)
+#     origin_data = origin_data[:data_num]
+#     origin_label = origin_label[:data_num]
+
+#     _, attack_test_label = torch.load(f'./data/cifar10/test_attack_data_full_{net}_{radius_bit}.pt',map_location=device)
+#     from torchattacks import AutoAttack
+#     at1 = AutoAttack(model, norm='Linf', eps=radius_bit/255, version='standard', verbose=False)
+#     # using autoattack to get 10 distinct adversarial examples for every data
+#     full_list = []
+#     for ith, (image, label) in enumerate(zip(origin_data,origin_label)):
+#         o_image = image.unsqueeze(0).to(device)
+#         label = label.unsqueeze(0).to(device)
+#         i = 0
+#         image_list = []
+#         while len(image_list) < 10:
+#             print(f"true {ith} len(image_list)")
+#             # random start
+#             with torch.no_grad():
+#                 image = o_image + torch.empty_like(image).uniform_(-radius_bit/255, radius_bit/255)
+#             adv_images1 = at1(image, label)
+#             if model(adv_images1).argmax(dim=1)!= label:
+#                 image_list.append(adv_images1)
+#                 i += 1
+#             print(f"{ith} {i}")
+#             image_list = list(set(image_list))
+#         image_list = torch.stack(image_list, dim=0)
+#         full_list.append(image_list)
+#     full_list = torch.stack(full_list, dim=0)
+#     full_list.requires_grad = False
+#     torch.save((full_list, attack_test_label),f'./data/cifar10/attack_data_{net}_{radius_bit}.pt')
+
+
+        
+
+
 
 def patch_label_autoattack(net, 
                             radius_bit, repair_number,device):
@@ -856,11 +1025,11 @@ def patch_label_autoattack(net,
     print(f'Using {device} device')
     # if net == 'vgg19':
     #     model1 = VGG('VGG19').to(device)
-    #     state = torch.load(f"/home/chizm/PatchART/model/cifar10/vgg19.pth")
+    #     state = torch.load(f"./model/cifar10/vgg19.pth")
     #     model1.load_state_dict(state)
     # elif net == 'resnet18':
     #     model1 = resnet18(num_classes=10).to(device)
-    #     state = torch.load(f"/home/chizm/PatchART/model/cifar10/resnet18.pth")
+    #     state = torch.load(f"./model/cifar10/resnet18.pth")
     #     model1.load_state_dict(state)
     # model1.to(device)
     # model1.eval()
@@ -868,11 +1037,11 @@ def patch_label_autoattack(net,
 
     if net == 'vgg19':
         frontier = VGG('VGG19').to(device)
-        frontier_state = torch.load(f"/home/chizm/PatchART/model/cifar10/vgg19.pth")
+        frontier_state = torch.load(f"./model/cifar10/vgg19.pth")
         frontier.load_state_dict(frontier_state)
     elif net == 'resnet18':
         frontier = Resnet_model(dom= deeppoly).to(device)
-        frontier_state = torch.load(f"/home/chizm/PatchART/model/cifar10/resnet18.pth")
+        frontier_state = torch.load(f"./model/cifar10/resnet18.pth")
         frontier.load_state_dict(frontier_state)
     frontier.to(device)
 
@@ -888,16 +1057,16 @@ def patch_label_autoattack(net,
         patch_lists.append(patch_net)
     rear =  Netsum(deeppoly, target_net = rear, patch_nets= patch_lists, device=device)
 
-    rear.load_state_dict(torch.load(f"/home/chizm/PatchART/model/cifar10_label_format/Cifar-{net}-feature-repair_number{repair_number}-rapair_radius{radius_bit}.pt",map_location=device))
+    rear.load_state_dict(torch.load(f"./model/cifar10_label_format/Cifar-{net}-feature-repair_number{repair_number}-rapair_radius{radius_bit}.pt",map_location=device))
     model2 = NetFeatureSumPatch(feature_sumnet=rear, feature_extractor=frontier)
-    torch.save(model2.state_dict(),f"/home/chizm/PatchART/model/cifar10_label_format/Cifar-{net}-full-repair_number{repair_number}-rapair_radius{radius_bit}-feature_sumnet.pt")
+    torch.save(model2.state_dict(),f"./model/cifar10_label_format/Cifar-{net}-full-repair_number{repair_number}-rapair_radius{radius_bit}-feature_sumnet.pt")
     model2.eval()
 
     # model3 = adv_training(net,radius, data_num=repair_number, device=device, radius_bit=radius_bit)
 
 
     # load data
-    datas,labels = torch.load(f'/home/chizm/PatchART/data/cifar10/origin_data_{net}_{radius_bit}.pt',map_location=device)
+    datas,labels = torch.load(f'./data/cifar10/origin_data_{net}_{radius_bit}.pt',map_location=device)
     # return
     
     datas = datas[:repair_number]
@@ -974,35 +1143,32 @@ def patch_label_autoattack(net,
             
     
     # print(f"ori_step {ori_step}, repair_step {repair_step}, pgd_step {pgd_step} \\ ori:{p1}, patch:{p2}, adv-train:{p3}")
-    with open(f'/home/chizm/PatchART/results/cifar10/repair/autoattack/compare_autoattack_ac.txt','a') as f:
+    with open(f'./results/cifar10/repair/autoattack/compare_autoattack_ac.txt','a') as f:
         f.write(f"For {net} {repair_number} {radius} : label:{p2}\n")
 if __name__ == '__main__':
     # training('vgg19','cuda:0')
     # get_dataset()
+    # adv_training_test('vgg19', 8, data_num=1000, device='cuda:1',radius_bit=8,epoch_n=200)
 
-    # for net in ['resnet18']:
-    #     # trasfer_state_dict(net)
-        for radius in [4,8]:
-            for net in ['vgg19','resnet18']:
-                # trasfer_state_dict(net)
-        #         for repair_num in [500,1000]:
-                    # compare_autoattack(net,radius_bit=radius, repair_number=repair_num)
-        # for radius in [8]:
-        #     for net in ['vgg19']:
-        #         for repair_num in [50,100,200,500,1000]:
-                # for repair_num in [50,100,200,500,1000]:
-                # for dataset_type in ['repair', 'attack_test']:
-                #     test_dataset(net,radius=radius, dataset_type=dataset_type,device='cuda:1')
-    #         if net == 'vgg19' and radius == 8:
-    #             continue
-                    # pgd_get_data(net,radius=radius,multi_number=10,data_num=1000,general=False)
-                    # grad_none(net,radius=radius)
-        # for net in ['resnet18']:
-        #     for radius in [4,8]:
-                for repair_num in [50,100,200,500,1000]: 
-                    if net == 'vgg19' and radius == 4 and (repair_num == 50 or repair_num == 100 or repair_num == 200):
-                        continue
-                    compare_autoattack(net,radius_bit=radius, repair_number=repair_num)
+
+
+
+    adv_training_test('vgg19', 8, data_num=1000, device='cuda:1',radius_bit=8,epoch_n=200)
+
+    for net in ['resnet18']:
+        for radius in [4, 8]:
+            for repair_num in [50,100,200,500,1000]: 
+    #             # if net == 'vgg19' and radius == 4 and (repair_num == 50 or repair_num == 100 or repair_num == 200):
+    #             #     continue
+    #             # compare_autoattack(net,radius_bit=radius, repair_number=repair_num)
+    #             # autoattack_adv_training(net, data_num=repair_num, device='cuda:0',radius_bit=radius)
+                for epoch in [200]:
+    #             # get_attack_data(net, radius_bit=radius, data_num=repair_num, device='cuda:1')
+                    adv_training_test(net,radius, data_num=repair_num, device='cuda:1',radius_bit=radius,epoch_n=epoch)
+    for net in ['vgg19','resnet18']:
+        for radius in [4, 8]:
+            for repair_num in [50,100,200,500,1000]:
+                autoattack_adv_training(net, data_num=repair_num, device='cuda:1',radius_bit=radius)
                     # patch_label_autoattack(net,radius_bit=radius, repair_number=repair_num,device='cuda:1')
         # for net in ['resnet18']:
         #     for radius in [4]:

@@ -140,6 +140,25 @@ class MnistProp(PhotoProp):
         return p
     
     @classmethod
+    def attack_input_label(cls, dom: AbsDom, input_shape: int, data: Tensor, label: int, radius: float,
+                     number: int = 1):
+        '''
+        The mnist property is Data-based property. One data point correspond to one l_0 ball.
+        :params input_dimension: the input/feature dimension
+        :params label: the output which should be retained
+        :params radius: the radius of the attack input/feature
+        '''
+        p = MnistProp(name=f'attack_input_label{number}', input_shape=input_shape, dom=dom, safe_fn='cols_is_max', viol_fn='col_not_max',
+                    fn_args=[label])  # mean/range hardcoded 
+        
+        p.set_input_bound(new_low=data - radius)
+        p.set_input_bound(new_high=data + radius)     
+
+        return p
+
+
+
+    @classmethod
     def feature_input(cls, dom: AbsDom, input_shape: int, lb: Tensor, ub: Tensor, label: int,
                      number: int = 1):
         '''
@@ -159,7 +178,7 @@ class MnistProp(PhotoProp):
                   input_shape: int, radius: float = 0.1, 
                   tasktype:str = 'attack_input'):
         '''
-        :param tasktype: the type of task, e.g. 'attack_input' in mnist repair
+        :param tasktype: the type of task, e.g. 'attack_input' or 'attack_input_label'in mnist repair
         :param dom: the domain of input, e.g. Deeppoly
         :param DataList: the list of data, e.g. [(data1, label1), (data2, label2), ...]
         :param input_shape: the dimension of input/feature

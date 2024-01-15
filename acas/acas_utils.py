@@ -67,7 +67,8 @@ class AcasNetID(object):
         return fname
 
     def applicable_props(self, dom: AbsDom) -> List[AcasProp]:
-        return [p for p in AcasProp.all_props(dom) if p.is_net_applicable(self)]
+        # return [p for p in AcasProp.all_props(dom) if p.is_net_applicable(self)]
+        return [AcasProp.property2(dom)]
 
     # N_{x, y} is for indexing given networks
     XS = 5

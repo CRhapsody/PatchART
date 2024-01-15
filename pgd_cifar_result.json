@@ -3,234 +3,234 @@
         "4": {
             "50": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.86
+                    "dsr": "14.0"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.78
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             },
             "100": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.87
+                    "dsr": "13.0"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.93
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             },
             "200": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.885
+                    "dsr": "11.5"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.845
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             },
             "500": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.848
+                    "dsr": "15.2"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.82
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": "None"
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             },
             "1000": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.833
+                    "dsr": "16.7"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.751
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": "None"
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             }
         },
         "8": {
             "50": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.84
+                    "dsr": "16.0"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.76
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             },
             "100": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.85
+                    "dsr": "15.0"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.87
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             },
             "200": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.865
+                    "dsr": "13.5"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.84
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             },
             "500": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.88
+                    "dsr": "12.0"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.854
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": "None"
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             },
             "1000": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.875
+                    "dsr": "12.5"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.799
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": "None"
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             }
         }
@@ -239,234 +239,234 @@
         "4": {
             "50": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.84
+                    "dsr": "16.0"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.82
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             },
             "100": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.82
+                    "dsr": "18.0"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.91
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             },
             "200": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.81
+                    "dsr": "19.0"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.86
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             },
             "500": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.788
+                    "dsr": "21.2"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.826
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": "None"
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             },
             "1000": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.803
+                    "dsr": "19.7"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.753
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": "None"
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             }
         },
         "8": {
             "50": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.84
+                    "dsr": "16.0"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.84
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             },
             "100": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.87
+                    "dsr": "13.0"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.8
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             },
             "200": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.88
+                    "dsr": "12.0"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.86
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             },
             "500": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.858
+                    "dsr": "14.2"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.826
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": "None"
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             },
             "1000": {
                 "patch": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "ori": {
-                    "defense success of apgd & apgdt": 0.856
+                    "dsr": "14.4"
                 },
-                "adv-train": {
-                    "defense success of apgd & apgdt": 0.798
+                "trades": {
+                    "dsr": "0.0"
                 },
                 "label": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "100.0"
                 },
                 "care": {
-                    "defense success of apgd & apgdt": 0
+                    "dsr": "0.0"
                 },
                 "prdnn": {
-                    "defense success of apgd & apgdt": "None"
+                    "dsr": "0.0"
                 },
                 "aprnn": {
-                    "defense success of apgd & apgdt": 0.0
+                    "dsr": "0.0"
                 }
             }
         }

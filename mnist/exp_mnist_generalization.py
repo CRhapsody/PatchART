@@ -123,15 +123,6 @@ class MnistPoints(exp.ConcIns):
             is_attack_testset_repaired = False, 
             is_attack_repaired = False,
             is_origin_data = False):
-        '''
-        trainnumber: 训练集数据量
-        testnumber: 测试集数据量
-        radius: 修复数据的半径
-        is_test_accuracy: if True, 检测一般测试集的准确率
-        is_attack_testset_repaired: if True, 检测一般被攻击测试集的准确率
-        is_attack_repaired: if True, 检测被攻击数据的修复率
-        三个参数只有一个为True
-        '''
         #_attack_data_full
         suffix = 'train' if train else 'test'
         if train:
@@ -320,7 +311,7 @@ def test_repaired(args: Namespace) -> float:
     logging.info(f'--For testset, out of {len(testset)} items, ratio {ratio}')
 
     logging.info(f'--evaluate the repaired net on testset and get the bitmap')
-    ratio = eval_test(repaired_net)
+    ratio = eval_test(repaired_net, testset)
     logging.info(f'--For testset, out of {len(testset)} items, ratio {ratio}')
 
 
@@ -398,11 +389,11 @@ def test_repaired(args: Namespace) -> float:
             scheduler.step()
         logging.info(f'--adv training finished')
         return net.eval()
-    adv_train_net = adv_train()
+    # adv_train_net = adv_train()
     torch.cuda.empty_cache()
 
-    logging.info(f'--evaluate the adv training net on testset')
-    logging.info(f'--For testset, out of {len(testset)} items, ratio {eval_test(adv_train_net, testset)}')
+    # logging.info(f'--evaluate the adv training net on testset')
+    # logging.info(f'--For testset, out of {len(testset)} items, ratio {eval_test(adv_train_net, testset)}')
 
     logging.info(f'--test the defense against autoattack')
     testloader = data.DataLoader(testset, batch_size=32, shuffle=False)
@@ -411,19 +402,19 @@ def test_repaired(args: Namespace) -> float:
     #     label = label.unsqueeze(0).to(device)
     correct1_sum, correct2_sum, correct3_sum = 0, 0, 0
     # count = 0
-    adv_train_net.train()
+    # adv_train_net.train()
     for images, labels in testloader:
         # count+=1
         images, labels = images.to(device), labels.to(device)
 
         # logging.info(f'attack net1 ')
-        at1 = AutoAttack(adv_train_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=100)
-        adv_images1 = at1(images, labels)
-        outs1 = adv_train_net(adv_images1)
-        predicted1 = outs1.argmax(dim=1)
-        correct1 = (predicted1 == labels).sum().item()
-        correct1_sum += correct1
-        logging.info(f'correct1 {correct1}')
+        # at1 = AutoAttack(adv_train_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=100)
+        # adv_images1 = at1(images, labels)
+        # outs1 = adv_train_net(adv_images1)
+        # predicted1 = outs1.argmax(dim=1)
+        # correct1 = (predicted1 == labels).sum().item()
+        # correct1_sum += correct1
+        # logging.info(f'correct1 {correct1}')
         # logging.info(f'attack net2 ')
 
         at2 = AutoAttack(repaired_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=100)
@@ -436,13 +427,13 @@ def test_repaired(args: Namespace) -> float:
         logging.info(f'correct2 {correct2}')
         # logging.info(f'attack net3 ')
 
-        at3 = AutoAttack(original_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=100)
-        adv_images3 = at3(images, labels)
-        outs3 = original_net(adv_images3)
-        predicted3 = outs3.argmax(dim=1)
-        correct3 = (predicted3 == labels).sum().item()
-        correct3_sum += correct3
-        logging.info(f'correct3 {correct3}')
+        # at3 = AutoAttack(original_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=100)
+        # adv_images3 = at3(images, labels)
+        # outs3 = original_net(adv_images3)
+        # predicted3 = outs3.argmax(dim=1)
+        # correct3 = (predicted3 == labels).sum().item()
+        # correct3_sum += correct3
+        # logging.info(f'correct3 {correct3}')
         # if count % 100 == 0:
         #     logging.info(f'--For testset, out of {count} items, adv training net ratio {correct1_sum}, repaired net ratio {correct2_sum}, original net ratio {correct3_sum}')
 
@@ -454,15 +445,19 @@ def test_repaired(args: Namespace) -> float:
     # write the result to the file
 
 
+    # with open(Path(COMP_DIR, f'compare_generalization.txt'), 'a') as f:
+    #     f.write(f'For net: {args.net}, radius: {args.repair_radius},' +
+    #             f'repair_number: {args.repair_number}, test_datasize: {args.test_datasize}, ' +
+    #             f'accuarcy rate: {ratio},' + 
+    #             f'adv training net ratio: {correct1_sum/len(testset)}, ' +
+    #             f'repaired net ratio: {correct2_sum/len(testset)},' + 
+    #             f'original net ratio: {correct3_sum/len(testset)}\n')
+
     with open(Path(COMP_DIR, f'compare_generalization.txt'), 'a') as f:
-        f.write(f'For net: {args.net}, radius: {args.repair_radius},' +
-                f'repair_number: {args.repair_number}, test_datasize: {args.test_datasize}, ' +
-                f'accuarcy rate: {ratio},' + 
-                f'adv training net ratio: {correct1_sum/len(testset)}, ' +
-                f'repaired net ratio: {correct2_sum/len(testset)},' + 
-                f'original net ratio: {correct3_sum/len(testset)}\n')
-
-
+        f.write(f'For net: {args.net}, radius: {args.repair_radius}, ' +
+                f'repair_number: {args.repair_number}, ' +
+                # f'adv training net ratio: {correct1_sum/len(testset)}, ' +
+                f'P_{args.patch_size}:{correct2_sum/len(testset)}\n') 
 
 
 
@@ -496,6 +491,7 @@ def test_label_repaired(args: Namespace) -> float:
         original_net = MnistNet_FNN_small(dom=args.dom)
         for_repair_net = MnistNet_FNN_small(dom=args.dom)
     original_net.to(device)
+    original_net.load_state_dict(torch.load(Path(MNIST_NET_DIR, f'mnist_{args.net}.pth')))
     patch_lists = []
     for i in range(10):
         patch_net = Mnist_patch_model(dom=args.dom,
@@ -677,11 +673,10 @@ def test_label_repaired(args: Namespace) -> float:
 
 
     with open(Path(COMP_DIR, f'compare_generalization.txt'), 'a') as f:
-        f.write(f'For net: {args.net}, radius: {args.repair_radius},' +
-                f'repair_number: {args.repair_number}, test_datasize: {args.test_datasize}, ' +
-                f'accuarcy rate: {ratio},' + 
+        f.write(f'For net: {args.net}, radius: {args.repair_radius}, ' +
+                f'repair_number: {args.repair_number}, ' +
                 # f'adv training net ratio: {correct1_sum/len(testset)}, ' +
-                f'repaired net ratio: {correct2_sum/len(testset)}\n') 
+                f'{args.patch_size}_label:{correct2_sum/len(testset)}\n') 
                 # f'original net ratio: {correct3_sum/len(testset)}\n')
 
 
@@ -772,7 +767,7 @@ def test(lr:float = 0.005, net:str = 'CNN_small',repair_radius:float = 0.1, repa
 
         
     }
-    if args.label_repaired:
+    if label_repaired:
         parser = MnistArgParser(RES_DIR_LABEL, description='MNIST Correct by Construction, label repaired')
     else:
         parser = MnistArgParser(RES_DIR, description='MNIST Correct by Construction')
@@ -790,13 +785,33 @@ def test(lr:float = 0.005, net:str = 'CNN_small',repair_radius:float = 0.1, repa
 
 if __name__ == '__main__':
 
-    for net in ['CNN_small', 'FNN_small', 'FNN_big']:
-        for patch_size in ['small']:
-        # for patch_size in ['big']:
-            # for radius in [0.3]:
-            for radius in [0.05,0.1,0.3]: #,0.1,0.3
-                # for repair_number,test_number in zip([1000],[10000]):
-                for repair_number in [50, 100, 200, 500, 1000]:
-                    test(net=net, repair_radius=radius, repair_number = repair_number, 
-         train_datasize = 10000, test_datasize = 10000, 
-         accuracy_loss='CE',patch_size=patch_size,label_repaired = True)
+    # for net in ['FNN_small']:
+    #     # for patch_size in ['small']:
+    #     for label_repaired in [False]:
+    #         for patch_size in ['big']:
+    #             # for radius in [0.3]:
+    #             for radius in [0.3]: #,0.1,0.3
+    #                 # for repair_number,test_number in zip([1000],[10000]):
+    #                 for repair_number in [50]:
+    #                 # for repair_number in [100, 200, 500, 1000]:
+    #                     test(net=net, repair_radius=radius, repair_number = repair_number, 
+    #         train_datasize = 10000, test_datasize = 10000, 
+    #         accuracy_loss='CE',patch_size=patch_size,label_repaired = label_repaired)
+    for net in ['FNN_big']:
+        # for patch_size in ['small']:
+        for label_repaired in [False]:
+        # for label_repaired in [True]:
+            for patch_size in ['big']:
+                # for radius in [0.3]:
+                for radius in [0.05, 0.1, 0.3]: #,0.1,0.3
+                    # for repair_number,test_number in zip([1000],[10000]):
+                    
+
+                    # for repair_number in [1000]:
+                    # for repair_number in [100]:
+                    for repair_number in [50, 100, 200, 500, 1000]:
+                        if radius == 0.05 and repair_number != 1000:
+                            continue
+                        test(net=net, repair_radius=radius, repair_number = repair_number, 
+            train_datasize = 10000, test_datasize = 10000, 
+            accuracy_loss='CE',patch_size=patch_size,label_repaired = label_repaired)

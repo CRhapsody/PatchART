@@ -68,14 +68,12 @@ class CifarArgParser(exp.ExpArgParser):
 
         # training
         self.add_argument('--divided_repair', type=int, default=1, help='batch size for training')
-        self.add_argument('--weight_decay', type=float, default=0.0, help='L2 regularization')
-        self.add_argument('--k_coeff', type=float, default=1e-3, help='learning rate')
+
+
         self.add_argument('--accuracy_loss', type=str, choices=['L1', 'SmoothL1', 'MSE', 'CE'], default='CE',
                           help='canonical loss function for concrete points training')
-        self.add_argument('--support_loss', type=str, choices=['CE','L2','SmoothL1'], default='L2',
-                          help= 'canonical loss function for patch net training')
-        self.add_argument('--sample_amount', type=int, default=5000,
-                          help='specifically for data points sampling from spec')
+
+
         self.add_argument('--reset_params', type=literal_eval, default=False,
                           help='start with random weights or provided trained weights when available')
         self.add_argument('--train_datasize', type=int, default=10000, 
@@ -111,15 +109,7 @@ class CifarArgParser(exp.ExpArgParser):
             'CE': ce_loss
         }[args.accuracy_loss]
 
-        args.support_loss = {
-            'BCE' : Bce_loss,
-            'L2': nn.MSELoss(),
-            'L1': nn.L1Loss(),
-            'CE': nn.CrossEntropyLoss(),
-            'SmoothL1': nn.SmoothL1Loss(),
 
-
-        }[args.support_loss]
         return
     pass
 
@@ -211,7 +201,6 @@ def eval_test(net, set: CifarPoints, bitmap: Tensor = None) -> float:
 def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool, float]:
 
 
-    # train number是修复多少个点
     # originalset = torch.load(Path(MNIST_DATA_DIR, f'origin_data_{args.repair_radius}.pt'), device)
     # originalset = MnistPoints(inputs=originalset[0], labels=originalset[1])
     originalset = CifarPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_origin_data=True)
@@ -275,36 +264,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                     is_in = (batch_inputs_clone >= (in_lb - 1e-4)) & (batch_inputs_clone <= (in_ub + 1e-4))
                     is_in = is_in.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
 
-            # distingush the photo and the property
-            # if len(in_lb.shape) == 2:
-            #     batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1])
-            #     is_in = (batch_inputs_clone >= in_lb) & (batch_inputs_clone <= in_ub)
-            #     # is_in = is_in.all(dim=-1) # every input is in the region of property, batch * n_prop
-            #     # allow 5 elements of is_in is False
-            #     # is_in = (~is_in).sum(dim=-1) <= 5
-            #     #  is_in.sum(dim=-1).max(dim=-1)
-            #     # get the max of every row of is_in
-            #     is_in_max = is_in.sum(dim=-1).max(dim=-1)[1]
-            #     # as the index to get repairlabels
-            #     is_in_max_re = repairlabels[is_in_max]
-            #     # comapre with the labels
-            #     is_in_statistics = (is_in_max_re == labels).sum().item()
-            #     is_in = (~is_in).sum(dim=-1) <= 5
-            # elif len(in_lb.shape) == 4:
-            #     if in_lb.shape[0] > 600:
-            #         is_in_list = []
-            #         for i in range(batch_inputs_clone.shape[0]):
-            #             batch_inputs_compare_datai = batch_inputs_clone[i].clone().expand(in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
-            #             is_in_datai = (batch_inputs_compare_datai >= in_lb) & (batch_inputs_compare_datai <= in_ub)
-            #             is_in_datai = is_in_datai.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
-            #             is_in_list.append(is_in_datai)
-            #         is_in = torch.stack(is_in_list, dim=0)
-            #     else:
-            #         batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
-            #         is_in = (batch_inputs_clone >= in_lb) & (batch_inputs_clone <= in_ub)
-            #         # allow 5 elements of is_in is False
-            #         is_in = (~is_in).sum(dim=(-1)).sum(dim=(-1)).sum(dim=(-1)) <= 5
-                    # is_in = is_in.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
+
             
             
             
@@ -317,14 +277,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                 bitmap[bitmap_i, :] = in_bitmap[inbitmap_j, :]
             else:
                 pass
-            # how to use the vectoirzation to speed up the following code
-            # tmp0 = in_bitmap.unsqueeze(0).expand(batch_inputs.shape[0], in_bitmap.shape[0], in_bitmap.shape[1]).to(device)
-            # tmp0 = torch.zeros((batch_inputs.shape[0], in_bitmap.shape[0], in_bitmap.shape[1]), device = device)
-            # tmp1 = is_in.unsqueeze(-1).expand(batch_inputs.shape[0], in_bitmap.shape[0], in_bitmap.shape[1]).to(device)
-            # bitmap = torch.where(tmp1, tmp0, 1)
-            # # tmp0[tmp1.nonzero(as_tuple=True)] = 1
-            # # bitmap = tmp0.all(dim=-1)
-            # a = bitmap.all(dim=-1)
+
 
 
             return bitmap
@@ -335,15 +288,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                                  dataset: CifarPoints, 
                                  radius = args.repair_radius/255,
                                  datanumber = 1e3):
-        # # step1 sample the datas from the radius of the original data
-        # # the number of datas is datanumber
-        # lb = dataset.inputs - radius
-        # ub = dataset.inputs + radius
-        # repeat_dims = [1] * (len(lb.size()) - 1)
-        # base = lb.repeat(int(datanumber), *repeat_dims)  # repeat K times in the batch, preserving the rest dimensions
-        # width = (ub - lb).repeat(int(datanumber), *repeat_dims)
-        # coefs = torch.rand_like(base)
-        # pts = base + coefs * width
+
 
         # step2 sample the data using pgd attack in the radius of the original data
         images = dataset.inputs.clone().detach()
