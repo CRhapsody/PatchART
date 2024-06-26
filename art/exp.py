@@ -188,8 +188,9 @@ class ExpArgParser(argparse.ArgumentParser):
 
         if 'small' in args.net or 'big' in args.net:
             args.stamp = f'{args.net}-{args.repair_radius}-{args.repair_number}-{args.patch_size}-{timestamp}'
-        elif 'resnet' in args.net or 'vgg' in args.net:
+        elif 'resnet' in args.net or 'vgg' in args.net or 'wide_resnet' in args.net:
             args.stamp = f'{args.net}-{args.repair_radius}-{args.repair_location}-{args.repair_number}-{timestamp}'
+        
         else:
             args.stamp = f'Acas-prpoerty2-{timestamp}'
         logger.handlers = []  # reset, otherwise it may duplicate many times when calling setup_logger() multiple times

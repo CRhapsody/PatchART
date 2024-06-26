@@ -179,10 +179,44 @@ class Netsum(nn.Module):
         self.generalization = generalization
     def set_repair_direction_dict(self, repair_direction_dict):
         self.repair_direction_dict = repair_direction_dict
-    def get_bitmap(self, original_out):
+    # def get_bitmap(self, original_out):
+    #     with torch.no_grad():
+    #         # get the max and runner-up score of out
+    #         _,index = torch.topk(original_out,2,dim = -1)
+    #         # max_index = index[...,0]
+    #         # runnerup_index = index[...,1]
+    #         # match with repair_direction_dict : (,2)
+    #         # index_clone = index.clone().unsqueeze_(1).expand(index.shape[0],self.repair_direction_dict.shape[0], index.shape[-1])
+    #         index_clone = index.clone().unsqueeze_(1).expand(index.shape[0], len(self.patch_nets), index.shape[-1])
+    #         # is_in 是一个bool矩阵（input_num, patch_num），表示每个输入是否在repair_direction_dict中，并且和哪几项相同
+    #         # 将 bool 矩阵转化为int矩阵
+    #         # is_in = is_in.int()
+
+    #         is_in = (index_clone == self.repair_direction_dict).all(dim = -1)
+    #         # 检查 is_in中的零行向量，如果有，说明这个输入不在任何一个patch中
+    #         is_in_test_zero = is_in.sum(dim = -1) == 0
+    #         # 记录其行索引
+    #         is_in_test_zero_index = is_in_test_zero.nonzero(as_tuple=True)[0]
+    #         # 从index中把这些行选出来            
+    #         is_in_zero_assign = index[is_in_test_zero_index][...,0].unsqueeze_(1).expand(-1, self.repair_direction_dict.shape[0])
+    #         # 将所有修复标签相同的patch拿来修复
+    #         is_in_zero_assign_map = torch.eq(is_in_zero_assign, self.repair_direction_dict[...,0])
+    #         is_in[is_in_test_zero] = is_in_zero_assign_map
+    #         is_in = is_in.to(torch.uint8)
+    #         # is_in 中每一行只保留列坐标最小的1，其余全变为0
+    #         unique = is_in.sum(dim = -1).nonzero()
+    #         first_one_index = is_in[unique].argmax(dim = -1)
+    #         is_in_unique_one = torch.zeros_like(is_in)
+    #         is_in_unique_one[unique, first_one_index] = 1
+    #         self.bitmap = is_in # 这里是直接将对应patch的结果都加了起来
+    #         # self.bitmap = is_in_unique_one # 这里是只选一个patch
+    #     return self.bitmap
+    def get_bitmap(self, sample_top2):
         with torch.no_grad():
             # get the max and runner-up score of out
-            _,index = torch.topk(original_out,2,dim = -1)
+            # _,index = torch.topk(original_out,2,dim = -1)
+            index = sample_top2
+            
             # max_index = index[...,0]
             # runnerup_index = index[...,1]
             # match with repair_direction_dict : (,2)
@@ -201,8 +235,14 @@ class Netsum(nn.Module):
             is_in[is_in_test_zero] = is_in_zero_assign_map
             is_in = is_in.to(torch.uint8)
             self.bitmap = is_in 
-        return self.bitmap
-            
+
+            # unique = is_in.sum(dim = -1).nonzero()
+            # first_one_index = is_in[unique].argmax(dim = -1)
+            # is_in_unique_one = torch.zeros_like(is_in)
+            # is_in_unique_one[unique, first_one_index] = 1
+            # self.bitmap = is_in_unique_one
+
+        return self.bitmap            
 
     def get_bitmap_label(self, original_out):
         with torch.no_grad():

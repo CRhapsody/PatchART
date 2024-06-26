@@ -712,7 +712,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         certified = False
         epoch = 0
 
-        opti = Adam(repair_net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+        opti = Adam(repair_net.parameters(), lr=args.lr)
         # accoridng to the net model
         # if args.net == 'vgg19':
         #     opti.param_groups[0]['params'] = opti.param_groups[0]['params'][6:]

@@ -170,8 +170,8 @@ def get_dataset():
         # print(f"batch {i} done")
     trainset_inputs = torch.cat(trainset_inputs)
     trainset_labels = torch.cat(trainset_labels)
-    trainset_inputs_split = trainset_inputs[:10000]
-    trainset_labels_split = trainset_labels[:10000]
+    trainset_inputs_split = trainset_inputs#[:10000]
+    trainset_labels_split = trainset_labels#[:10000]
     trainset_inputs_split.requires_grad = False
     trainset_labels_split.requires_grad = False
     torch.save((trainset_inputs_split, trainset_labels_split),'./data/cifar10/train.pt')
@@ -1007,7 +1007,22 @@ def adv_training_test(net, radius, data_num, device,radius_bit = 8,epoch_n = 200
 #     torch.save((full_list, attack_test_label),f'./data/cifar10/attack_data_{net}_{radius_bit}.pt')
 
 
-        
+def load_cifar10_data(net, radius_bit, data_num, device):
+    if net == 'vgg19':
+        model = VGG('VGG19').to(device)
+        state = torch.load(f"./model/cifar10/vgg19.pth")
+        model.load_state_dict(state)
+    elif net == 'resnet18':
+        model = resnet18(num_classes=10).to(device)
+        state = torch.load(f"./model/cifar10/resnet18.pth")
+        model.load_state_dict(state)
+
+    origin_data,origin_label = torch.load(f'./data/cifar10/origin_data_{net}_{radius_bit}.pt',map_location=device)
+    origin_data = origin_data[:data_num]
+    origin_label = origin_label[:data_num]
+
+    _, attack_test_label = torch.load(f'./data/cifar10/train_attack_data_full_{net}_{radius_bit}.pt',map_location=device)
+    return origin_data, origin_label, attack_test_label
 
 
 

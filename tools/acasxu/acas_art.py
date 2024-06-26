@@ -23,7 +23,7 @@ from art.repair_moudle import PatchNet, Netsum
 
 RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'acas' / 'ART'
 RES_DIR.mkdir(parents=True, exist_ok=True)
-REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'reassure_format'
+REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'tool' / 'model' / 'acasxu' / 'ART'
 REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 # RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'acas'
@@ -247,6 +247,7 @@ def train_acas(nid: acas.AcasNetID, args: Namespace) -> Tuple[int, float, bool, 
     logging.info(f'After {epoch} epochs / {utils.pp_time(train_time)}, ' +
                  f'eventually the trained network got certified? {certified}, ' +
                  f'with {accuracies[-1]:.4f} accuracy on test set.')
+    torch.save(net.state_dict(), Path(REPAIR_MODEL_DIR, f'{str(nid)}_repaired.pt'))
     return epoch, train_time, certified, accuracies[-1]
 
 

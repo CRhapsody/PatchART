@@ -8,14 +8,63 @@ import torch
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 root = Path(__file__).resolve().parent.parent
 # sys.path.append(str(root))
-from DiffAbs.DiffAbs import AbsDom, DeeppolyDom
+from DiffAbs.DiffAbs import AbsDom, deeppoly
 
 from art.prop import AndProp
 
+REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'acasxu'
+ACAS_CON_ENCODE_DIR = Path(__file__).resolve().parent.parent / 'data' / 'acas_con_encode'
 
 
-from acas.acas_utils import ACAS_DIR, AcasNetID, AcasNet, AcasOut
+from acas.acas_utils import ACAS_DIR, AcasNetID, AcasNet, AcasOut, AcasProp
 from art.utils import sample_points
+
+def sample_property2_data(dom: AbsDom, trainsize: int = 10000, testsize: int = 5000, dir: str = ACAS_CON_ENCODE_DIR,
+                            device = 'cuda'):
+    """ Sample the data from every trained network. Serve as extra data for property 2.
+    """
+    nids =  AcasNetID.goal_safety_ids(dom=dom)
+    nids.remove(AcasNetID(torch.tensor(4),torch.tensor(2)))
+
+    for nid in nids:
+        fpath = nid.fpath()
+        print('\rSampling for network', nid, 'picked nnet file:', fpath, end='')
+        net, bound_mins, bound_maxs = AcasNet.load_nnet(fpath, dom)
+        net = net.to(device)
+
+        repair_net = torch.load(REPAIR_MODEL_DIR / f'{str(nid)}repaired.pt',map_location=device)
+
+
+        # load property2
+        prop2 = AcasProp.property2(dom=dom)
+        in_lb, in_ub = prop2.lbub(device=device)
+        in_lb = net.normalize_inputs(in_lb, bound_mins, bound_maxs)
+        in_ub = net.normalize_inputs(in_ub, bound_mins, bound_maxs)
+        data_list = []
+        labels_list = []
+        while len(data_list) < testsize:
+            inputs = sample_points(in_lb, in_ub, K=1)
+            with torch.no_grad():
+                outputs = net(inputs)
+                labels = (outputs * -1).argmax(dim=-1)
+                repair_labels = (repair_net(inputs) * -1).argmax(dim=-1)    
+                if labels != 0 and labels == repair_labels: #1 cond:label not coc,encoding will failure;2 cond: lable not modify after repairing & not violate P2
+                    data_list.append(inputs)
+                    labels_list.append(labels)
+                    print(f'find a counterexample, the number of counterexample is {len(data_list)}')
+        data = torch.cat(data_list, dim=0)
+        labels = torch.cat(labels_list, dim=0)
+        torch.save((data,labels), Path(dir, f'{str(nid)}-property2.pt'))
+
+
+
+
+
+
+
+
+
+
 
 
 def sample_original_data(dom: AbsDom, trainsize: int = 10000, testsize: int = 5000, dir: str = ACAS_DIR,
@@ -269,6 +318,7 @@ def test(net, device):
     print(f'net {net} repair_acc {repair_acc} gene_acc {gene_acc}')
 
 if __name__ == '__main__':
-    net_list = [f'{i}_{j}' for i in range(2, 6) for j in range(1,10) ]
-    for net in net_list:
-        test(net, device = 'cuda:2')
+    # net_list = [f'{i}_{j}' for i in range(2, 6) for j in range(1,10) ]
+    # for net in net_list:
+    #     test(net, device = 'cuda:2')
+    sample_property2_data(dom=deeppoly, device='cuda:2')

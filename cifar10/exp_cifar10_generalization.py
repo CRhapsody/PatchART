@@ -228,9 +228,9 @@ def test_repaired(args: Namespace) -> float:
         patch_lists.append(patch_net)
     logging.info(f'--feature patch network: {patch_net}')
     rear_sum =  Netsum(args.dom, target_net = rear, patch_nets= patch_lists, device=device, generalization=True)
-    # rear.load_state_dict(torch.load(Path(REPAIR_MODEL_DIR, f'Cifar-{args.net}-feature-repair_number{args.repair_number}-rapair_radius{args.repair_radius}.pt')))
+    rear_sum.load_state_dict(torch.load(Path(REPAIR_MODEL_DIR, f'Cifar-{args.net}-feature-repair_number{args.repair_number}-rapair_radius{args.repair_radius}.pt')))
     repaired_net = NetFeatureSumPatch(feature_sumnet=rear_sum, feature_extractor=frontier)
-    repaired_net.load_state_dict(torch.load(Path(REPAIR_MODEL_DIR, f'Cifar-{args.net}-full-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-feature_sumnet.pt')))
+    # repaired_net.load_state_dict(torch.load(Path(REPAIR_MODEL_DIR, f'Cifar-{args.net}-full-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-feature_sumnet.pt')))
     repaired_net.eval()
 
 
@@ -245,9 +245,10 @@ def test_repaired(args: Namespace) -> float:
     logging.info(f'--label patch network: {patch_label_net}')
 
     rear_label = Netsum(args.dom, target_net = rear, patch_nets= patch_label_lists, device=device, generalization=True, is_label_repaired=True)
+    rear_label.load_state_dict(torch.load(Path(LABEL_MODEL_DIR, f'Cifar-{args.net}-feature-repair_number{args.repair_number}-rapair_radius{args.repair_radius}.pt')))
     repaired_label_net = NetFeatureSumPatch(feature_sumnet= rear_label, feature_extractor= frontier)
-    repaired_label_net.load_state_dict(torch.load(Path(LABEL_MODEL_DIR, f'Cifar-{args.net}-full-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-feature_sumnet.pt')))
-
+    # repaired_label_net.load_state_dict(torch.load(Path(LABEL_MODEL_DIR, f'Cifar-{args.net}-full-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-feature_sumnet.pt')))
+    repaired_label_net.eval()
 
 
     # load the dataset
@@ -368,7 +369,7 @@ def test_repaired(args: Namespace) -> float:
         # PGD_attack = PGD(net, eps=args.repair_radius, alpha=args.repair_radius/4., steps=20, random_start=False)
         buggy_loader = data.DataLoader(repairset, batch_size=32, shuffle=True)
         
-        train_loader = data.DataLoader(testset, batch_size=32, shuffle=True)
+        train_loader = data.DataLoader(trainset, batch_size=32, shuffle=True)
 
         loss_fn = nn.CrossEntropyLoss()
         optimizer = optim.SGD(net.parameters(), lr=0.02, momentum=0.01)
@@ -447,41 +448,41 @@ def test_repaired(args: Namespace) -> float:
         net.load_state_dict(torch.load(Path(RES_DIR, f'best_{args.net}_{args.repair_radius}_{args.repair_number}_adv_train.pth')))
         return net.eval()
     # judge the adv training net is exist or not
-    if Path(RES_DIR, f'best_{args.net}_{args.repair_radius}_{args.repair_number}_adv_train.pth').exists():
-        logging.info(f'--load the adv training net')
-        if args.net == 'vgg19':
-            adv_train_net = Vgg_model(dom=args.dom)
-        elif args.net == 'resnet18':
-            adv_train_net = Resnet_model(dom=args.dom)
-        adv_train_net.load_state_dict(torch.load(Path(RES_DIR, f'best_{args.net}_{args.repair_radius}_{args.repair_number}_adv_train.pth'),map_location=device))
-        adv_train_net.to(device)
-        adv_train_net.eval()
-    else:
-        logging.info(f'--adv training')
-        adv_train_net = adv_train(epoch=1000)
+    # if Path(RES_DIR, f'best_{args.net}_{args.repair_radius}_{args.repair_number}_adv_train.pth').exists():
+    #     logging.info(f'--load the adv training net')
+    #     if args.net == 'vgg19':
+    #         adv_train_net = Vgg_model(dom=args.dom)
+    #     elif args.net == 'resnet18':
+    #         adv_train_net = Resnet_model(dom=args.dom)
+    #     adv_train_net.load_state_dict(torch.load(Path(RES_DIR, f'best_{args.net}_{args.repair_radius}_{args.repair_number}_adv_train.pth'),map_location=device))
+    #     adv_train_net.to(device)
+    #     adv_train_net.eval()
+    # else:
+    #     logging.info(f'--adv training')
+    #     adv_train_net = adv_train(epoch=1000)
     torch.cuda.empty_cache()
 
     logging.info(f'--evaluate the adv training net on testset')
-    logging.info(f'--For testset, out of {len(testset)} items, ratio {eval_test(adv_train_net, testset)}')
+    # logging.info(f'--For testset, out of {len(testset)} items, ratio {eval_test(adv_train_net, testset)}')
 
     logging.info(f'--test the defense against autoattack')
     testloader = data.DataLoader(testset, batch_size=32, shuffle=False)
 
     correct1_sum, correct2_sum, correct3_sum, correct4_sum = 0, 0, 0, 0
     # count = 0
-    adv_train_net.train()
+    # adv_train_net.eval()
     for images, labels in testloader:
         # count+=1
         images, labels = images.to(device), labels.to(device)
 
         # logging.info(f'attack net1 ')
-        at1 = AutoAttack(adv_train_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=10)
-        adv_images1 = at1(images, labels)
-        outs1 = adv_train_net(adv_images1)
-        predicted1 = outs1.argmax(dim=1)
-        correct1 = (predicted1 == labels).sum().item()
-        correct1_sum += correct1
-        logging.info(f'correct1 {correct1}')
+        # at1 = AutoAttack(adv_train_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=10)
+        # adv_images1 = at1(images, labels)
+        # outs1 = adv_train_net(adv_images1)
+        # predicted1 = outs1.argmax(dim=1)
+        # correct1 = (predicted1 == labels).sum().item()
+        # correct1_sum += correct1
+        # logging.info(f'correct1 {correct1}')
         # logging.info(f'attack net2 ')
 
         at2 = AutoAttack(repaired_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=10)
@@ -607,13 +608,13 @@ if __name__ == '__main__':
     for net in ['vgg19', 'resnet18']:
         # for patch_size in ['small', 'big']:
         # for patch_size in ['big']:
-            for radius in [4,8]: 
+            for radius in [4]: 
 
             # for radius in [0.05,0.1,0.3]: #,0.1,0.3
                 # for repair_number,test_number in zip([200],[2000]):
-                # for repair_number,test_number in zip([50],[500]):
+                for repair_number,test_number in zip([50],[500]):
                 # for repair_number,test_number in zip([1000],[10000]):
-                for repair_number,test_number in zip([50,100,200,500,1000],[500,1000,2000,5000,10000]):
+                # for repair_number,test_number in zip([50,100,200,500,1000],[500,1000,2000,5000,10000]):
                     test(net=net, repair_radius=radius, repair_number = repair_number, 
          train_datasize = 10000, test_datasize = 10000, 
          accuracy_loss='CE')

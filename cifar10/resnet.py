@@ -146,6 +146,7 @@ class ResNet(nn.Module):
         return nn.Sequential(
             self.conv1, 
             self.bn1, 
+            F.relu,
             self.layer1, self.layer2, self.layer3, self.layer4,
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Flatten(),

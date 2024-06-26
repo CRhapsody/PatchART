@@ -1,0 +1,8 @@
+For resnet152 500 2 : repair:1.0, attack:1.0, test:0.0377, time:4667.650564908981
+For resnet152 500 4 : repair:1.0, attack:1.0, test:0.0371, time:4624.183440685272
+For WRN 500 4 : repair:1.0, attack:1.0, test:0.126, time:4985.542070865631
+For WRN 500 2 : repair:1.0, attack:1.0, test:0.1758, time:5040.815874576569
+For WRN 1000 4 : repair:1.0, attack:1.0, test:0.1484, time:6976.1891276836395
+For WRN 1000 2 : repair:1.0, attack:1.0, test:0.2112, time:7088.610011816025
+For resnet152 1000 2 : repair:1.0, attack:1.0, test:0.0567, time:7503.516288995743
+For resnet152 1000 4 : repair:1.0, attack:1.0, test:0.0461, time:7499.875967502594

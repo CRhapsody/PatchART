@@ -1002,14 +1002,20 @@ def adv_training_test(net, radius,data_num, device, epoch_n=200):
 
     #train
     # criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001)
+    optimizer = optim.SGD(model.parameters(), lr=0.0005)
     model.train()
     loss_sum_best = 100
     import time
     start = time.time()
-    for epoch in range(epoch_n):
-        print(f"adv-training epoch {epoch}")
+    p_l = [param for param in model.parameters()]
+    epoch = 0
+    while 1:
+    # for epoch in range(epoch_n):
+        
+        # print(f"adv-training epoch {epoch}")
+        epoch +=1
         loss_sum = 0
+        print(p_l[0][0,0])
         for inputs,labels in origin_loader:
             inputs,labels = inputs.to(device),labels.to(device)
             optimizer.zero_grad()
@@ -1019,7 +1025,7 @@ def adv_training_test(net, radius,data_num, device, epoch_n=200):
                             optimizer=optimizer,
                             epsilon=radius,
                             step_size=1,
-                            beta=0.001)
+                            beta=1)
             loss.backward()
             optimizer.step()
             loss_sum += loss.item()
@@ -1256,8 +1262,8 @@ if __name__ == "__main__":
                 # adv_training_test(net, radius, data,device='cuda:0')
                 # for epoch in [200]:
                     # adv_training_test_pgd(net, radius, data_num=data, device='cuda:0',epoch_n=epoch)
-                    # adv_training_test(net, radius, data_num=data, device='cuda:0',epoch_n=epoch)
-                trades_generalization(net, radius, data, device='cuda:2')
+                    adv_training_test(net, radius, data_num=data, device='cuda:0',epoch_n=200)
+                # trades_generalization(net, radius, data, device='cuda:2')
             
                 # autoattack_adv_training(net, data,device='cuda:0',radius = radius)
                     # compare_pgd_step_length(net, patch_format, radius, data)
