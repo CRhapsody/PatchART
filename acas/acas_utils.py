@@ -19,8 +19,9 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from art.prop import OneProp, AndProp
 from art.utils import sample_points
 
-
-ACAS_DIR = Path(__file__).resolve().parent.parent / 'data' / 'acas_nets'
+STORAGE_DIR = Path('/data/chizm/PatchART')
+# ACAS_DIR = Path(__file__).resolve().parent.parent / 'data' / 'acas_nets'
+ACAS_DIR = STORAGE_DIR / 'data' / 'acas_nets'
 
 
 class AcasIn(enum.IntEnum):

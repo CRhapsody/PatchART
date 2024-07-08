@@ -7,7 +7,7 @@ import sys
 from itertools import product
 from pathlib import Path
 from typing import List, Optional, Tuple, Iterable, Sequence, Union
-from abc import ABC, abstractclassmethod
+from abc import ABC
 
 import torch
 from torch import Tensor, nn

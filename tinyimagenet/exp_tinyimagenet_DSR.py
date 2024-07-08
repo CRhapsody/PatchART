@@ -19,52 +19,53 @@ from art.prop import AndProp
 from art.bisecter import Bisecter
 from art import exp, utils
 from art.repair_moudle import Netsum, NetFeatureSumPatch
-from cifar10_utils import Cifar_feature_patch_model, CifarProp, Vgg_model, Resnet_model
+from tinyimagenet_utils import TinyImagenetProp, TinyImagenet_feature_patch_model, Resnet_152_model, Wide_Resnet_101_2_model
 torch.manual_seed(10668091966382305352)
 device = torch.device(f'cuda:2')
 
 
 
-# CIFAR_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'cifar10'
-# CIFAR_NET_DIR = Path(__file__).resolve().parent.parent / 'model' / 'cifar10'
+# TINY_IMAGENET_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'tiny_imagenet'
+# TINY_IMAGENET_NET_DIR = Path(__file__).resolve().parent.parent / 'model' / 'tiny_imagenet'
 
-# RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'cifar10' / 'generalization' 
+# RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'tiny_imagenet' / 'generalization' / 'base'
 # RES_DIR.mkdir(parents=True, exist_ok=True)
 
-# # RES_DIR_LABEL = Path(__file__).resolve().parent.parent / 'results' / 'cifar10' / 'generalization' / 'label'
-# # RES_DIR_LABEL.mkdir(parents=True, exist_ok=True)
+# RES_DIR_LABEL = Path(__file__).resolve().parent.parent / 'results' / 'tiny_imagenet' / 'generalization' / 'label'
+# RES_DIR_LABEL.mkdir(parents=True, exist_ok=True)
 
+# REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'tiny_imagenet_base_format'
+# REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
-# REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'cifar10_base_format'
-# # REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
+# LABEL_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'tiny_imagenet_label_format'
+# LABEL_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
-# LABEL_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'cifar10_label_format'
-# # LABEL_MODEL_DIR.mkdir(parents=True, exist_ok=True)
-
-# COMP_DIR = Path(__file__).resolve().parent.parent / 'results' / 'cifar10' / 'repair' / 'generalization' / 'compare'
+# COMP_DIR = Path(__file__).resolve().parent.parent / 'results' / 'tiny_imagenet' / 'repair' / 'generalization' / 'compare'
 # COMP_DIR.mkdir(parents=True, exist_ok=True)
 
 STORAGE_DIR = Path('/data/chizm/PatchART')
-CIFAR_DATA_DIR = STORAGE_DIR / 'data' / 'cifar10'
-CIFAR_NET_DIR = STORAGE_DIR / 'model' / 'cifar10'
+TINY_IMAGENET_DATA_DIR = STORAGE_DIR / 'data' / 'tiny_imagenet'
+TINY_IMAGENET_NET_DIR = STORAGE_DIR / 'model' / 'tiny_imagenet'
 
-CIFAR_RES_DIR = STORAGE_DIR / 'results' / 'cifar10' / 'generalization'
-CIFAR_RES_DIR.mkdir(parents=True, exist_ok=True)
+RES_DIR = STORAGE_DIR / 'results' / 'tiny_imagenet' / 'generalization' / 'base'
+RES_DIR.mkdir(parents=True, exist_ok=True)
 
-LABEL_CIFAR_RES_DIR = STORAGE_DIR / 'results' / 'cifar10' / 'generalization' / 'label'
-LABEL_CIFAR_RES_DIR.mkdir(parents=True, exist_ok=True)
+RES_DIR_LABEL = STORAGE_DIR / 'results' / 'tiny_imagenet' / 'generalization' / 'label'
+RES_DIR_LABEL.mkdir(parents=True, exist_ok=True)
 
-REPAIR_MODEL_DIR = STORAGE_DIR / 'model' / 'cifar10_base_format'
+REPAIR_MODEL_DIR = STORAGE_DIR / 'model' / 'tiny_imagenet_base_format'
 REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
-LABEL_MODEL_DIR = STORAGE_DIR / 'model' / 'cifar10_label_format'
+LABEL_MODEL_DIR = STORAGE_DIR / 'model' / 'tiny_imagenet_label_format'
 LABEL_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
-COMP_DIR = STORAGE_DIR / 'results' / 'cifar10' / 'repair' / 'generalization' / 'compare'
+COMP_DIR = STORAGE_DIR / 'results' / 'tiny_imagenet' / 'repair' / 'generalization' / 'compare'
 COMP_DIR.mkdir(parents=True, exist_ok=True)
 
 
-class CifarArgParser(exp.ExpArgParser):
+
+
+class TinyImagenetArgParser(exp.ExpArgParser):
     """ Parsing and storing all ACAS experiment configuration arguments. """
 
     def __init__(self, log_path: Optional[str], *args, **kwargs):
@@ -133,7 +134,7 @@ class CifarArgParser(exp.ExpArgParser):
         return
     pass
 
-class CifarPoints(exp.ConcIns):
+class TinyImagenetPoints(exp.ConcIns):
     """ Storing the concrete data points for one ACAS network sampled.
         Loads to CPU/GPU automatically.
     """
@@ -149,37 +150,37 @@ class CifarPoints(exp.ConcIns):
         #_attack_data_full
         suffix = 'train' if train else 'test'
         if train:
-            fname = f'train_norm.pt'  # note that it is using original data
+            fname = f'train.pt'  # note that it is using original data
             # fname = f'{suffix}_norm00.pt'
-            # Cifar_train_norm00_dir = "/pub/data/chizm/"
-            # combine = torch.load(Cifar_train_norm00_dir+fname, device)
-            combine = torch.load(Path(CIFAR_DATA_DIR, fname), device)
+            # TinyImagenet_train_norm00_dir = "/pub/data/chizm/"
+            # combine = torch.load(TinyImagenet_train_norm00_dir+fname, device)
+            combine = torch.load(Path(TINY_IMAGENET_DATA_DIR, fname), device)
             inputs, labels = combine 
             inputs = inputs[:trainnumber]
             labels = labels[:trainnumber]
         else:
             if is_test_accuracy:
-                fname = f'test_norm.pt'
-                combine = torch.load(Path(CIFAR_DATA_DIR, fname), device)
+                fname = f'test.pt'
+                combine = torch.load(Path(TINY_IMAGENET_DATA_DIR, fname), device)
                 inputs, labels = combine
                 # inputs = inputs[:testnumber]
                 # labels = labels[:testnumber]
             elif is_origin_data:
                 fname = f'origin_data_{net}_{radius}.pt'
-                combine = torch.load(Path(CIFAR_DATA_DIR, fname), device)
+                combine = torch.load(Path(TINY_IMAGENET_DATA_DIR, fname), device)
                 inputs, labels = combine
                 inputs = inputs[:repairnumber]
                 labels = labels[:repairnumber]
             
             elif is_attack_testset_repaired:
                 fname = f'test_attack_data_full_{net}_{radius}.pt'
-                combine = torch.load(Path(CIFAR_DATA_DIR, fname), device)
+                combine = torch.load(Path(TINY_IMAGENET_DATA_DIR, fname), device)
                 inputs, labels = combine
                 inputs = inputs[:testnumber]
                 labels = labels[:testnumber]
             elif is_attack_repaired:
                 fname = f'train_attack_data_full_{net}_{radius}.pt'
-                combine = torch.load(Path(CIFAR_DATA_DIR, fname), device)
+                combine = torch.load(Path(TINY_IMAGENET_DATA_DIR, fname), device)
                 inputs, labels = combine
                 inputs = inputs[:repairnumber]
                 labels = labels[:repairnumber]
@@ -192,7 +193,7 @@ class CifarPoints(exp.ConcIns):
         return cls(inputs, labels)
     pass
 
-def eval_test(net, testset: CifarPoints, bitmap: Tensor = None) -> float:
+def eval_test(net, testset: TinyImagenetPoints, bitmap: Tensor = None) -> float:
     """ Evaluate accuracy on test set.
     :param categories: e.g., acas.AcasOut
     """
@@ -209,24 +210,24 @@ def eval_test(net, testset: CifarPoints, bitmap: Tensor = None) -> float:
 
 def test_repaired(args: Namespace) -> float:
     # construct the original net and patch net
-    # original_net = eval(f'CifarNet_{args.net}(dom = {args.dom})').to(device)
-    originalset = CifarPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_origin_data=True)
-    repairset = CifarPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_attack_repaired=True)
-    # attack_testset = CifarPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, testnumber=args.test_datasize, radius=args.repair_radius,is_attack_testset_repaired=True)
+    # original_net = eval(f'TinyImagenetNet_{args.net}(dom = {args.dom})').to(device)
+    originalset = TinyImagenetPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_origin_data=True)
+    repairset = TinyImagenetPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_attack_repaired=True)
+    # attack_testset = TinyImagenetPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, testnumber=args.test_datasize, radius=args.repair_radius,is_attack_testset_repaired=True)
 
 
-    if args.net == 'vgg19':
-        original_net = Vgg_model(dom=args.dom)
-        for_repair_net = Vgg_model(dom=args.dom)
+    if args.net == 'wide_resnet101_2':
+        original_net = Wide_Resnet_101_2_model(dom=args.dom)
+        for_repair_net = Wide_Resnet_101_2_model(dom=args.dom)
         # for_label_repair_net = Vgg_model(dom=args.dom)
-        fname = f'vgg19.pth'
-        fpath = Path(CIFAR_NET_DIR, fname)
-    elif args.net == 'resnet18':
-        original_net = Resnet_model(dom=args.dom)
-        for_repair_net = Resnet_model(dom=args.dom)
+        fname = f'wide_resnet101_2.pth' 
+        fpath = Path(TINY_IMAGENET_NET_DIR, fname)
+    elif args.net == 'resnet152':
+        original_net = Resnet_152_model(dom=args.dom)
+        for_repair_net = Resnet_152_model(dom=args.dom)
         # for_label_repair_net = Resnet_model(dom=args.dom)
-        fname = f'resnet18.pth'
-        fpath = Path(CIFAR_NET_DIR, fname)
+        fname = f'resnet152.pth'
+        fpath = Path(TINY_IMAGENET_NET_DIR, fname)
     original_net.to(device)
     original_net.load_state_dict(torch.load(fpath))
     original_net.eval()
@@ -236,45 +237,45 @@ def test_repaired(args: Namespace) -> float:
     for_repair_net.load_state_dict(torch.load(fpath))
     for_repair_net.eval()
 
-    input_dimension = 512
+    input_dimension = 2048
 
 
     frontier, rear  = for_repair_net.split()
     patch_lists = []
     for i in range(args.repair_number):
-        patch_net = Cifar_feature_patch_model(dom=args.dom,
+        patch_net = TinyImagenet_feature_patch_model(dom=args.dom,
             name = f'property patch network {i}', input_dimension=input_dimension).to(device)
         patch_lists.append(patch_net)
     logging.info(f'--feature patch network: {patch_net}')
     rear_sum =  Netsum(args.dom, target_net = rear, patch_nets= patch_lists, device=device, generalization=True)
-    rear_sum.load_state_dict(torch.load(Path(REPAIR_MODEL_DIR, f'Cifar-{args.net}-feature-repair_number{args.repair_number}-rapair_radius{args.repair_radius}.pt')))
+    rear_sum.load_state_dict(torch.load(Path(REPAIR_MODEL_DIR, f'TinyImagenet-{args.net}-feature-repair_number{args.repair_number}-rapair_radius{args.repair_radius}.pt')))
     repaired_net = NetFeatureSumPatch(feature_sumnet=rear_sum, feature_extractor=frontier)
-    # repaired_net.load_state_dict(torch.load(Path(REPAIR_MODEL_DIR, f'Cifar-{args.net}-full-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-feature_sumnet.pt')))
+    # repaired_net.load_state_dict(torch.load(Path(REPAIR_MODEL_DIR, f'TinyImagenet-{args.net}-full-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-feature_sumnet.pt')))
     repaired_net.eval()
 
 
 
 
     # load the label repaired net
-    patch_label_lists = []
-    for i in range(10):
-        patch_label_net = Cifar_feature_patch_model(dom=args.dom,
-            name = f'label patch network {i}', input_dimension=input_dimension).to(device)
-        patch_label_lists.append(patch_label_net)
-    logging.info(f'--label patch network: {patch_label_net}')
+    # patch_label_lists = []
+    # for i in range(200):
+    #     patch_label_net = TinyImagenet_feature_patch_model(dom=args.dom,
+    #         name = f'label patch network {i}', input_dimension=input_dimension).to(device)
+    #     patch_label_lists.append(patch_label_net)
+    # logging.info(f'--label patch network: {patch_label_net}')
 
-    rear_label = Netsum(args.dom, target_net = rear, patch_nets= patch_label_lists, device=device, generalization=True, is_label_repaired=True)
-    rear_label.load_state_dict(torch.load(Path(LABEL_MODEL_DIR, f'Cifar-{args.net}-feature-repair_number{args.repair_number}-rapair_radius{args.repair_radius}.pt')))
-    repaired_label_net = NetFeatureSumPatch(feature_sumnet= rear_label, feature_extractor= frontier)
-    # repaired_label_net.load_state_dict(torch.load(Path(LABEL_MODEL_DIR, f'Cifar-{args.net}-full-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-feature_sumnet.pt')))
-    repaired_label_net.eval()
+    # rear_label = Netsum(args.dom, target_net = rear, patch_nets= patch_label_lists, device=device, generalization=True, is_label_repaired=True)
+    # rear_label.load_state_dict(torch.load(Path(LABEL_MODEL_DIR, f'TinyImagenet-{args.net}-feature-repair_number{args.repair_number}-rapair_radius{args.repair_radius}.pt')))
+    # repaired_label_net = NetFeatureSumPatch(feature_sumnet= rear_label, feature_extractor= frontier)
+    # # repaired_label_net.load_state_dict(torch.load(Path(LABEL_MODEL_DIR, f'TinyImagenet-{args.net}-full-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-feature_sumnet.pt')))
+    # repaired_label_net.eval()
 
 
     # load the dataset
-    originalset = CifarPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_origin_data=True)
-    repairset = CifarPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_attack_repaired=True)
-    # attack_testset = CifarPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, testnumber=args.test_datasize, radius=args.repair_radius,is_attack_testset_repaired=True)
-    trainset = CifarPoints.load(train=True, device=device, net=args.net, repairnumber=args.repair_number, trainnumber=args.train_datasize, radius=args.repair_radius,is_attack_repaired=True)
+    originalset = TinyImagenetPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_origin_data=True)
+    repairset = TinyImagenetPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_attack_repaired=True)
+    # attack_testset = TinyImagenetPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, testnumber=args.test_datasize, radius=args.repair_radius,is_attack_testset_repaired=True)
+    # trainset = TinyImagenetPoints.load(train=True, device=device, net=args.net, repairnumber=args.repair_number, trainnumber=args.train_datasize, radius=args.repair_radius,is_attack_repaired=True)
     # from buggy dataset and its original dataset, we get the true label and error label of buggy dataset respectively
     # then we assign the error label and true label to the every patch as their strategies
     assign_table = torch.zeros(args.repair_number, 2).to(device)
@@ -285,9 +286,9 @@ def test_repaired(args: Namespace) -> float:
     for i in range(args.repair_number):
         assign_table[i][0] = originalset.labels[i]
         assign_table[i][1] = buggy_predicted[i]
-
+    assign_table = assign_table.to(torch.long)
     repaired_net.feature_sumnet.set_repair_direction_dict(assign_table)
-    repaired_label_net.feature_sumnet.set_repair_direction_dict(assign_table)
+    # repaired_label_net.feature_sumnet.set_repair_direction_dict(assign_table)
 
     def get_bitmap(in_lb: Tensor, in_ub: Tensor, in_bitmap: Tensor, batch_inputs: Tensor):
         '''
@@ -296,46 +297,24 @@ def test_repaired(args: Namespace) -> float:
         batch_inputs: batch * input
         '''
         with torch.no_grad():
-            # if len(batch_inputs.shape) == 3:
+        
             batch_inputs_clone = batch_inputs.clone().unsqueeze_(1)
-            # elif len(batch_inputs.shape) == 4:
-            #     batch_inputs_clone = batch_inputs.clone()
-            # distingush the photo and the property
             if len(in_lb.shape) == 2:
                 batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1])
                 is_in = (batch_inputs_clone >= in_lb) & (batch_inputs_clone <= in_ub)
                 is_in = is_in.all(dim=-1) # every input is in the region of property, batch * n_prop
             elif len(in_lb.shape) == 4:
-                if in_lb.shape[0] > 200:
-                #     is_in_list = []
-                #     # for i in range(batch_inputs_clone.shape[0]):
-                #     # for every 500 inputs, we compare them with the property
-                #     for i in range(math.ceil(batch_inputs_clone.shape[0]/500)):
-                #         batch_inputs_compare_datai = batch_inputs_clone[i*500:(i+1)*500].clone().expand(in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
-                #         is_in_datai = (batch_inputs_compare_datai >= in_lb) & (batch_inputs_compare_datai <= in_ub)
-                #         is_in_datai = is_in_datai.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
-                #         is_in_list.append(is_in_datai)
+                # if in_lb.shape[0] > 50:
+                is_in_list = []
+                for i in range(batch_inputs_clone.shape[0]):
+                    batch_inputs_compare_datai = batch_inputs_clone[i].clone().expand(in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
+                    is_in_datai = (batch_inputs_compare_datai >= in_lb) & (batch_inputs_compare_datai <= in_ub)
+                    is_in_datai = is_in_datai.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
+                    is_in_list.append(is_in_datai)
+                is_in = torch.stack(is_in_list, dim=0)
 
-                #         # batch_inputs_compare_datai = batch_inputs_clone[i].clone().expand(in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
-                #         # is_in_datai = (batch_inputs_compare_datai >= in_lb) & (batch_inputs_compare_datai <= in_ub)
-                #         # is_in_datai = is_in_datai.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
-                #         # is_in_list.append(is_in_datai)
-                #     is_in = torch.stack(is_in_list, dim=0)
-                # else:
-                    batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
-                    is_in = (batch_inputs_clone >= in_lb) & (batch_inputs_clone <= in_ub)
-                    is_in = is_in.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
             # convert to bitmap
             bitmap = torch.zeros((batch_inputs.shape[0], in_bitmap.shape[1]), device = device).to(torch.uint8)
-            # is in is a batch * in_bitmap.shape[0] tensor, in_bitmap.shape[1] is the number of properties
-            # the every row of is_in is the bitmap of the input which row of in_bitmap is allowed
-            # for i in range(is_in.shape[0]):
-            #     for j in range(is_in.shape[1]):
-            #         if is_in[i][j]:
-            #             bitmap[i] = in_bitmap[j]
-            #             break
-            #         else:
-            #             continue
             bitmap_i, inbitmap_j =  is_in.nonzero(as_tuple=True)
             if bitmap_i.shape[0] != 0:
                 bitmap[bitmap_i, :] = in_bitmap[inbitmap_j, :]
@@ -343,129 +322,135 @@ def test_repaired(args: Namespace) -> float:
                 pass
             return bitmap
 
-    logging.info(f'--load the trainset and testset as testing set')
+    logging.info(f'--load the testset as testing set')
     # trainset = MnistPoints.load(train=True, device=device, net=args.net, trainnumber=args.train_datasize)
-    testset = CifarPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, testnumber=args.test_datasize,is_test_accuracy=True)    # trainset = MnistPoints.load(train=True, device=device, net=args.net, trainnumber=args.train_datasize)
+    testset = TinyImagenetPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, testnumber=args.test_datasize,is_test_accuracy=True)    # trainset = MnistPoints.load(train=True, device=device, net=args.net, trainnumber=args.train_datasize)
 
     # evaluate the repaired net on testset
     logging.info(f'--evaluate the original net on testset')
     ratio = eval_test(original_net, testset)
     logging.info(f'--For testset, out of {len(testset)} items, ratio {ratio}')
-
+    
+    # initialize the bitmap of testset
+    with torch.no_grad():
+        ori_images_pred = original_net(testset.inputs)
+        _,index = ori_images_pred.topk(2, dim=1)
+    repaired_net.feature_sumnet.get_bitmap(sample_top2=index)
+    
     logging.info(f'--evaluate the repaired net on testset and get the bitmap')
     ratio = eval_test(repaired_net, testset)
     logging.info(f'--For testset, out of {len(testset)} items, ratio {ratio}')  
 
-    logging.info(f'--evaluate the label repaired net on testset and get the bitmap')
-    ratio = eval_test(repaired_label_net, testset)
-    logging.info(f'--For testset, out of {len(testset)} items, ratio {ratio}')
+    # logging.info(f'--evaluate the label repaired net on testset and get the bitmap')
+    # ratio = eval_test(repaired_label_net, testset)
+    # logging.info(f'--For testset, out of {len(testset)} items, ratio {ratio}')
 
 
     in_lb = testset.inputs - args.repair_radius/255
     in_ub = testset.inputs + args.repair_radius/255
 
-    logging.info(f'--adv training')
+    # logging.info(f'--adv training')
     from torchattacks import PGD,AutoAttack
     # proceed the adv training
-    epoch = 1000
-    from TRADES.trades import trades_loss
+    # epoch = 1000
+    # from TRADES.trades import trades_loss
 
 
 
 
-    def adv_train(epoch):
+    # def adv_train(epoch):
 
 
 
-        if args.net == 'vgg19':
-            net = Vgg_model(dom=args.dom)
-        elif args.net == 'resnet18':
-            net = Resnet_model(dom=args.dom)
+    #     if args.net == 'wide_resnet101_2':
+    #         net = Wide_Resnet_101_2_model(dom=args.dom)
+    #     elif args.net == 'resnet152':
+    #         net = Resnet_152_model(dom=args.dom)
 
             
-        # net.load_state_dict(torch.load(Path(MNIST_NET_DIR, f'mnist_{args.net}.pth')))
-        net.to(device)
-        # PGD_attack = PGD(net, eps=args.repair_radius, alpha=args.repair_radius/4., steps=20, random_start=False)
-        buggy_loader = data.DataLoader(repairset, batch_size=32, shuffle=True)
+    #     # net.load_state_dict(torch.load(Path(MNIST_NET_DIR, f'mnist_{args.net}.pth')))
+    #     net.to(device)
+    #     # PGD_attack = PGD(net, eps=args.repair_radius, alpha=args.repair_radius/4., steps=20, random_start=False)
+    #     buggy_loader = data.DataLoader(repairset, batch_size=32, shuffle=True)
         
-        train_loader = data.DataLoader(trainset, batch_size=32, shuffle=True)
+    #     train_loader = data.DataLoader(trainset, batch_size=32, shuffle=True)
 
-        loss_fn = nn.CrossEntropyLoss()
-        optimizer = optim.SGD(net.parameters(), lr=0.02, momentum=0.01)
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
-        net.train()
-        best_loss = 100
-        for epoch in range(epoch):            
-            loss_sum = 0
-            # for images, labels in buggy_loader:
-            #     images, labels = images.to(device), labels.to(device)
-            for (buggy_images, buggy_labels), (test_images, test_labels) in zip(buggy_loader, train_loader):
+    #     loss_fn = nn.CrossEntropyLoss()
+    #     optimizer = optim.SGD(net.parameters(), lr=0.02, momentum=0.01)
+    #     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
+    #     net.train()
+    #     best_loss = 100
+    #     for epoch in range(epoch):            
+    #         loss_sum = 0
+    #         # for images, labels in buggy_loader:
+    #         #     images, labels = images.to(device), labels.to(device)
+    #         for (buggy_images, buggy_labels), (test_images, test_labels) in zip(buggy_loader, train_loader):
                           
-                # net.eval()
-                # adv_images = PGD_attack(test_images, test_labels)      
-                # print(adv_images[0])   
-                # torchvision.transforms.ToPILImage()(adv_images[0].cpu()).save(f'./tmp.png')       
-                # net.train()
-                # outs = net(adv_images)
+    #             # net.eval()
+    #             # adv_images = PGD_attack(test_images, test_labels)      
+    #             # print(adv_images[0])   
+    #             # torchvision.transforms.ToPILImage()(adv_images[0].cpu()).save(f'./tmp.png')       
+    #             # net.train()
+    #             # outs = net(adv_images)
 
-                optimizer.zero_grad()
-                loss1 = trades_loss(model=net,
-                           x_natural=buggy_images,
-                           y=buggy_labels,
-                           optimizer=optimizer,
-                           epsilon=args.repair_radius,
-                        #    step_size=args.step_size,
-                        #    epsilon=args.epsilon,
-                        #    perturb_steps=args.num_steps,
-                        #    beta=args.beta,
-			    distance='l_inf')
-
-
-
-                out = net(test_images)
-                loss2 = loss_fn(out, test_labels)
-                loss = loss1 + loss2
-                loss.backward()
-                optimizer.step()
-
-                loss_sum += loss.item()
-
-                # outs = net(buggy_images)
-
-
-                # loss1 = loss_fn(outs, buggy_labels)
-
-
-                # loss1.backward()
-                # optimizer.step()
-
-                # outs = net(test_images)
-                # loss2 = loss_fn(outs, test_labels)
-                # loss2.backward()
-                # optimizer.step()
-
-                # optimizer.zero_grad()
-                # loss_sum += loss1.item()
+    #             optimizer.zero_grad()
+    #             loss1 = trades_loss(model=net,
+    #                        x_natural=buggy_images,
+    #                        y=buggy_labels,
+    #                        optimizer=optimizer,
+    #                        epsilon=args.repair_radius,
+    #                     #    step_size=args.step_size,
+    #                     #    epsilon=args.epsilon,
+    #                     #    perturb_steps=args.num_steps,
+    #                     #    beta=args.beta,
+	# 		    distance='l_inf')
 
 
 
+    #             out = net(test_images)
+    #             loss2 = loss_fn(out, test_labels)
+    #             loss = loss1 + loss2
+    #             loss.backward()
+    #             optimizer.step()
 
-                # loss = loss_fn(net(images), labels)
-                # loss.backward()
-                # optimizer.step()
-                # optimizer.zero_grad()
-            if epoch % 1 == 0:
-                logging.info(f'--epoch {epoch} loss {loss_sum/len(buggy_loader)}')
-                # save the best checkpoint
-                if loss_sum/len(buggy_loader) < best_loss:
-                    best_loss = loss_sum/len(buggy_loader)
-                    torch.save(net.state_dict(), Path(RES_DIR, f'best_{args.net}_{args.repair_radius}_{args.repair_number}_adv_train.pth'))
+    #             loss_sum += loss.item()
 
-            scheduler.step()
-        logging.info(f'--adv training finished')
-        # load the best checkpoint
-        net.load_state_dict(torch.load(Path(RES_DIR, f'best_{args.net}_{args.repair_radius}_{args.repair_number}_adv_train.pth')))
-        return net.eval()
+    #             # outs = net(buggy_images)
+
+
+    #             # loss1 = loss_fn(outs, buggy_labels)
+
+
+    #             # loss1.backward()
+    #             # optimizer.step()
+
+    #             # outs = net(test_images)
+    #             # loss2 = loss_fn(outs, test_labels)
+    #             # loss2.backward()
+    #             # optimizer.step()
+
+    #             # optimizer.zero_grad()
+    #             # loss_sum += loss1.item()
+
+
+
+
+    #             # loss = loss_fn(net(images), labels)
+    #             # loss.backward()
+    #             # optimizer.step()
+    #             # optimizer.zero_grad()
+    #         if epoch % 1 == 0:
+    #             logging.info(f'--epoch {epoch} loss {loss_sum/len(buggy_loader)}')
+    #             # save the best checkpoint
+    #             if loss_sum/len(buggy_loader) < best_loss:
+    #                 best_loss = loss_sum/len(buggy_loader)
+    #                 torch.save(net.state_dict(), Path(RES_DIR, f'best_{args.net}_{args.repair_radius}_{args.repair_number}_adv_train.pth'))
+
+    #         scheduler.step()
+    #     logging.info(f'--adv training finished')
+    #     # load the best checkpoint
+    #     net.load_state_dict(torch.load(Path(RES_DIR, f'best_{args.net}_{args.repair_radius}_{args.repair_number}_adv_train.pth')))
+    #     return net.eval()
     # judge the adv training net is exist or not
     # if Path(RES_DIR, f'best_{args.net}_{args.repair_radius}_{args.repair_number}_adv_train.pth').exists():
     #     logging.info(f'--load the adv training net')
@@ -481,15 +466,23 @@ def test_repaired(args: Namespace) -> float:
     #     adv_train_net = adv_train(epoch=1000)
     torch.cuda.empty_cache()
 
-    logging.info(f'--evaluate the adv training net on testset')
+    # logging.info(f'--evaluate the adv training net on testset')
     # logging.info(f'--For testset, out of {len(testset)} items, ratio {eval_test(adv_train_net, testset)}')
 
     logging.info(f'--test the defense against autoattack')
     testloader = data.DataLoader(testset, batch_size=32, shuffle=False)
 
-    correct1_sum, correct2_sum, correct3_sum, correct4_sum = 0, 0, 0, 0
+    # correct1_sum, correct2_sum, correct3_sum, correct4_sum = 0, 0, 0, 0
+    # correct2_sum, correct3_sum, correct4_sum = 0, 0, 0
+    correct2_sum_ori = 0
+    correct2_sum, correct3_sum = 0, 0
     # count = 0
     # adv_train_net.eval()
+    # attacked_original_data_list = []
+    # attacked_origin_labels_list = []
+    # attacked_data_list = []
+    # attacked_labels_list = []
+    wrong_sum = 0
     for images, labels in testloader:
         # count+=1
         images, labels = images.to(device), labels.to(device)
@@ -502,19 +495,43 @@ def test_repaired(args: Namespace) -> float:
         # correct1 = (predicted1 == labels).sum().item()
         # correct1_sum += correct1
         # logging.info(f'correct1 {correct1}')
-        # logging.info(f'attack net2 ')
+        logging.info(f'attack net2 ')
+        # filter the wrong prediction
+        with torch.no_grad():
+            ori_images_pred = original_net(images)
+            _,index = ori_images_pred.topk(2, dim=1)
+            # filt the wrong prediction
+            corre = index[...,0] == labels
+            wrong_sum += len(labels) - corre.sum().item()
+            index = index[corre]
+            images = images[corre]
+            labels = labels[corre]
+            correct2_sum_ori += corre.sum().item()
 
-        at2 = AutoAttack(repaired_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=10)
+        repaired_net.feature_sumnet.get_bitmap(sample_top2=index)
+
+        at2 = AutoAttack(repaired_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,
+                         bitmap=repaired_net.feature_sumnet.bitmap.clone(),steps=10)
         adv_images2 = at2(images, labels)
-        adv_images2_bitmap = get_bitmap(in_lb, in_ub, repaired_net.feature_sumnet.bitmap, adv_images2)
-        outs2 = repaired_net(adv_images2, bitmap = adv_images2_bitmap)
+        # adv_images2_bitmap = get_bitmap(in_lb, in_ub, repaired_net.feature_sumnet.bitmap, adv_images2)
+        outs2 = repaired_net(adv_images2)
         predicted2 = outs2.argmax(dim=1)
         correct2 = (predicted2 == labels).sum().item()
         correct2_sum += correct2
         logging.info(f'correct2 {correct2}')
         # logging.info(f'attack net3 ')
+        # attacked_origin_data = images[predicted2 != labels]
+        # attacked_origin_labels = labels[predicted2 != labels]
+        # attacked_data = adv_images2[predicted2 != labels]
+        # attacked_labels = predicted2[predicted2 != labels]
+        # if len(attacked_origin_data) != 0:
+        #     attacked_original_data_list.append(attacked_origin_data)
+        #     attacked_origin_labels_list.append(attacked_origin_labels)
+        #     attacked_data_list.append(attacked_data)
+        #     attacked_labels_list.append(attacked_labels)        
 
-        at3 = AutoAttack(original_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=10)
+        at3 = AutoAttack(original_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,
+                         steps=10)
         adv_images3 = at3(images, labels)
         outs3 = original_net(adv_images3)
         predicted3 = outs3.argmax(dim=1)
@@ -524,28 +541,30 @@ def test_repaired(args: Namespace) -> float:
         # if count % 100 == 0:
         #     logging.info(f'--For testset, out of {count} items, adv training net ratio {correct1_sum}, repaired net ratio {correct2_sum}, original net ratio {correct3_sum}')
 
-        at4 = AutoAttack(repaired_label_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=10)
-        adv_images4 = at4(images, labels)
-        adv_images4_bitmap = get_bitmap(in_lb, in_ub, repaired_label_net.feature_sumnet.bitmap, adv_images4)
-        outs4 = repaired_label_net(adv_images4, bitmap = adv_images4_bitmap)
-        predicted4 = outs4.argmax(dim=1)
-        correct4 = (predicted4 == labels).sum().item()
-        correct4_sum += correct4
-        logging.info(f'correct4 {correct4}')
+        # at4 = AutoAttack(repaired_label_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=10)
+        # adv_images4 = at4(images, labels)
+        # adv_images4_bitmap = get_bitmap(in_lb, in_ub, repaired_label_net.feature_sumnet.bitmap, adv_images4)
+        # outs4 = repaired_label_net(adv_images4, bitmap = adv_images4_bitmap)
+        # predicted4 = outs4.argmax(dim=1)
+        # correct4 = (predicted4 == labels).sum().item()
+        # correct4_sum += correct4
+        # logging.info(f'correct4 {correct4}')
 
 
 
-    logging.info(f'--For testset, out of {len(testset)} items, adv training net ratio {correct1_sum/len(testset)}')
+    # logging.info(f'--For testset, out of {len(testset)} items, adv training net ratio {correct1_sum/len(testset)}')
     logging.info(f'--For testset, out of {len(testset)} items, repaired net ratio {correct2_sum/len(testset)}')
     logging.info(f'--For testset, out of {len(testset)} items, original net ratio {correct3_sum/len(testset)}')
+    # logging.info(f'--For testset, out of {len(testset)} items, label repaired net ratio {correct4_sum/len(testset)}')
 
     with open(Path(COMP_DIR, f'compare_generalization.txt'), 'a') as f:
         f.write(f'For net: {args.net}, radius: {args.repair_radius},' +
                 f'repair_number: {args.repair_number}, ' +
-                f'adv_training:{correct1_sum/len(testset)}, ' +
+                # f'adv_training:{correct1_sum/len(testset)}, ' +
                 f'PatchRepair:{correct2_sum/len(testset)}, ' + 
-                f'original:{correct3_sum/len(testset)}, ' +
-                f'label_repair:{correct4_sum/len(testset)}\n')
+                # f'original:{correct3_sum/len(testset)}, ' +
+                f'original:{correct3_sum/len(testset)}\n')
+                # f'label_repair:{correct4_sum/len(testset)}\n')
 
 
 def _run_test(args: Namespace):
@@ -562,7 +581,7 @@ def _run_test(args: Namespace):
     # logging.info(avg_res)
     return
 
-def test_goal_test(parser: CifarArgParser):
+def test_goal_test(parser: TinyImagenetArgParser):
     """ Q1: Show that we can train previously unsafe networks to safe. """
     defaults = {
         # 'start_abs_cnt': 5000,
@@ -611,7 +630,7 @@ def test(lr:float = 0.005, net:str = 'CNN_small',repair_radius:float = 0.1, repa
         
     }
 
-    parser = CifarArgParser(RES_DIR, description='Cifar Correct by Construction')
+    parser = TinyImagenetArgParser(RES_DIR, description='TinyImagenet Correct by Construction')
     parser.set_defaults(**test_defaults)
     args, _ = parser.parse_known_args()
 
@@ -624,15 +643,21 @@ def test(lr:float = 0.005, net:str = 'CNN_small',repair_radius:float = 0.1, repa
 
 if __name__ == '__main__':
 
-    for net in ['vgg19', 'resnet18']:
+    # for net in ['wide_resnet101_2']:
+    # for net in ['resnet152','wide_resnet101_2']:
+    for net in ['resnet152']:
         # for patch_size in ['small', 'big']:
         # for patch_size in ['big']:
-            for radius in [4]: 
-
+        # for radius in [4]: 
+        for radius in [2, 4]: 
             # for radius in [0.05,0.1,0.3]: #,0.1,0.3
                 # for repair_number,test_number in zip([200],[2000]):
-                for repair_number,test_number in zip([50],[500]):
-                # for repair_number,test_number in zip([1000],[10000]):
+                # for repair_number,test_number in zip([100],[1000]):
+
+                # for repair_number,test_number in zip([50],[500]):
+                # for repair_number,test_number in zip([500],[5000]):
+
+                for repair_number,test_number in zip([500,1000],[5000,10000]):
                 # for repair_number,test_number in zip([50,100,200,500,1000],[500,1000,2000,5000,10000]):
                     test(net=net, repair_radius=radius, repair_number = repair_number, 
          train_datasize = 10000, test_datasize = 10000, 

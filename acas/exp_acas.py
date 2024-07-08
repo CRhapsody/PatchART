@@ -21,9 +21,16 @@ from art.bisecter import Bisecter
 from art import exp, utils
 from art.repair_moudle import PatchNet, Netsum, get_bitmap
 
-RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'acas' 
+
+# RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'acas' 
+# RES_DIR.mkdir(parents=True, exist_ok=True)
+# REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'acasxu'
+# REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
+
+STORAGE_DIR = Path('/data/chizm/PatchART')
+RES_DIR = STORAGE_DIR / 'results' / 'acas'
 RES_DIR.mkdir(parents=True, exist_ok=True)
-REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'acasxu'
+REPAIR_MODEL_DIR = STORAGE_DIR / 'model' / 'acasxu'
 REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 

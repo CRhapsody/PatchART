@@ -18,7 +18,7 @@ from art.prop import AndProp
 from art.bisecter import Bisecter
 from art import exp, utils
 from art.repair_moudle import Netsum
-from cifar10_utils import CifarProp, Cifar_feature_patch_model, Resnet_model, Vgg_model
+from tinyimagenet_utils import TinyImagenetProp, TinyImagenet_feature_patch_model, Resnet_152_model, Wide_Resnet_101_2_model
 # from mnist.mnist_utils import MnistNet_CNN_small, MnistNet_FNN_big, MnistNet_FNN_small, MnistProp, Mnist_feature_patch_model
 # from mnist.u import MnistNet, MnistFeatureProp
 torch.manual_seed(10668091966382305352)
@@ -26,40 +26,44 @@ device = torch.device(f'cuda:2')
 
 
 
-# CIFAR_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'cifar10'
-# CIFAR_NET_DIR = Path(__file__).resolve().parent.parent / 'model' / 'cifar10'
-# LABEL_RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'cifar10' / 'label'
-# LABEL_RES_DIR.mkdir(parents=True, exist_ok=True)
-# RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'cifar10' / 'base'
+# TINY_IMAGENET_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'tiny_imagenet'
+# TINY_IMAGENET_NET_DIR = Path(__file__).resolve().parent.parent / 'model' / 'tiny_imagenet'
+
+# RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'tiny_imagenet' / 'base'
 # RES_DIR.mkdir(parents=True, exist_ok=True)
-# LABEL_REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'cifar10_label_format'
-# LABEL_REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
-# REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'cifar10_base_format'
+# RES_DIR_LABEL = Path(__file__).resolve().parent.parent / 'results' / 'tiny_imagenet' / 'label'
+# RES_DIR_LABEL.mkdir(parents=True, exist_ok=True)
+
+# REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'tiny_imagenet_base_format'
 # REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
+# LABEL_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'tiny_imagenet_label_format'
+# LABEL_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 STORAGE_DIR = Path('/data/chizm/PatchART')
-CIFAR_DATA_DIR = STORAGE_DIR / 'data' / 'cifar10'
-CIFAR_NET_DIR = STORAGE_DIR / 'model' / 'cifar10'
-LABEL_RES_DIR = STORAGE_DIR / 'results' / 'cifar10' / 'label'
-LABEL_RES_DIR.mkdir(parents=True, exist_ok=True)
-RES_DIR = STORAGE_DIR / 'results' / 'cifar10' / 'base'
+TINY_IMAGENET_DATA_DIR = STORAGE_DIR / 'data' / 'tiny_imagenet'
+TINY_IMAGENET_NET_DIR = STORAGE_DIR / 'model' / 'tiny_imagenet'
+
+RES_DIR = STORAGE_DIR / 'results' / 'tiny_imagenet' / 'base'
 RES_DIR.mkdir(parents=True, exist_ok=True)
-LABEL_REPAIR_MODEL_DIR = STORAGE_DIR / 'model' / 'cifar10_label_format'
-LABEL_REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
-REPAIR_MODEL_DIR = STORAGE_DIR / 'model' / 'cifar10_base_format'
+
+RES_DIR_LABEL = STORAGE_DIR / 'results' / 'tiny_imagenet' / 'label'
+RES_DIR_LABEL.mkdir(parents=True, exist_ok=True)
+
+REPAIR_MODEL_DIR = STORAGE_DIR / 'model' / 'tiny_imagenet_base_format'
 REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
+LABEL_MODEL_DIR = STORAGE_DIR / 'model' / 'tiny_imagenet_label_format'
+LABEL_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 
-
-class CifarArgParser(exp.ExpArgParser):
+class TinyImagenetArgParser(exp.ExpArgParser):
     """ Parsing and storing all ACAS experiment configuration arguments. """
 
     def __init__(self, log_path: Optional[str], *args, **kwargs):
         super().__init__(log_path, *args, **kwargs)
 
-        self.add_argument('--net', type=str, choices=['vgg19, ResNet18'], default='Vgg19', 
-                          help='network architecture')
+        self.add_argument('--net', type=str, choices=['Wide_Resnet_101_2', 'Resnet_152'], default='Wide_Resnet_101_2',
+                            help='the network to be used')
 
 
         # use repair or nor
@@ -96,7 +100,8 @@ class CifarArgParser(exp.ExpArgParser):
                           help='dataset size for training')
         self.add_argument('--test_datasize', type=int, default=2000,
                           help='dataset size for test')
-
+        self.add_argument('--label_repaired', type=bool, default=False,
+                            help='whether label repaired')
         # querying a verifier
         self.add_argument('--max_verifier_sec', type=int, default=300,
                           help='allowed time for a verifier query')
@@ -129,7 +134,7 @@ class CifarArgParser(exp.ExpArgParser):
         return
     pass
 
-class CifarPoints(exp.ConcIns):
+class TinyImagenetPoints(exp.ConcIns):
     """ Storing the concrete data points for one ACAS network sampled.
         Loads to CPU/GPU automatically.
     """
@@ -154,37 +159,37 @@ class CifarPoints(exp.ConcIns):
         #_attack_data_full
         suffix = 'train' if train else 'test'
         if train:
-            fname = f'train_norm.pt'  # note that it is using original data
+            fname = f'train.pt'  # note that it is using original data
             # fname = f'{suffix}_norm00.pt'
             # mnist_train_norm00_dir = "/pub/data/chizm/"
             # combine = torch.load(mnist_train_norm00_dir+fname, device)
-            combine = torch.load(Path(CIFAR_DATA_DIR, fname), device)
+            combine = torch.load(Path(TINY_IMAGENET_DATA_DIR, fname), device)
             inputs, labels = combine 
             inputs = inputs[:trainnumber]
             labels = labels[:trainnumber]
         else:
             if is_test_accuracy:
-                fname = f'test_norm.pt'
-                combine = torch.load(Path(CIFAR_DATA_DIR, fname), device)
+                fname = f'test.pt'
+                combine = torch.load(Path(TINY_IMAGENET_DATA_DIR, fname), device)
                 inputs, labels = combine
                 # inputs = inputs[:testnumber]
                 # labels = labels[:testnumber]
             elif is_origin_data:
                 fname = f'origin_data_{net}_{radius}.pt'
-                combine = torch.load(Path(CIFAR_DATA_DIR, fname), device)
+                combine = torch.load(Path(TINY_IMAGENET_DATA_DIR, fname), device)
                 inputs, labels = combine
                 inputs = inputs[:repairnumber]
                 labels = labels[:repairnumber]
             
             elif is_attack_testset_repaired:
                 fname = f'test_attack_data_full_{net}_{radius}.pt'
-                combine = torch.load(Path(CIFAR_DATA_DIR, fname), device)
+                combine = torch.load(Path(TINY_IMAGENET_DATA_DIR, fname), device)
                 inputs, labels = combine
                 inputs = inputs[:testnumber]
                 labels = labels[:testnumber]
             elif is_attack_repaired:
                 fname = f'train_attack_data_full_{net}_{radius}.pt'
-                combine = torch.load(Path(CIFAR_DATA_DIR, fname), device)
+                combine = torch.load(Path(TINY_IMAGENET_DATA_DIR, fname), device)
                 inputs, labels = combine
                 inputs = inputs[:repairnumber]
                 labels = labels[:repairnumber]
@@ -197,7 +202,7 @@ class CifarPoints(exp.ConcIns):
         return cls(inputs, labels)
     pass
 
-def eval_test(net, set: CifarPoints, bitmap: Tensor = None) -> float:
+def eval_test(net, set: TinyImagenetPoints, bitmap: Tensor = None) -> float:
     """ Evaluate accuracy on test set.
     :param categories: e.g., acas.AcasOut
     """
@@ -214,16 +219,16 @@ def eval_test(net, set: CifarPoints, bitmap: Tensor = None) -> float:
     return ratio
 
 
-def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool, float]:
+def repair_tiny_imagenet(args: Namespace)-> Tuple[int, float, bool, float]:
 
 
     # originalset = torch.load(Path(MNIST_DATA_DIR, f'origin_data_{args.repair_radius}.pt'), device)
     # originalset = MnistPoints(inputs=originalset[0], labels=originalset[1])
-    originalset = CifarPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_origin_data=True)
-    repairset = CifarPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_attack_repaired=True)
-    trainset = CifarPoints.load(train=True, device=device, net=args.net, repairnumber=args.repair_number, trainnumber=args.train_datasize)
-    testset = CifarPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, testnumber=args.test_datasize,is_test_accuracy=True)
-    attack_testset = CifarPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, testnumber=args.test_datasize, radius=args.repair_radius,is_attack_testset_repaired=True)
+    originalset = TinyImagenetPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_origin_data=True)
+    repairset = TinyImagenetPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, radius=args.repair_radius,is_attack_repaired=True)
+    trainset = TinyImagenetPoints.load(train=True, device=device, net=args.net, repairnumber=args.repair_number, trainnumber=args.train_datasize)
+    testset = TinyImagenetPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, testnumber=args.test_datasize,is_test_accuracy=True)
+    attack_testset = TinyImagenetPoints.load(train=False, device=device, net=args.net, repairnumber=args.repair_number, testnumber=args.test_datasize, radius=args.repair_radius,is_attack_testset_repaired=True)
     # if args.net == 'CNN_small':
     #     net = MnistNet_CNN_small(dom=args.dom)
     # elif args.net == 'FNN_big':
@@ -232,14 +237,15 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     #     net = MnistNet_FNN_small(dom=args.dom)
     # net.to(device)
     
-    if args.net == 'vgg19':
-        net = Vgg_model(dom=args.dom)
-        fname = f'vgg19.pth'
-        fpath = Path(CIFAR_NET_DIR, fname)
-    elif args.net == 'resnet18':
-        net = Resnet_model(dom=args.dom)
-        fname = f'resnet18.pth'
-        fpath = Path(CIFAR_NET_DIR, fname)
+    if args.net == 'wide_resnet101_2':
+        net = Wide_Resnet_101_2_model(dom=args.dom)
+        fname = f'wide_resnet101_2.pth'    
+    elif args.net == 'resnet152':
+        net = Resnet_152_model(dom=args.dom)
+        fname = f'resnet152.pth'
+    net.to(device)
+    fpath = Path(TINY_IMAGENET_NET_DIR, fname)
+    
     
 
     net.load_state_dict(torch.load(fpath))
@@ -267,18 +273,18 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                 is_in = (batch_inputs_clone >= in_lb) & (batch_inputs_clone <= in_ub)
                 is_in = is_in.all(dim=-1) # every input is in the region of property, batch * n_prop
             elif len(in_lb.shape) == 4:
-                if in_lb.shape[0] > 200:
-                    is_in_list = []
-                    for i in range(batch_inputs_clone.shape[0]):
-                        batch_inputs_compare_datai = batch_inputs_clone[i].clone().expand(in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
-                        is_in_datai = (batch_inputs_compare_datai >= in_lb) & (batch_inputs_compare_datai <= in_ub)
-                        is_in_datai = is_in_datai.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
-                        is_in_list.append(is_in_datai)
-                    is_in = torch.stack(is_in_list, dim=0)
-                else:
-                    batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
-                    is_in = (batch_inputs_clone >= (in_lb - 1e-4)) & (batch_inputs_clone <= (in_ub + 1e-4))
-                    is_in = is_in.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
+                # if in_lb.shape[0] > 50:
+                is_in_list = []
+                for i in range(batch_inputs_clone.shape[0]):
+                    batch_inputs_compare_datai = batch_inputs_clone[i].clone().expand(in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
+                    is_in_datai = (batch_inputs_compare_datai >= in_lb) & (batch_inputs_compare_datai <= in_ub)
+                    is_in_datai = is_in_datai.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
+                    is_in_list.append(is_in_datai)
+                is_in = torch.stack(is_in_list, dim=0)
+                # else:
+                #     batch_inputs_clone = batch_inputs_clone.expand(batch_inputs.shape[0], in_lb.shape[0], in_lb.shape[1], in_lb.shape[2], in_lb.shape[3])
+                #     is_in = (batch_inputs_clone >= (in_lb - 1e-4)) & (batch_inputs_clone <= (in_ub + 1e-4))
+                #     is_in = is_in.all(dim=(-1)).all(dim=(-1)).all(dim=(-1)) # every input is in the region of property, batch * n_prop
 
 
             
@@ -301,7 +307,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     # sample the repairset datas from the radius with original data
 
     def sample_datas_from_radius(net,
-                                 dataset: CifarPoints, 
+                                 dataset: TinyImagenetPoints, 
                                  radius = args.repair_radius/255,
                                  datanumber = 1e3):
 
@@ -356,11 +362,11 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                     pass
                 
                 
-                if step <= 50:
+                if step <= 10:
                     step+=1
                     continue
             
-                elif step > 50:
+                elif step > 10:
                     # cat the attacked data
                     if attack_datas == []:
                         while_number+=1
@@ -390,7 +396,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                 adv_curr_image = repairset.inputs[fgsm_ith-1].clone().unsqueeze(0).detach()
             pgd_ith+=1
             logging.info(f'--PGD sample {pgd_ith} image')
-            for i in range(10):
+            for i in range(5):
                 adv_curr_image = adv_curr_image + torch.empty_like(adv_curr_image).uniform_(-radius, radius).detach()
                 # adv_curr_image = torch.clamp(adv_curr_image, min=0, max=1).detach()
                 step = 0
@@ -414,7 +420,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                         pass
                     
                     
-                    if step <= 50:
+                    if step <= 10:
                         step+=1
                         continue
                 
@@ -429,7 +435,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         return full_adv_images_cat, data_number_record_list
     # with torch.no_grad():
 
-    logging.info(f'get the feature of the repairset, testset and trainset')
+    logging.info(f'get the feature of the repairset and testset')
     feature_extractor, classifier = net.split()
     feature_extractor.eval()
     feature_extractor.to(device)
@@ -437,17 +443,15 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     with torch.no_grad():
         feature_repairset_input = feature_extractor(repairset.inputs)
         feature_testset_input = feature_extractor(testset.inputs)
-        feature_trainset_input = feature_extractor(trainset.inputs)
         feature_attack_testset_input = feature_extractor(attack_testset.inputs)
     
     # 查看显存占用并释放缓存
     torch.cuda.empty_cache()
 
 
-    feature_repairset = CifarPoints(feature_repairset_input, repairset.labels)
-    feature_testset = CifarPoints(feature_testset_input, testset.labels)
-    feature_trainset = CifarPoints(feature_trainset_input, trainset.labels)
-    feature_attack_testset = CifarPoints(feature_attack_testset_input, attack_testset.labels)
+    feature_repairset = TinyImagenetPoints(feature_repairset_input, repairset.labels)
+    feature_testset = TinyImagenetPoints(feature_testset_input, testset.labels)
+    feature_attack_testset = TinyImagenetPoints(feature_attack_testset_input, attack_testset.labels)
     
     def get_the_box_bounds_of_features(sample_feature_list, 
                                        feature_repairset,data_number_record_list):
@@ -497,9 +501,9 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
         part = o
         if o != args.divided_repair - 1:
-            tempset = CifarPoints(originalset.inputs[int(part*len(originalset.inputs)/args.divided_repair):int((part+1)*len(originalset.inputs)/args.divided_repair)], originalset.labels[int(part*len(originalset.labels)/args.divided_repair):int((part+1)*len(originalset.labels)/args.divided_repair)]) 
+            tempset = TinyImagenetPoints(originalset.inputs[int(part*len(originalset.inputs)/args.divided_repair):int((part+1)*len(originalset.inputs)/args.divided_repair)], originalset.labels[int(part*len(originalset.labels)/args.divided_repair):int((part+1)*len(originalset.labels)/args.divided_repair)]) 
         else:
-            tempset = CifarPoints(originalset.inputs[int(part*len(originalset.inputs)/args.divided_repair):], originalset.labels[int(part*len(originalset.labels)/args.divided_repair):])
+            tempset = TinyImagenetPoints(originalset.inputs[int(part*len(originalset.inputs)/args.divided_repair):], originalset.labels[int(part*len(originalset.labels)/args.divided_repair):])
         logging.info(f'--sample the {o} part of the originalset')
         sample_datas_list, data_number_record_list = sample_datas_from_radius(net, tempset, radius = args.repair_radius/255, datanumber = args.sample_amount)
 
@@ -510,67 +514,16 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
             for i in range(len(sample_datas_list)):
                 sample_features_list.append(feature_extractor(sample_datas_list[i]))
     
-        # declare the sample_datas_list
-        # sample_datas_list = None
             del sample_datas_list
             torch.cuda.empty_cache()
-
-    # get the k-means center of every sample_datas_list
-    # the shape of the center is (len(data_number_record_list), *feature_dim)
-    # from sklearn.cluster import KMeans
-    # import numpy as np
-    # # A_flattened = [tensor.flatten().numpy() for tensor in A]
-    # # A_np = np.array(A_flattened)
-    # center_list = []
-    # pca_reduction_dim = 3
-    # for i in range(len(sample_features_list)):
-    #     _,_,V = torch.pca_lowrank(sample_features_list[i], q=pca_reduction_dim)
-    #     # get the demensionality reducted data
-    #     reduction_data = torch.matmul(sample_features_list[i], V[:, :pca_reduction_dim])
-    #     # get the center of every element of sample_datas
-    #     # convert the tensor to numpy
-    #     reduction_data_np = reduction_data.detach().cpu().numpy()
-    #     kmeans = KMeans(n_clusters=1, random_state=0).fit(reduction_data_np)
-    #     center_i = kmeans.cluster_centers_
-    #     center_list.append(center_i)
-
-
-
-
-    # def get_the_box_bounds_of_features(feature_extractor, sample_datas, batch_number):
-    #     sample_features = feature_extractor(sample_datas)
-    #     # get the box bound of the features
-    #     # the shape of the sample_features is (n_sample, *feature_dim)
-    #     # the shape of the bound_mins and bound_maxs is (n_sample/50, *feature_dim)
-    #     bound_mins = torch.zeros((int(sample_features.shape[0]/batch_number), *sample_features.shape[1:]), device = device)
-    #     bound_maxs = torch.zeros((int(sample_features.shape[0]/batch_number), *sample_features.shape[1:]), device = device)
-        
-    #     for i in range(args.repair_number):
-    #         indexs = torch.arange(i, sample_features.shape[0], args.repair_number
-    #                         , dtype=torch.long, device = device)
-    #         bound_mins[i] = sample_features[indexs].min(dim=0)[0]
-    #         bound_maxs[i] = sample_features[indexs].max(dim=0)[0]
-    #     return bound_mins, bound_maxs
-
-
-
-
-
-
-
-        
-
-        
-
-
 
     # for every 50 samples, we need to get the box bound of the features
 
         with torch.no_grad():
             if o != args.divided_repair - 1:
-                temp_feature_repairset = CifarPoints(feature_repairset.inputs[int(part*len(feature_repairset.inputs)/args.divided_repair):int((part+1)*len(feature_repairset.inputs)/args.divided_repair)], feature_repairset.labels[int(part*len(feature_repairset.labels)/args.divided_repair):int((part+1)*len(feature_repairset.labels)/args.divided_repair)])
+                temp_feature_repairset = TinyImagenetPoints(feature_repairset.inputs[int(part*len(feature_repairset.inputs)/args.divided_repair):int((part+1)*len(feature_repairset.inputs)/args.divided_repair)], feature_repairset.labels[int(part*len(feature_repairset.labels)/args.divided_repair):int((part+1)*len(feature_repairset.labels)/args.divided_repair)])
             else:
-                temp_feature_repairset = CifarPoints(feature_repairset.inputs[int(part*len(feature_repairset.inputs)/args.divided_repair):], feature_repairset.labels[int(part*len(feature_repairset.labels)/args.divided_repair):])
+                temp_feature_repairset = TinyImagenetPoints(feature_repairset.inputs[int(part*len(feature_repairset.inputs)/args.divided_repair):], feature_repairset.labels[int(part*len(feature_repairset.labels)/args.divided_repair):])
             feature_lb, feature_ub = get_the_box_bounds_of_features(sample_features_list, temp_feature_repairset, data_number_record_list)
         feature_lb_list.append(feature_lb)
         feature_ub_list.append(feature_ub)
@@ -588,7 +541,10 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     # repairlist = [(data[0],data[1]) for data in zip(repairset.inputs, repairset.labels)]
     # repair_prop_list = MnistProp.all_props(args.dom, DataList=repairlist, feature_shape= feature_shape,radius= args.repair_radius)
     feature_repair_feature_bounds = [(data[0],data[1]) for data in zip(feature_lb, feature_ub)]
-    feature_repair_prop_list = CifarProp.all_feature_props(args.dom, bounds = feature_repair_feature_bounds, labels= repairset.labels, feature_shape = feature_shape)
+    if args.label_repaired:
+        feature_repair_prop_list = TinyImagenetProp.all_feature_props(args.dom, bounds = feature_repair_feature_bounds, labels= repairset.labels, feature_shape = feature_shape, tasktype='feature_input_label')
+    else:
+        feature_repair_prop_list = TinyImagenetProp.all_feature_props(args.dom, bounds = feature_repair_feature_bounds, labels= repairset.labels, feature_shape = feature_shape)
     # get the all props after join all l_0 ball feature property
     # TODO squeeze the property list, which is the same as the number of label
     feature_all_props = AndProp(props=feature_repair_prop_list)
@@ -622,7 +578,13 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
     # 
     input_shape = trainset.inputs.shape[1:]
     repairlist = [(data[0],data[1]) for data in zip(originalset.inputs, originalset.labels)]
-    repair_prop_list = CifarProp.all_props(args.dom, DataList=repairlist, input_shape= input_shape,radius= args.repair_radius/255)
+    # if args.label_repaired:
+    #     repair_prop_list = TinyImagenetProp.all_props(args.dom, DataList=repairlist, input_shape= input_shape,radius= args.repair_radius/255, tasktype='attack_input_label')
+    # else:
+    repair_prop_list = TinyImagenetProp.all_props(args.dom, DataList=repairlist, input_shape= input_shape,radius= args.repair_radius/255)
+    
+    
+    # repair_prop_list = TinyImagenetProp.all_props(args.dom, DataList=repairlist, input_shape= input_shape,radius= args.repair_radius/255)
     all_props = AndProp(props=repair_prop_list)
     v = Bisecter(args.dom, all_props)
 
@@ -652,11 +614,14 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
     # test init accuracy
     logging.info(f'--Test repair set accuracy {eval_test(net, repairset)}')
-
+    if args.label_repaired:
+        n_repair = all_props.labels.shape[1]
+    else:
+        n_repair = args.repair_number
     patch_lists = []
-    n_repair = all_props.labels.shape[1]
+    # n_repair = all_props.labels.shape[1]
     for i in range(n_repair):
-        patch_net = Cifar_feature_patch_model(dom=args.dom,
+        patch_net = TinyImagenet_feature_patch_model(dom=args.dom,
             name = f'feature patch network {i}',input_dimension=feature_shape[0])
         patch_net.to(device)
         patch_lists.append(patch_net)
@@ -711,10 +676,10 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
         # recostruct the dataset and bitmap
         if part != args.divided_repair - 1:
             curr_map = bitmap[int(part*bitmap.shape[0]/args.divided_repair):int((part+1)*bitmap.shape[0]/args.divided_repair)]
-            curr_set = CifarPoints(dataset.inputs[int(part*len(dataset.inputs)/args.divided_repair):int((part+1)*len(dataset.inputs)/args.divided_repair)], dataset.labels[int(part*len(dataset.labels)/args.divided_repair):int((part+1)*len(dataset.labels)/args.divided_repair)])
+            curr_set = TinyImagenetPoints(dataset.inputs[int(part*len(dataset.inputs)/args.divided_repair):int((part+1)*len(dataset.inputs)/args.divided_repair)], dataset.labels[int(part*len(dataset.labels)/args.divided_repair):int((part+1)*len(dataset.labels)/args.divided_repair)])
         else:
             curr_map = bitmap[int(part*bitmap.shape[0]/args.divided_repair):]
-            curr_set = CifarPoints(dataset.inputs[int(part*len(dataset.inputs)/args.divided_repair):], dataset.labels[int(part*len(dataset.inputs)/args.divided_repair):])
+            curr_set = TinyImagenetPoints(dataset.inputs[int(part*len(dataset.inputs)/args.divided_repair):], dataset.labels[int(part*len(dataset.inputs)/args.divided_repair):])
         return curr_set, curr_map
         
         
@@ -922,7 +887,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                                                                     stop_on_k_new=args.refine_top_k,for_feature=True)
             pass
         train_time = timer() - start
-        torch.save(repair_net.state_dict(), str(REPAIR_MODEL_DIR / f'Cifar-{args.net}-{args.repair_location}-repair_number{args.repair_number}-rapair_radius{args.repair_radius}.pt'))
+        torch.save(repair_net.state_dict(), str(REPAIR_MODEL_DIR / f'TinyImagenet-{args.net}-{args.repair_location}-repair_number{args.repair_number}-rapair_radius{args.repair_radius}.pt'))
         logging.info(f'Accuracy at every epoch: {accuracies}')
         logging.info(f'After {epoch} epochs / {utils.pp_time(train_time)}, ' +
                     f'eventually the trained network got certified? {certified}, ' +
@@ -955,7 +920,7 @@ def _run_repair(args: Namespace):
     res = []
     # for nid in nids:
     logging.info(f'For pgd attack net')
-    outs = repair_cifar(args,weight_clamp=False)
+    outs = repair_tiny_imagenet(args)
     res.append(outs)
 
     avg_res = torch.tensor(res).mean(dim=0)
@@ -966,7 +931,7 @@ def _run_repair(args: Namespace):
 
 
 
-def test_goal_repair(parser: CifarArgParser):
+def test_goal_repair(parser: TinyImagenetArgParser):
     """ Q1: Show that we can train previously unsafe networks to safe. """
     defaults = {
         # 'start_abs_cnt': 5000,
@@ -985,7 +950,7 @@ def test_goal_repair(parser: CifarArgParser):
         _run_repair(args)
     return
 
-def test(lr:float = 0.005, net:str = 'CNN_small',repair_radius:float = 0.1, repair_number = 200, refine_top_k = 300,
+def test(lr:float = 0.005, net:str = 'resnet152',repair_radius:float = 0.1, repair_number = 200, refine_top_k = 300,
          train_datasize = 200, test_datasize = 2000, 
          accuracy_loss:str = 'CE'):
     test_defaults = {
@@ -1017,7 +982,7 @@ def test(lr:float = 0.005, net:str = 'CNN_small',repair_radius:float = 0.1, repa
 
         
     }
-    parser = CifarArgParser(RES_DIR, description='CIFAR10 Correct by Construction')
+    parser = TinyImagenetArgParser(RES_DIR, description='Tiny imagenet Correct by Construction')
     parser.set_defaults(**test_defaults)
     args, _ = parser.parse_known_args()
 
@@ -1048,16 +1013,19 @@ if __name__ == '__main__':
    # for net in ['FNN_small', 'FNN_big', 'CNN_small']:
     # for net in ['vgg19', 'resnet18']:
     # for net in ['resnet18']:
-    for net in ['vgg19']:
+    for net in ['wide_resnet101_2']:
+    # for net in ['resnet152']:
         # for patch_size in ['small', 'big']:
         # for patch_size in ['big']:
-            for radius in [4,8]: 
+            # for radius in [2, 4]:
+            for radius in [2]: 
 
             # for radius in [0.05,0.1,0.3]: #,0.1,0.3
                 # for repair_number,test_number in zip([200],[2000]):
                 # for repair_number,test_number in zip([50],[500]):
                 # for repair_number,test_number in zip([1000],[10000]):
-                for repair_number,test_number in zip([50,100,200,500,1000],[500,1000,2000,5000,10000]):
+                # for repair_number,test_number in zip([50,100,200,500,1000],[500,1000,2000,5000,10000]):
+                for repair_number,test_number in zip([500],[5000]):
                     # if radius == 4 and (repair_number == 50 or repair_number == 100 or repair_number == 200):
                     #     continue
                     test(lr=10, net=net, repair_radius=radius, repair_number = repair_number, refine_top_k= 50, 
@@ -1074,9 +1042,9 @@ if __name__ == '__main__':
     # model1, model2 = net.split()
     # with torch.no_grad():
     #     feature_traindata = model1(trainset.inputs)
-    # feature_trainset = CifarPoints(feature_traindata, trainset.labels)
+    # feature_trainset = TinyImagenetPoints(feature_traindata, trainset.labels)
     # with torch.no_grad():
     #     feature_testdata = model1(testset.inputs)
     #     feature_attack_testdata = model1(attack_testset.inputs)
-    # feature_testset = CifarPoints(feature_testdata, testset.labels)
-    # feature_attack_testset = CifarPoints(feature_attack_testdata, attack_testset.labels)
+    # feature_testset = TinyImagenetPoints(feature_testdata, testset.labels)
+    # feature_attack_testset = TinyImagenetPoints(feature_attack_testdata, attack_testset.labels)

@@ -11,9 +11,12 @@ root = Path(__file__).resolve().parent.parent
 from DiffAbs.DiffAbs import AbsDom, deeppoly
 
 from art.prop import AndProp
-
-REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'acasxu'
-ACAS_CON_ENCODE_DIR = Path(__file__).resolve().parent.parent / 'data' / 'acas_con_encode'
+STORAGE_DIR = Path('/data/chizm/PatchART')
+# REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'acasxu'
+REPAIR_MODEL_DIR = STORAGE_DIR / 'model' / 'acasxu'
+# ACAS_CON_ENCODE_DIR = Path(__file__).resolve().parent.parent / 'data' / 'acas_con_encode'
+ACAS_CON_ENCODE_DIR = STORAGE_DIR / 'data' / 'acas_con_encode'
+ACAS_CON_ENCODE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 from acas.acas_utils import ACAS_DIR, AcasNetID, AcasNet, AcasOut, AcasProp

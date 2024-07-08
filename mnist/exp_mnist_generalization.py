@@ -32,22 +32,41 @@ from mnist.mnist_utils import MnistNet_CNN_small, MnistNet_FNN_big, MnistNet_FNN
 
 
 device = torch.device(f'cuda:2')
-MNIST_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'MNIST' / 'processed'
-MNIST_NET_DIR = Path(__file__).resolve().parent.parent / 'model' /'mnist'
-# MNIST_NET_DIR = Path(__file__).resolve().parent.parent / 'pgd' /'model' 
-RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'generalization' / 'origin'
+# MNIST_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'MNIST' / 'processed'
+# MNIST_NET_DIR = Path(__file__).resolve().parent.parent / 'model' /'mnist'
+
+# RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'generalization' / 'origin'
+# RES_DIR.mkdir(parents=True, exist_ok=True)
+
+# RES_DIR_LABEL = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'generalization' / 'label'
+# RES_DIR_LABEL.mkdir(parents=True, exist_ok=True)
+
+# REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'mnist_label_format'
+# REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
+
+# LABEL_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'mnist_label_format' 
+# LABEL_MODEL_DIR.mkdir(parents=True, exist_ok=True)
+
+# COMP_DIR = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'generalization' / 'compare'
+# COMP_DIR.mkdir(parents=True, exist_ok=True)
+
+STORAGE_DIR = Path('/data/chizm/PatchART')
+MNIST_DATA_DIR = STORAGE_DIR / 'data' / 'MNIST' / 'processed'
+MNIST_NET_DIR = STORAGE_DIR / 'model' / 'mnist'
+
+RES_DIR = STORAGE_DIR / 'results' / 'mnist' / 'repair' / 'generalization' / 'base'
 RES_DIR.mkdir(parents=True, exist_ok=True)
 
-RES_DIR_LABEL = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'generalization' / 'label'
+RES_DIR_LABEL = STORAGE_DIR / 'results' / 'mnist' / 'repair' / 'generalization' / 'label'
 RES_DIR_LABEL.mkdir(parents=True, exist_ok=True)
 
-REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'patch_format'
-# REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'mnist_label_format'
+REPAIR_MODEL_DIR = STORAGE_DIR / 'model' / 'mnist_base_format'
 REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
-LABEL_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'mnist_label_format' 
+
+LABEL_MODEL_DIR = STORAGE_DIR / 'model' / 'mnist_label_format'
 LABEL_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
-COMP_DIR = Path(__file__).resolve().parent.parent / 'results' / 'mnist' / 'repair' / 'generalization' / 'compare'
+COMP_DIR = STORAGE_DIR / 'results' / 'mnist' / 'repair' / 'generalization' / 'compare'
 COMP_DIR.mkdir(parents=True, exist_ok=True)
 
 class MnistArgParser(exp.ExpArgParser):

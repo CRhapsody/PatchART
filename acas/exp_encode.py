@@ -29,7 +29,11 @@ from art.repair_moudle import PatchNet, Netsum
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'acasxu'
+
+# REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'acasxu'
+
+STORAGE_DIR = Path('/data/chizm/PatchART')
+REPAIR_MODEL_DIR = STORAGE_DIR / 'model' / 'acasxu'
 
 
 class AcasPoints(exp.ConcIns):
