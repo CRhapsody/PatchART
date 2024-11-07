@@ -10,7 +10,7 @@ from collections import OrderedDict
 # import io
 # Define the Vgg19 model
 from torchvision.models import resnet18
-from cifar10_utils import Resnet_model
+from cifar10_utils import Resnet_model, Cifar_feature_patch_model_big
 
 import os
 from pathlib import Path
@@ -339,7 +339,8 @@ class PGD():
 
         return steps, acc_flag
 
-
+def get_specific_label_data(net, radius = 2, data_num = 200,label = 1):
+    pass
 
 def pgd_get_data(net, radius = 2, multi_number = 10, data_num = 200, general = False):
     '''
@@ -461,24 +462,34 @@ def adv_training(net, radius, data_num, device,radius_bit = 8):
         state = torch.load(f"./model/cifar10/resnet18.pth")
         model.load_state_dict(state)
 
+    origin_data,origin_label = torch.load(f'./data/cifar10/origin_data_{net}_{radius}.pt',map_location=device)
+    origin_data = origin_data[:data_num]
+    origin_label = origin_label[:data_num]
+    origin_data = origin_data.repeat(10000//data_num,1,1,1)
+    origin_label = origin_label.repeat(10000//data_num)
+
+    origin_data_loader = torch.utils.data.DataLoader(torch.utils.data.TensorDataset(origin_data,origin_label), batch_size=128, shuffle=True)
+    # trainloader = torch.utils.data.DataLoader(train_set, batch_size=256, shuffle=True)
+    # testloader = torch.utils.data.DataLoader(test_set, batch_size=256, shuffle=False)
 
 
-    train_attack_data,train_attack_labels = torch.load(f'./data/cifar10/train_attack_data_full_{net}_{radius_bit}.pt',map_location=device)
-    train_attack_data = train_attack_data[:data_num]
-    train_attack_labels = train_attack_labels[:data_num]
-    # test_attack_data,test_attack_labels = torch.load(f'./data/cifar10/test_attack_data_full_{net}_{radius_bit}.pt',map_location=device)
-    # test_attack_data = test_attack_data[:data_num]
-    # test_attack_labels = test_attack_labels[:data_num]
 
-    train_data, train_label = torch.load(f'./data/cifar10/train_norm.pt',map_location=device)
-    train_dataset = torch.utils.data.TensorDataset(train_data,train_label)
+    # train_attack_data,train_attack_labels = torch.load(f'./data/cifar10/train_attack_data_full_{net}_{radius_bit}.pt',map_location=device)
+    # train_attack_data = train_attack_data[:data_num]
+    # train_attack_labels = train_attack_labels[:data_num]
+    # # test_attack_data,test_attack_labels = torch.load(f'./data/cifar10/test_attack_data_full_{net}_{radius_bit}.pt',map_location=device)
+    # # test_attack_data = test_attack_data[:data_num]
+    # # test_attack_labels = test_attack_labels[:data_num]
+
+    # train_data, train_label = torch.load(f'./data/cifar10/train_norm.pt',map_location=device)
+    # train_dataset = torch.utils.data.TensorDataset(train_data,train_label)
     
-    # dataset
-    train_attack_dataset = torch.utils.data.TensorDataset(train_attack_data,train_attack_labels)
-    # test_attack_dataset = torch.utils.data.TensorDataset(test_attack_data,test_attack_labels)
-    # data loader
-    train_loader = DataLoader(train_dataset, batch_size=128)
-    train_attack_loader = DataLoader(train_attack_dataset, batch_size=50)
+    # # dataset
+    # train_attack_dataset = torch.utils.data.TensorDataset(train_attack_data,train_attack_labels)
+    # # test_attack_dataset = torch.utils.data.TensorDataset(test_attack_data,test_attack_labels)
+    # # data loader
+    # train_loader = DataLoader(train_dataset, batch_size=128)
+    # train_attack_loader = DataLoader(train_attack_dataset, batch_size=50)
     # test_attack_loader = DataLoader(test_attack_dataset, batch_size=128)
     # train
     criterion = nn.CrossEntropyLoss()
@@ -508,7 +519,7 @@ def adv_training(net, radius, data_num, device,radius_bit = 8):
         #     loss.backward()
         #     optimizer.step()
 
-        for inputs,labels in train_loader:
+        for inputs,labels in origin_data_loader:
             inputs,labels = inputs.to(device),labels.to(device)
             optimizer.zero_grad()
             loss = trades_loss(model=model,
@@ -524,7 +535,7 @@ def adv_training(net, radius, data_num, device,radius_bit = 8):
             loss_sum += loss.item()
 
         if epoch % 10 == 0:
-            print(f'Epoch [{epoch+1}/{200}], Loss: {loss_sum/len(train_attack_loader):.4f}')
+            print(f'Epoch [{epoch+1}/{200}], Loss: {loss_sum/len(origin_data_loader):.4f}')
         # for i in range(train_nbatch):
         #     inputs,labels = iter_train.__next__()
             # inputs = inputs.to(device)
@@ -701,7 +712,131 @@ from DiffAbs.DiffAbs import deeppoly
     # from mnist.mnist_utils import MnistNet_CNN_small,MnistNet_FNN_small, MnistNet_FNN_big, Mnist_patch_model,MnistProp
 from cifar10_utils import Cifar_feature_patch_model,CifarProp
 
+def compare_autoattack_big(net, 
+                            radius_bit, repair_number):
+    '''
+    use the length of pgd steps to compare the hardness of attacking two model respectively
+    the model1 is origin model, model2 is repaired model
+    '''
+    # load net
 
+    radius= radius_bit/255
+    
+    device = 'cuda:1' if torch.cuda.is_available() else 'cpu'
+    print(f'Using {device} device')
+    # print(f'Using {device} device')
+    # if net == 'vgg19':
+    #     model1 = VGG('VGG19').to(device)
+    #     state = torch.load(f"./model/cifar10/vgg19.pth")
+    #     model1.load_state_dict(state)
+    # elif net == 'resnet18':
+    #     model1 = resnet18(num_classes=10).to(device)
+    #     state = torch.load(f"./model/cifar10/resnet18.pth")
+    #     model1.load_state_dict(state)
+    # model1.to(device)
+    # model1.eval()
+
+
+    if net == 'vgg19':
+        frontier = VGG('VGG19').to(device)
+        frontier_state = torch.load(f"./model/cifar10/vgg19.pth")
+        frontier.load_state_dict(frontier_state)
+    elif net == 'resnet18':
+        frontier = Resnet_model(dom= deeppoly).to(device)
+        frontier_state = torch.load(f"./model/cifar10/resnet18.pth")
+        frontier.load_state_dict(frontier_state)
+    frontier.to(device)
+
+    frontier, rear  = frontier.split()
+
+    patch_lists = []
+    for i in range(repair_number):
+        # if patch_format == 'small':
+        patch_net = Cifar_feature_patch_model_big(dom=deeppoly, name = f'feature patch network {i}', input_dimension=512)
+        # elif patch_format == 'big':
+        #     patch_net = Cifar_feature_patch_model(dom=deeppoly,name = f'big patch network {i}')
+        patch_net.to(device)
+        patch_lists.append(patch_net)
+    rear =  Netsum(deeppoly, target_net = rear, patch_nets= patch_lists, device=device)
+
+    rear.load_state_dict(torch.load(f"./model/cifar10_big_format/Cifar-{net}-feature-repair_number{repair_number}-rapair_radius{radius_bit}.pt",map_location=device))
+    model2 = NetFeatureSumPatch(feature_sumnet=rear, feature_extractor=frontier)
+    torch.save(model2.state_dict(),f"./model/cifar10_big_format/Cifar-{net}-full-repair_number{repair_number}-rapair_radius{radius_bit}-feature_sumnet.pt")
+    model2.eval()
+
+    # model3 = adv_training(net,radius, data_num=repair_number, device=device, radius_bit=radius_bit)
+
+
+    # load data
+    datas,labels = torch.load(f'./data/cifar10/origin_data_{net}_{radius_bit}.pt',map_location=device)
+    # return
+    
+    datas = datas[:repair_number]
+    labels = labels[:repair_number]
+
+    # pgd
+    # pgd1 = PGD(model=model1, eps=radius, alpha=2/255, steps=50, random_start=True)
+    # pgd2 = PGD(model=model2, eps=radius, alpha=2/255, steps=50, random_start=True)
+    # pgd3 = PGD(model=model3, eps=radius, alpha=2/255, steps=50, random_start=True)
+    from torchattacks import AutoAttack
+
+
+    # attack
+    # ori_step = 0
+    # repair_step = 0
+    # pgd_step = 0
+
+    # get bitmap
+    from art.prop import AndProp
+    # from art.bisecter import Bisecter
+    repairlist = [(data[0],data[1]) for data in zip(datas, labels)]
+    repair_prop_list = CifarProp.all_props(deeppoly, DataList=repairlist, input_shape= datas.shape[1:], radius= radius)
+    # get the all props after join all l_0 ball feature property
+    # TODO squeeze the property list, which is the same as the number of label
+    all_props = AndProp(props=repair_prop_list)
+    # v = Bisecter(deeppoly, all_props)
+    in_lb, in_ub = all_props.lbub(device)
+    in_bitmap = all_props.bitmap(device)
+
+    # bitmap = get_bitmap(in_lb, in_ub, in_bitmap, datas, device)
+
+    data_loader = DataLoader(torch.utils.data.TensorDataset(datas,labels), batch_size=32)
+
+    p2 = 0
+
+
+    for images,labels in data_loader:
+        images = images.to(device)
+        labels = labels.to(device)
+
+        bitmap_batch = get_bitmap(in_lb, in_ub, in_bitmap, images, device)
+        model2.feature_sumnet.bitmap = bitmap_batch
+        at2 = AutoAttack(model2, norm='Linf', eps=radius, version='standard', verbose=False, 
+                         bitmap=bitmap_batch)
+        adv_images2 = at2(images, labels)
+        outs2 = model2(adv_images2)
+        predicted2 = torch.argmax(outs2, dim=1)
+        correct2 = torch.sum(predicted2 == labels).item()
+        p2 += correct2
+        print(f"big patch attack success {correct2}")
+        
+        # step1, ori_acc = pgd1.forward_sumsteps(image,label)
+        # step2, repair_acc = pgd2.forward_sumsteps(image,label, device=device, bitmap = [in_lb, in_ub, in_bitmap])
+        # step3, adt_acc = pgd3.forward_sumsteps(image,label)
+        # ori_step += step1
+        # repair_step += step2
+        # pgd_step += step3
+        # if ori_acc == 1:
+        #     p1 += 1
+        # if repair_acc == 1:
+        #     p2 += 1
+        # if adt_acc == 1:
+        #     p3 += 1
+            
+    
+    # print(f"ori_step {ori_step}, repair_step {repair_step}, pgd_step {pgd_step} \\ ori:{p1}, patch:{p2}, adv-train:{p3}")
+    with open(f'./results/cifar10/repair/autoattack/compare_autoattack_ac.txt','a') as f:
+        f.write(f"For {net} {repair_number} {radius} : \\  big:{p2} \\ \n")
 
 
 def compare_autoattack(net, 
@@ -897,20 +1032,73 @@ def adv_training_test(net, radius, data_num, device,radius_bit = 8,epoch_n = 200
     origin_data,origin_label = torch.load(f'./data/cifar10/origin_data_{net}_{radius_bit}.pt',map_location=device)
     repair_data, repair_label = torch.load(f'./data/cifar10/train_attack_data_full_{net}_{radius_bit}.pt',map_location=device)
     attack_data, attack_label = torch.load(f'./data/cifar10/test_attack_data_full_{net}_{radius_bit}.pt',map_location=device)
-    test_data, test_label = torch.load(f'./data/cifar10/test_attack_data_full_{net}_{radius_bit}.pt',map_location=device)
+    test_data, test_label = torch.load(f'./data/cifar10/test_norm.pt',map_location=device)
+
+
+    # fine the first data which the label is 1 in origin data and record the index
+    # record_index = 0
+    # for i in range(len(origin_label)):
+    #     if origin_label[i] == 1:
+    #         record_index = i
+    #         break
+
+    # # then switch the record data with the 49th data
+    # from copy import deepcopy
+    # origin_data_re = deepcopy(origin_data[record_index])
+    # origin_label_re = deepcopy(origin_label[record_index])
+
+    # origin_data_fourty_nine = deepcopy(origin_data[49])
+    # origin_label_fourty_nine = deepcopy(origin_label[49])
+
+    # origin_data[record_index] = origin_data_fourty_nine
+    # origin_label[record_index] = origin_label_fourty_nine
+
+    # origin_data[49] = origin_data_re
+    # origin_label[49] = origin_label_re
+
+    # # and switch the repair data with the 49th data
+    # repair_data_re = deepcopy(repair_data[record_index])
+    # repair_label_re = deepcopy(repair_label[record_index])
+    # repair_data_fourty_nine = deepcopy(repair_data[49])
+    # repair_label_fourty_nine = deepcopy(repair_label[49])
+    # repair_data[record_index] = repair_data_fourty_nine
+    # repair_label[record_index] = repair_label_fourty_nine
+    # repair_data[49] = repair_data_re
+    # repair_label[49] = repair_label_re
+
+    # # then switch the attack data with the 49th data
+    # attack_data_re = deepcopy(attack_data[record_index*10:(record_index+1)*10])
+    # attack_label_re = deepcopy(attack_label[record_index*10:(record_index+1)*10])
+    # attack_data_fourty_nine = deepcopy(attack_data[49*10:(50)*10])
+    # attack_label_fourty_nine = deepcopy(attack_label[49*10:(50)*10])
+    # attack_data[record_index*10:(record_index+1)*10] = attack_data_fourty_nine
+    # attack_label[record_index*10:(record_index+1)*10] = attack_label_fourty_nine
+    # attack_data[49*10:(50)*10] = attack_data_re
+    # attack_label[49*10:(50)*10] = attack_label_re
+
+    # torch.save((origin_data,origin_label),f'./data/cifar10/origin_data_{net}_{radius_bit}.pt')
+    # torch.save((repair_data,repair_label),f'./data/cifar10/train_attack_data_full_{net}_{radius_bit}.pt')
+    # torch.save((attack_data,attack_label),f'./data/cifar10/test_attack_data_full_{net}_{radius_bit}.pt')
+
+    # return
+
 
     origin_data,origin_label = origin_data[:data_num],origin_label[:data_num]
     repair_data, repair_label = repair_data[:data_num],repair_label[:data_num]
     attack_data, attack_label = attack_data[:data_num],attack_label[:data_num]
 
+
+
     # dataset
+    # origin_data = origin_data.repeat(10000//data_num,1,1,1)
+    # origin_label = origin_label.repeat(10000//data_num)
     origin_dataset = torch.utils.data.TensorDataset(origin_data,origin_label)
     
     # dataloader
     origin_loader = DataLoader(origin_dataset, batch_size=32)
 
-    #train
-    # criterion = nn.CrossEntropyLoss()
+    # train
+    criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.1)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50)
     model.train()
@@ -918,7 +1106,7 @@ def adv_training_test(net, radius, data_num, device,radius_bit = 8,epoch_n = 200
     import time
     start = time.time()
     for epoch in range(epoch_n):
-        print(f"adv-training epoch {epoch}")
+        # print(f"adv-training epoch {epoch}")
         loss_sum = 0
         for inputs,labels in origin_loader:
             inputs,labels = inputs.to(device),labels.to(device)
@@ -935,7 +1123,7 @@ def adv_training_test(net, radius, data_num, device,radius_bit = 8,epoch_n = 200
             loss_sum += loss.item()
 
         if epoch % 1 == 0:
-            print(f'Epoch [{epoch+1}/{200}], Loss: {loss_sum/len(origin_loader):.4f}')
+            # print(f'Epoch [{epoch+1}/{200}], Loss: {loss_sum/len(origin_loader):.4f}')
             # save model
             if loss_sum < loss_sum_best:
                 torch.save(model.state_dict(),f"./tools/cifar/trade-cifar/best_{net}_{radius_bit}_{data_num}.pt")
@@ -1160,6 +1348,72 @@ def patch_label_autoattack(net,
     # print(f"ori_step {ori_step}, repair_step {repair_step}, pgd_step {pgd_step} \\ ori:{p1}, patch:{p2}, adv-train:{p3}")
     with open(f'./results/cifar10/repair/autoattack/compare_autoattack_ac.txt','a') as f:
         f.write(f"For {net} {repair_number} {radius} : label:{p2}\n")
+
+
+def test_trades_adv_acc(net_name, radius_bit, repair_number,device):
+    if net_name == 'vgg19':
+        net = VGG('VGG19').to(device)
+        state = torch.load(f"./tools/cifar/trade-cifar/best_{net_name}_{radius_bit}_{repair_number}.pt")
+        net.load_state_dict(state)
+
+        ori_net = VGG('VGG19').to(device)
+        state = torch.load(f"./model/cifar10/vgg19.pth")
+        ori_net.load_state_dict(state)
+
+
+    elif net_name == 'resnet18':
+        net = resnet18(num_classes=10).to(device)
+        state = torch.load(f"./tools/cifar/trade-cifar/best_{net_name}_{radius_bit}_{repair_number}.pt")
+        net.load_state_dict(state)
+
+        ori_net = resnet18(num_classes=10).to(device)
+        state = torch.load(f"./model/cifar10/resnet18.pth")
+        ori_net.load_state_dict(state)
+    
+    adv_datas,adv_labels = torch.load(f'./data/cifar10/test_adv_{net_name}_{radius_bit}.pt',map_location=device)
+    # dataset
+    adv_dataset = torch.utils.data.TensorDataset(adv_datas,adv_labels)
+    adv_loader = torch.utils.data.DataLoader(adv_dataset, batch_size=32, shuffle=False)
+    # test
+    net.eval()
+    adv_correct = 0
+    all_bit_correct = 0
+    i = 0
+    with torch.no_grad():
+        for images, labels in adv_loader:
+            i = i+1
+            if images.shape[0] == 1:
+                continue
+            images, labels = images.to(device), labels.to(device)
+            outputs = net(images)
+            _, predicted = torch.max(outputs.data, 1)
+            trades_bit = (predicted == labels)
+            # try:
+            outputs_ori = ori_net(images)
+            # except: #打印错误信息
+            #     print(i)
+                
+            _, predicted_ori = torch.max(outputs_ori.data, 1)
+            ori_bit = (predicted_ori == labels)
+
+            # intersection
+            all_bit = trades_bit & ori_bit
+            all_bit_correct += all_bit.sum().item()
+
+
+            adv_correct += predicted.eq(labels).sum().item()
+    # mkdir
+    if not os.path.exists(f'./results/cifar10/trades'):
+        os.mkdir(f'./results/cifar10/trades')
+    with open(f'./results/cifar10/trades/adv_acc.txt','a') as f:
+        f.write(f"{net_name} {radius_bit} {repair_number} adv_acc:{adv_correct/len(adv_loader.dataset)}, all_bit_correct:{all_bit_correct/len(adv_loader.dataset)}\n")
+
+
+
+
+
+
+
 if __name__ == '__main__':
     # training('vgg19','cuda:0')
     # get_dataset()
@@ -1168,22 +1422,26 @@ if __name__ == '__main__':
 
 
 
-    adv_training_test('vgg19', 8, data_num=1000, device='cuda:1',radius_bit=8,epoch_n=200)
+    # adv_training_test('vgg19', 8, data_num=1000, device='cuda:1',radius_bit=8,epoch_n=200)
 
-    for net in ['resnet18']:
-        for radius in [4, 8]:
-            for repair_num in [50,100,200,500,1000]: 
-    #             # if net == 'vgg19' and radius == 4 and (repair_num == 50 or repair_num == 100 or repair_num == 200):
-    #             #     continue
-    #             # compare_autoattack(net,radius_bit=radius, repair_number=repair_num)
-    #             # autoattack_adv_training(net, data_num=repair_num, device='cuda:0',radius_bit=radius)
-                for epoch in [200]:
-    #             # get_attack_data(net, radius_bit=radius, data_num=repair_num, device='cuda:1')
-                    adv_training_test(net,radius, data_num=repair_num, device='cuda:1',radius_bit=radius,epoch_n=epoch)
+    # for net in ['resnet18']:
+    #     for radius in [4, 8]:
+    #         for repair_num in [50,100,200,500,1000]: 
+    # #             # if net == 'vgg19' and radius == 4 and (repair_num == 50 or repair_num == 100 or repair_num == 200):
+    # #             #     continue
+    # #             # compare_autoattack(net,radius_bit=radius, repair_number=repair_num)
+    # #             # autoattack_adv_training(net, data_num=repair_num, device='cuda:0',radius_bit=radius)
+    #             for epoch in [200]:
+    # #             # get_attack_data(net, radius_bit=radius, data_num=repair_num, device='cuda:1')
+    #                 adv_training_test(net,radius, data_num=repair_num, device='cuda:1',radius_bit=radius,epoch_n=epoch)
     for net in ['vgg19','resnet18']:
         for radius in [4, 8]:
             for repair_num in [50,100,200,500,1000]:
-                autoattack_adv_training(net, data_num=repair_num, device='cuda:1',radius_bit=radius)
+                # adv_training_test(net,radius, data_num=repair_num, device='cuda:1',radius_bit=radius)
+                compare_autoattack_big(net,radius_bit=radius, repair_number=repair_num)
+                
+                # autoattack_adv_training(net, data_num=repair_num, device='cuda:1',radius_bit=radius)
+                # test_trades_adv_acc(net, radius, repair_num, 'cuda:1')
                     # patch_label_autoattack(net,radius_bit=radius, repair_number=repair_num,device='cuda:1')
         # for net in ['resnet18']:
         #     for radius in [4]:

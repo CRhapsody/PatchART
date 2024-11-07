@@ -16,6 +16,7 @@ from art.prop import OneProp, AndProp
 from art.utils import sample_points
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+sys.path.append(str(Path(__file__).resolve().parent))
 from vgg import VGG
 # from resnet import ResNet,BasicBlock
 
@@ -173,5 +174,41 @@ class Cifar_feature_patch_model(nn.Module):
             '--- End of feature PatchNet ---'
         ]
         return '\n'.join(ss)
+
+
+class Cifar_feature_patch_model_big(nn.Module):
+    def __init__(self,dom: AbsDom, name: str, input_dimension: int) -> None:
+        super().__init__()
+        self.dom = dom
+        self.name = name
+        self.input_dimension = input_dimension
+        self.extraction_dim = 200
+
+        self.extractor = nn.Sequential(
+            dom.Linear(in_features=input_dimension, out_features=200),
+            dom.ReLU(),
+            dom.Linear(in_features=200, out_features=200),
+            dom.ReLU(),
+            dom.Linear(in_features=200, out_features=200),
+            dom.ReLU(),
+        )
+
+
+        self.classifier = nn.Sequential(
+            dom.Linear(in_features=self.extraction_dim, out_features=10),
+
+        )
+    def forward(self,x):
+        extract = self.extractor(x)
+        out = self.classifier(extract)
+        return out
+    def __str__(self):
+        """ Just print everything for information. """
+        ss = [
+            '--- feature PatchNet ---',
+            'Name: %s' % self.name,
+            '--- End of feature PatchNet ---'
+        ]
+        return '\n'.join(ss)    
 
 

@@ -242,7 +242,54 @@ class Netsum(nn.Module):
             # is_in_unique_one[unique, first_one_index] = 1
             # self.bitmap = is_in_unique_one
 
-        return self.bitmap            
+        return self.bitmap
+
+
+    def get_bitmap_first(self, sample_top1):
+        index = sample_top1
+        in_bitmap = torch.zeros((index.shape[0], len(self.patch_nets)), dtype = torch.uint8, device = index.device)
+        index_clone = index.clone().unsqueeze_(1).expand(index.shape[0], len(self.patch_nets))
+        is_in_1st = (index_clone[:,:] == self.repair_direction_dict[...,0])
+        
+        nonzero_index_1st = is_in_1st.nonzero(as_tuple=False)
+
+        for i in range(nonzero_index_1st.shape[0]):
+            in_bitmap[nonzero_index_1st[i][0], nonzero_index_1st[i][1]] = 1
+        self.bitmap = in_bitmap
+
+        return self.bitmap
+
+    def get_bitmap_potential(self, sample_top2):
+        index = sample_top2
+
+        in_bitmap = torch.zeros((index.shape[0], len(self.patch_nets)), dtype = torch.uint8, device = index.device)
+
+        index_clone = index.clone().unsqueeze_(1).expand(index.shape[0], len(self.patch_nets), index.shape[-1])
+
+        is_in_1st = (index_clone[:,:,0] == self.repair_direction_dict[...,0])
+
+        nonzero_index_1st = is_in_1st.nonzero(as_tuple=False)
+
+        for i in range(nonzero_index_1st.shape[0]):
+            in_bitmap[nonzero_index_1st[i][0], nonzero_index_1st[i][1]] = 1
+
+        is_in_2nd = (index_clone[:,:,1] == self.repair_direction_dict[...,0])
+        nonzero_index_2nd = is_in_2nd.nonzero(as_tuple=False)
+
+        for i in range(nonzero_index_2nd.shape[0]):
+            in_bitmap[nonzero_index_2nd[i][0], nonzero_index_2nd[i][1]] = 1
+
+        self.bitmap = in_bitmap
+
+        
+
+        # unique = is_in.sum(dim = -1).nonzero()
+        # first_one_index = is_in[unique].argmax(dim = -1)
+        # is_in_unique_one = torch.zeros_like(is_in)
+        # is_in_unique_one[unique, first_one_index] = 1
+        # self.bitmap = is_in_unique_one
+
+        return self.bitmap
 
     def get_bitmap_label(self, original_out):
         with torch.no_grad():
@@ -257,7 +304,7 @@ class Netsum(nn.Module):
 
             self.bitmap = is_in 
         return self.bitmap
-    def forward(self, x, in_bitmap = None, out = None):
+    def forward(self, x, bitmap = None, out = None):
         if out == None:
             out = self.target_net(x)
         else:
@@ -267,16 +314,19 @@ class Netsum(nn.Module):
 
         if self.generalization and self.bitmap is None and self.repair_direction_dict is not None:
             if self.is_label_repaired:
-                in_bitmap = self.get_bitmap_label(out)
+                bitmap = self.get_bitmap_label(out)
             else:
-                in_bitmap = self.get_bitmap(out)
+                pass
+                # in_bitmap = self.get_bitmap(out)
+        # elif self.generalization and self.bitmap is not None and self.repair_direction_dict is not None:
+        #     in_bitmap = self.bitmap
 
             
         # classes_score, violate_score = self.support_net(x) # batchsize * repair_num * []
         # n_prop = in_bitmap.shape[-1]
-        if in_bitmap is not None:
+        if bitmap is not None:
             for i,patch in enumerate(self.patch_nets):
-                bits = in_bitmap[..., i]
+                bits = bitmap[..., i]
                 if not bits.any():
                 # no one here needs to obey this property
                     continue
@@ -290,7 +340,7 @@ class Netsum(nn.Module):
                     out[bits] += p_out[bits]
                 elif isinstance(out, AbsEle):
                     replace_item = out[bits] + patch(x[bits]) # may not only one prop
-                    out.replace(in_bitmap[..., i], replace_item)
+                    out.replace(bitmap[..., i], replace_item)
         return out
         
         

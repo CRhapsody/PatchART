@@ -850,6 +850,119 @@ def compare_pgd_step_length(net, patch_format,
     #                 return False
     #     return True
 
+def compare_autoattack_small(net, patch_format, 
+                            radius, repair_number):
+    '''
+    use the length of pgd steps to compare the hardness of attacking two model respectively
+    the model1 is origin model, model2 is repaired model
+    '''
+    # load net
+    from art.repair_moudle import Netsum
+    from DiffAbs.DiffAbs import deeppoly
+    from mnist.mnist_utils import MnistNet_CNN_small,MnistNet_FNN_small, MnistNet_FNN_big, Mnist_patch_model_small,MnistProp
+    device = 'cuda:3' if torch.cuda.is_available() else 'cpu'
+    print(f'Using {device} device')
+    if net == 'CNN_small':
+        model1 = CNN_small_NeuralNet().to(device)
+        orinet = MnistNet_CNN_small(dom=deeppoly)
+    elif net == 'FNN_big':
+        model1 = FNN_big_NeuralNet().to(device)
+        orinet = MnistNet_FNN_big(dom=deeppoly)
+    elif net == 'FNN_small':
+        model1 = FNN_small_NeuralNet().to(device)
+        orinet = MnistNet_FNN_small(dom=deeppoly)
+    model1.load_state_dict(torch.load(f"./model/mnist/mnist_{net}.pth"))
+
+  
+
+
+
+    orinet.to(device)
+    patch_lists = []
+    for i in range(repair_number):
+        if patch_format == 'small':
+            patch_net = Mnist_patch_model_small(dom=deeppoly, name = f'small patch network {i}')
+        # elif patch_format == 'big':
+        #     patch_net = Mnist_patch_model(dom=deeppoly,name = f'big patch network {i}')
+        patch_net.to(device)
+        patch_lists.append(patch_net)
+    model2 =  Netsum(deeppoly, target_net = orinet, patch_nets= patch_lists, device=device)
+    model2.load_state_dict(torch.load(f"./model/mnist_patch_format_small/Mnist-{net}-repair_number{repair_number}-rapair_radius{radius}-{patch_format}.pt",map_location=device))
+
+    # model3 = adv_training(net,radius, data_num=repair_number, device=device)
+
+
+    # load data
+    datas,labels = torch.load(f'./data/MNIST/processed/origin_data_{net}_{radius}.pt',map_location=device)
+    # return
+    
+    datas = datas[:repair_number]
+    labels = labels[:repair_number]
+    data_loader = DataLoader(torch.utils.data.TensorDataset(datas,labels), batch_size=50)
+    # pgd
+    # pgd1 = PGD(model=model1, eps=radius, alpha=2/255, steps=50, random_start=True)
+    # pgd2 = PGD(model=model2, eps=radius, alpha=2/255, steps=50, random_start=True)
+    # pgd3 = PGD(model=model3, eps=radius, alpha=2/255, steps=50, random_start=True)
+    from torchattacks import AutoAttack
+
+
+    # attack
+    # ori_step = 0
+    # repair_step = 0
+    # pgd_step = 0
+
+    # get bitmap
+    from art.prop import AndProp
+    # from art.bisecter import Bisecter
+    repairlist = [(data[0],data[1]) for data in zip(datas, labels)]
+    repair_prop_list = MnistProp.all_props(deeppoly, DataList=repairlist, input_shape= datas.shape[1:], radius= radius)
+    # get the all props after join all l_0 ball feature property
+    # TODO squeeze the property list, which is the same as the number of label
+    all_props = AndProp(props=repair_prop_list)
+    # v = Bisecter(deeppoly, all_props)
+    in_lb, in_ub = all_props.lbub(device)
+    in_bitmap = all_props.bitmap(device)
+
+    # bitmap = get_bitmap(in_lb, in_ub, in_bitmap, datas, device)
+
+    # p1 = 0
+    p2 = 0
+    # p3 = 0
+
+    for images,labels in data_loader:
+        images = images.to(device)
+        labels = labels.to(device)
+
+        bitmap_batch = get_bitmap(in_lb, in_ub, in_bitmap, images, device)
+        model2.bitmap = bitmap_batch
+        at2 = AutoAttack(model2, norm='Linf', eps=radius, version='standard', verbose=False, 
+                         bitmap=bitmap_batch)
+        adv_images2 = at2(images, labels)
+        outs2 = model2(adv_images2, bitmap_batch)
+        predicted2 = torch.argmax(outs2, dim=1)
+        correct2 = torch.sum(predicted2 == labels).item()
+        p2 += correct2
+        print(f"small patch attack success {correct2}")      
+        # step1, ori_acc = pgd1.forward_sumsteps(image,label)
+        # step2, repair_acc = pgd2.forward_sumsteps(image,label, device=device, bitmap = [in_lb, in_ub, in_bitmap])
+        # step3, adt_acc = pgd3.forward_sumsteps(image,label)
+        # ori_step += step1
+        # repair_step += step2
+        # pgd_step += step3
+        # if ori_acc == 1:
+        #     p1 += 1
+        # if repair_acc == 1:
+        #     p2 += 1
+        # if adt_acc == 1:
+        #     p3 += 1
+            
+    
+    # print(f"ori_step {ori_step}, repair_step {repair_step}, pgd_step {pgd_step} \\ ori:{p1}, patch:{p2}, adv-train:{p3}")
+    with open(f'./results/mnist/repair/autoattack/compare_autoattack_ac.txt','a') as f:
+        f.write(f"For {net} {radius} {data} {patch_format}: \\  small:{p2} \\ \n")
+
+
+
 def compare_autoattack(net, patch_format, 
                             radius, repair_number):
     '''
@@ -877,19 +990,19 @@ def compare_autoattack(net, patch_format,
 
 
 
-    orinet.to(device)
-    patch_lists = []
-    for i in range(repair_number):
-        if patch_format == 'small':
-            patch_net = Mnist_patch_model(dom=deeppoly, name = f'small patch network {i}')
-        elif patch_format == 'big':
-            patch_net = Mnist_patch_model(dom=deeppoly,name = f'big patch network {i}')
-        patch_net.to(device)
-        patch_lists.append(patch_net)
-    model2 =  Netsum(deeppoly, target_net = orinet, patch_nets= patch_lists, device=device)
-    model2.load_state_dict(torch.load(f"./model/patch_format/Mnist-{net}-repair_number{repair_number}-rapair_radius{radius}-{patch_format}.pt",map_location=device))
+    # orinet.to(device)
+    # patch_lists = []
+    # for i in range(repair_number):
+    #     if patch_format == 'small':
+    #         patch_net = Mnist_patch_model(dom=deeppoly, name = f'small patch network {i}')
+    #     elif patch_format == 'big':
+    #         patch_net = Mnist_patch_model(dom=deeppoly,name = f'big patch network {i}')
+    #     patch_net.to(device)
+    #     patch_lists.append(patch_net)
+    # model2 =  Netsum(deeppoly, target_net = orinet, patch_nets= patch_lists, device=device)
+    # model2.load_state_dict(torch.load(f"./model/patch_format/Mnist-{net}-repair_number{repair_number}-rapair_radius{radius}-{patch_format}.pt",map_location=device))
 
-    model3 = adv_training(net,radius, data_num=repair_number, device=device)
+    # model3 = adv_training(net,radius, data_num=repair_number, device=device)
 
 
     # load data
@@ -1255,19 +1368,21 @@ if __name__ == "__main__":
             # if (data == 200 and radius == 0.05): # or (data == 200 and radius == 0.1):
             #     continue    
 
-            for net in ['FNN_small','FNN_big', 'CNN_small']:
+                for net in ['FNN_small','FNN_big', 'CNN_small']:
             # for net in [ 'CNN_small']:
-                # for patch_format in ['small', 'big']:
+                    # for patch_format in ['small', 'big']:
+                    for patch_format in ['small']:
+
                 #     patch_label_autoattack(net, patch_format, radius, data,device='cuda:0')
                 # adv_training_test(net, radius, data,device='cuda:0')
                 # for epoch in [200]:
                     # adv_training_test_pgd(net, radius, data_num=data, device='cuda:0',epoch_n=epoch)
-                    adv_training_test(net, radius, data_num=data, device='cuda:0',epoch_n=200)
+                    # adv_training_test(net, radius, data_num=data, device='cuda:0',epoch_n=200)
                 # trades_generalization(net, radius, data, device='cuda:2')
             
                 # autoattack_adv_training(net, data,device='cuda:0',radius = radius)
                     # compare_pgd_step_length(net, patch_format, radius, data)
-                    # compare_autoattack(net, patch_format, radius, data)
+                        compare_autoattack_small(net, patch_format, radius, data)
                     # adv_training_test(net, radius,device='cuda:0')
     #         pgd_get_data(radius=radius,multi_number=10,data_num=data,general = True)
             # pgd_get_data(net=net,radius=radius,multi_number=10,data_num=1000)

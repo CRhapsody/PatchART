@@ -28,9 +28,9 @@ device = torch.device(f'cuda:2')
 
 CIFAR_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'cifar10'
 CIFAR_NET_DIR = Path(__file__).resolve().parent.parent / 'model' / 'cifar10'
-RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'cifar10' / 'label'
+RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'cifar10' / 'single'
 RES_DIR.mkdir(parents=True, exist_ok=True)
-REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'cifar10_label_format'
+REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'cifar10_single_format'
 REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -589,6 +589,9 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
     feature_lb, feature_ub = feature_all_props.lbub(device)
     feature_bitmap = feature_all_props.bitmap(device)
+    # For single_patch
+    feature_bitmap = torch.zeros_like(feature_bitmap)
+    feature_bitmap[:, 0] = 1
     
     # get the bitmap of features of every dataset
     # feature_test_bitmap = get_bitmap(feature_lb, feature_ub, feature_bitmap, feature_testset.inputs)
@@ -613,6 +616,10 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
     in_lb, in_ub = all_props.lbub(device)
     in_bitmap = all_props.bitmap(device)
+
+    # For single_patch
+    in_bitmap = torch.zeros_like(in_bitmap)
+    in_bitmap[:, 0] = 1
 
     test_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, testset.inputs)
     repairset_bitmap = get_bitmap(in_lb, in_ub, in_bitmap, repairset.inputs)
@@ -639,7 +646,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
 
     patch_lists = []
     n_repair = all_props.labels.shape[1]
-    for i in range(n_repair):
+    for i in range(1):
         patch_net = Cifar_feature_patch_model(dom=args.dom,
             name = f'feature patch network {i}',input_dimension=feature_shape[0])
         patch_net.to(device)
@@ -906,7 +913,7 @@ def repair_cifar(args: Namespace, weight_clamp = False)-> Tuple[int, float, bool
                                                                     stop_on_k_new=args.refine_top_k,for_feature=True)
             pass
         train_time = timer() - start
-        torch.save(repair_net.state_dict(), str(REPAIR_MODEL_DIR / f'Cifar-{args.net}-{args.repair_location}-repair_number{args.repair_number}-rapair_radius{args.repair_radius}.pt'))
+        torch.save(repair_net.state_dict(), str(REPAIR_MODEL_DIR / f'Cifar-{args.net}-{args.repair_location}-repair_number{args.repair_number}-rapair_radius{args.repair_radius}-single-patch.pt'))
         logging.info(f'Accuracy at every epoch: {accuracies}')
         logging.info(f'After {epoch} epochs / {utils.pp_time(train_time)}, ' +
                     f'eventually the trained network got certified? {certified}, ' +
@@ -996,8 +1003,8 @@ def test(lr:float = 0.005, net:str = 'CNN_small',repair_radius:float = 0.1, repa
         'lr': lr,
         'accuracy_loss': accuracy_loss,
         'tiny_width': repair_radius*0.0001,
-        'min_epochs': 15,
-        'max_epochs': 100,
+        'min_epochs': 10,
+        'max_epochs': 10,
 
         
     }
@@ -1035,14 +1042,14 @@ if __name__ == '__main__':
     for net in ['vgg19']:
         # for patch_size in ['small', 'big']:
         # for patch_size in ['big']:
-            for radius in [4]: 
+            for radius in [8]: 
 
             # for radius in [4,8]: 
 
             # for radius in [0.05,0.1,0.3]: #,0.1,0.3
                 # for repair_number,test_number in zip([200],[2000]):
-                for repair_number,test_number in zip([50],[500]):
-                # for repair_number,test_number in zip([1000],[10000]):
+                # for repair_number,test_number in zip([50,100,200,500,1000],[500,1000,2000,5000,10000]):
+                for repair_number,test_number in zip([500,1000],[5000,10000]):
                 # for repair_number,test_number in zip([50,100,200,500,1000],[500,1000,2000,5000,10000]):
                     # if radius == 4 and (repair_number == 50 or repair_number == 100 or repair_number == 200):
                     #     continue

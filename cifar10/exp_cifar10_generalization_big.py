@@ -19,7 +19,7 @@ from art.prop import AndProp
 from art.bisecter import Bisecter
 from art import exp, utils
 from art.repair_moudle import Netsum, NetFeatureSumPatch
-from cifar10_utils import Cifar_feature_patch_model, CifarProp, Vgg_model, Resnet_model
+from cifar10_utils import Cifar_feature_patch_model_big, CifarProp, Vgg_model, Resnet_model
 torch.manual_seed(10668091966382305352)
 device = torch.device(f'cuda:2')
 
@@ -28,20 +28,20 @@ device = torch.device(f'cuda:2')
 CIFAR_DATA_DIR = Path(__file__).resolve().parent.parent / 'data' / 'cifar10'
 CIFAR_NET_DIR = Path(__file__).resolve().parent.parent / 'model' / 'cifar10'
 
-RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'cifar10' / 'generalization' 
+RES_DIR = Path(__file__).resolve().parent.parent / 'results' / 'cifar10' / 'generalization_big' 
 RES_DIR.mkdir(parents=True, exist_ok=True)
 
 # RES_DIR_LABEL = Path(__file__).resolve().parent.parent / 'results' / 'cifar10' / 'generalization' / 'label'
 # RES_DIR_LABEL.mkdir(parents=True, exist_ok=True)
 
 
-REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'cifar10_patch_format'
+REPAIR_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'cifar10_big_format'
 # REPAIR_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 LABEL_MODEL_DIR = Path(__file__).resolve().parent.parent / 'model' / 'cifar10_label_format'
 # LABEL_MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
-COMP_DIR = Path(__file__).resolve().parent.parent / 'results' / 'cifar10' / 'repair' / 'generalization' / 'compare'
+COMP_DIR = Path(__file__).resolve().parent.parent / 'results' / 'cifar10' / 'repair' / 'generalization' / 'compare_big'
 COMP_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -223,7 +223,7 @@ def test_repaired(args: Namespace) -> float:
     frontier, rear  = for_repair_net.split()
     patch_lists = []
     for i in range(args.repair_number):
-        patch_net = Cifar_feature_patch_model(dom=args.dom,
+        patch_net = Cifar_feature_patch_model_big(dom=args.dom,
             name = f'property patch network {i}', input_dimension=input_dimension).to(device)
         patch_lists.append(patch_net)
     logging.info(f'--feature patch network: {patch_net}')
@@ -504,85 +504,86 @@ def test_repaired(args: Namespace) -> float:
             labels = labels[corre]
             correct2_sum_ori += corre.sum().item()
         
-        pgd_origin = PGD(model=original_net, eps=args.repair_radius/255, alpha=args.repair_radius/(4. * 255), 
-            steps=10, random_start=False)
-        adv_image_origin = pgd_origin(images, labels)
+        # pgd_origin = PGD(model=original_net, eps=args.repair_radius/255, alpha=args.repair_radius/(4. * 255), 
+        #     steps=10, random_start=False)
+        # adv_image_origin = pgd_origin(images, labels)
 
-        with torch.no_grad():
-            outs_origin = original_net(adv_image_origin)
-            predicted2 = outs_origin.argmax(dim=1)
-            correct2_adv_ori = (predicted2 == labels).sum().item()
-            correct2_sum_adv_ori += correct2_adv_ori
-            logging.info(f'correct2_adv_ori {correct2_adv_ori}')
+        # with torch.no_grad():
+        #     outs_origin = original_net(adv_image_origin)
+        #     predicted2 = outs_origin.argmax(dim=1)
+        #     correct2_adv_ori = (predicted2 == labels).sum().item()
+        #     correct2_sum_adv_ori += correct2_adv_ori
+        #     logging.info(f'correct2_adv_ori {correct2_adv_ori}')
 
         # TODO: from the output of the original net, get the top10 index of prediction
         # then use target pgd attack to get the two most likely prediction
-        with torch.no_grad():
-            ori_images_pred = original_net(images)
-            _,index = ori_images_pred.topk(10, dim=1)
-        pgd = PGD(model=original_net, eps=args.repair_radius/255, alpha=args.repair_radius/(4. * 255), 
-            steps=10, random_start=False)
-        # targeted attack
-        pgd.set_mode_targeted_by_label(quiet=True)
+        # with torch.no_grad():
+        #     ori_images_pred = original_net(images)
+        #     _,index = ori_images_pred.topk(10, dim=1)
+        # pgd = PGD(model=original_net, eps=args.repair_radius/255, alpha=args.repair_radius/(4. * 255), 
+        #     steps=10, random_start=False)
+        # # targeted attack
+        # pgd.set_mode_targeted_by_label(quiet=True)
 
         # images = adv_image_origin
-        outs_max_storage_list = []
-        for i in range(10):
-            index_i = index[...,i]
-            adv_images = pgd(images, index_i)
-            outs = original_net(adv_images)
-            # softmax
-            # outs = nn.Softmax(dim=1)(outs)
+        # outs_max_storage_list = []
+        # for i in range(10):
+        #     index_i = index[...,i]
+        #     adv_images = pgd(images, index_i)
+        #     outs = original_net(adv_images)
+        #     # softmax
+        #     # outs = nn.Softmax(dim=1)(outs)
 
-            # get the max prediction
-            outs_max,_ = outs.max(dim=1)
-            outs_max_storage_list.append(outs_max)
-        outs_max_storage = torch.stack(outs_max_storage_list, dim=1)
-        value_storage,index_storage = outs_max_storage.topk(2, dim=1)
-        index_two_1 = index[range(len(index)),index_storage[...,0]]
-        index_two_2 = index[range(len(index)),index_storage[...,1]]
-        index_two = torch.stack((index_two_1, index_two_2),dim=1)
+        #     # get the max prediction
+        #     outs_max,_ = outs.max(dim=1)
+        #     outs_max_storage_list.append(outs_max)
+        # outs_max_storage = torch.stack(outs_max_storage_list, dim=1)
+        # value_storage,index_storage = outs_max_storage.topk(2, dim=1)
+        # index_two_1 = index[range(len(index)),index_storage[...,0]]
+        # index_two_2 = index[range(len(index)),index_storage[...,1]]
+        # index_two = torch.stack((index_two_1, index_two_2),dim=1)
 
 
 
-        repaired_net.feature_sumnet.get_bitmap_potential(sample_top2=index_two)
+        # repaired_net.feature_sumnet.get_bitmap_potential(sample_top2=index_two)
 
-        with torch.no_grad():
-            repair_ori_images_pred = repaired_net(images, bitmap = repaired_net.feature_sumnet.bitmap)
-            l = repair_ori_images_pred.argmax(dim=1)
-            correct2 = (l == labels).sum().item()
-            correct2_sum += correct2
-            logging.info(f'correct2 {correct2}')
-    logging.info(f'--For testset, out of {len(testset)} items, repaired net acc ratio {correct2_sum/len(testset)}')
-    with open(Path(COMP_DIR, f'cifar_generalization.txt'), 'a') as f:
-        f.write(f'For net: {args.net}, radius: {args.repair_radius},' +
-                f'repair_number: {args.repair_number}, ' +
-                f'PatchRepair:{correct2_sum/len(testset)}\n')  
-    return 
-    #     # at2 = AutoAttack(repaired_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,
-    #     #                  bitmap=repaired_net.feature_sumnet.bitmap.clone(), steps=10)
-    #     at2 = AutoAttack(repaired_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,
-    #                      steps=10)
-    #     adv_images2 = at2(images, labels)
-    #     # adv_images2_bitmap = get_bitmap(in_lb, in_ub, repaired_net.feature_sumnet.bitmap, adv_images2)
-        
     #     with torch.no_grad():
-    #         outs2 = repaired_net(adv_images2)
-    #         predicted2 = outs2.topk(2, dim=1)[1]
-    #         index_two_1 = index[range(len(index)),index_storage[...,0]]
-    #         index_two_2 = index[range(len(index)),index_storage[...,1]]
-    #         index_two = torch.stack((index_two_1, index_two_2),dim=1)
-
-    #         repaired_net.feature_sumnet.get_bitmap_potential(sample_top2=index_two)
-
-
-    #     outs2 = repaired_net(adv_images2, bitmap = repaired_net.feature_sumnet.bitmap)
+    #         repair_ori_images_pred = repaired_net(images, bitmap = repaired_net.feature_sumnet.bitmap)
+    #         l = repair_ori_images_pred.argmax(dim=1)
+    #         correct2 = (l == labels).sum().item()
+    #         correct2_sum += correct2
+    #         logging.info(f'correct2 {correct2}')
+    # logging.info(f'--For testset, out of {len(testset)} items, repaired net acc ratio {correct2_sum/len(testset)}')
+    # with open(Path(COMP_DIR, f'cifar_generalization.txt'), 'a') as f:
+    #     f.write(f'For net: {args.net}, radius: {args.repair_radius},' +
+    #             f'repair_number: {args.repair_number}, ' +
+    #             f'PatchRepair:{correct2_sum/len(testset)}\n')  
+    # return 
+        repaired_net.feature_sumnet.get_bitmap(sample_top2=index)
+        at2 = AutoAttack(repaired_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,
+                         bitmap=repaired_net.feature_sumnet.bitmap.clone(), steps=10)
+        # at2 = AutoAttack(repaired_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,
+        #                  steps=10)
+        adv_images2 = at2(images, labels)
+        # adv_images2_bitmap = get_bitmap(in_lb, in_ub, repaired_net.feature_sumnet.bitmap, adv_images2)
         
-    #     # outs2 = repaired_net(adv_images2)
-    #     predicted2 = outs2.argmax(dim=1)
-    #     correct2 = (predicted2 == labels).sum().item()
-    #     correct2_sum += correct2
-    #     logging.info(f'correct2 {correct2}')
+        # with torch.no_grad():
+        #     outs2 = repaired_net(adv_images2)
+        #     predicted2 = outs2.topk(2, dim=1)[1]
+        #     index_two_1 = index[range(len(index)),index_storage[...,0]]
+        #     index_two_2 = index[range(len(index)),index_storage[...,1]]
+        #     index_two = torch.stack((index_two_1, index_two_2),dim=1)
+
+        #     repaired_net.feature_sumnet.get_bitmap_potential(sample_top2=index_two)
+
+
+        outs2 = repaired_net(adv_images2, bitmap = repaired_net.feature_sumnet.bitmap)
+        
+        # outs2 = repaired_net(adv_images2)
+        predicted2 = outs2.argmax(dim=1)
+        correct2 = (predicted2 == labels).sum().item()
+        correct2_sum += correct2
+        logging.info(f'correct2 {correct2}')
     #     # logging.info(f'attack net3 ')
 
     #     at3 = AutoAttack(original_net, norm='Linf', eps=args.repair_radius, version='standard', verbose=False,steps=10)
@@ -610,13 +611,13 @@ def test_repaired(args: Namespace) -> float:
     # logging.info(f'--For testset, out of {len(testset)} items, repaired net ratio {correct2_sum/len(testset)}')
     # logging.info(f'--For testset, out of {len(testset)} items, original net ratio {correct3_sum/len(testset)}')
 
-    # with open(Path(COMP_DIR, f'compare_generalization.txt'), 'a') as f:
-    #     f.write(f'For net: {args.net}, radius: {args.repair_radius},' +
-    #             f'repair_number: {args.repair_number}, ' +
-    #             f'adv_training:{correct1_sum/len(testset)}, ' +
-    #             f'PatchRepair:{correct2_sum/len(testset)}, ' + 
-    #             f'original:{correct3_sum/len(testset)}, ' +
-    #             f'label_repair:{correct4_sum/len(testset)}\n')
+    with open(Path(COMP_DIR, f'compare_generalization.txt'), 'a') as f:
+        f.write(f'For net: {args.net}, radius: {args.repair_radius},' +
+                f'repair_number: {args.repair_number}, ' +
+                f'adv_training:{correct1_sum/len(testset)}, ' +
+                f'PatchRepair:{correct2_sum/len(testset)}, ' + 
+                f'original:{correct3_sum/len(testset)}, ' +
+                f'label_repair:{correct4_sum/len(testset)}\n')
 
 
 def _run_test(args: Namespace):
@@ -698,13 +699,14 @@ if __name__ == '__main__':
     for net in ['vgg19', 'resnet18']:
         # for patch_size in ['small', 'big']:
         # for patch_size in ['big']:
-            for radius in [8]: 
+            # for radius in [8]: 
+            for radius in [4,8]:
 
             # for radius in [0.05,0.1,0.3]: #,0.1,0.3
                 # for repair_number,test_number in zip([200],[2000]):
                 # for repair_number,test_number in zip([50],[500]):
-                for repair_number,test_number in zip([1000],[10000]):
-                # for repair_number,test_number in zip([50,100,200,500,1000],[500,1000,2000,5000,10000]):
+                # for repair_number,test_number in zip([1000],[10000]):
+                for repair_number,test_number in zip([50,100,200,500,1000],[500,1000,2000,5000,10000]):
                     test(net=net, repair_radius=radius, repair_number = repair_number, 
          train_datasize = 10000, test_datasize = 10000, 
          accuracy_loss='CE')
